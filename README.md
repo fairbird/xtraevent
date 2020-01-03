@@ -17,10 +17,10 @@ ChannelSelection       : source="ServiceEvent"
 	<convert type="pstrCnvrt">POSTER</convert>
 </widget>
 
-pstrCnvrt.py
+pstrCnvrt.py 
 /usr/lib/enigma2/python/Components/Converter
 
-pstrRndr.py
+pstrRndr.py 
 /usr/lib/enigma2/python/Components/Renderer
 
 ##################
