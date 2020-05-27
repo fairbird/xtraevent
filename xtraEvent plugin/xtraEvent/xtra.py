@@ -289,11 +289,11 @@ class xtra(Screen, ConfigListScreen):
 			list.append(getConfigListEntry("  TMDB", config.plugins.xtraEvent.tmdb, _("best source for poster..."),))
 			if config.plugins.xtraEvent.tmdb.value :
 				list.append(getConfigListEntry("    TMDB POSTER SIZE", config.plugins.xtraEvent.TMDBpostersize, _("Choose poster sizes for TMDB")))
-				list.append(getConfigListEntry("—"*100))
+				list.append(getConfigListEntry("_"*100))
 			list.append(getConfigListEntry("  TVDB", config.plugins.xtraEvent.tvdb, _("best source for banner...")))
 			if config.plugins.xtraEvent.tvdb.value :
 				list.append(getConfigListEntry("    TVDB POSTER SIZE", config.plugins.xtraEvent.TVDBpostersize, _("Choose poster sizes for TVDB")))
-				list.append(getConfigListEntry("—"*100))
+				list.append(getConfigListEntry("_"*100))
 			list.append(getConfigListEntry("  OMDB", config.plugins.xtraEvent.omdb, _("best source for info...")))
 			list.append(getConfigListEntry("  MAZE(TV SHOWS)", config.plugins.xtraEvent.maze, _("best source for tv shows...")))
 			list.append(getConfigListEntry("  FANART", config.plugins.xtraEvent.fanart, _("alternative source for poster, banner, etc...")))	
@@ -313,15 +313,15 @@ class xtra(Screen, ConfigListScreen):
 			list.append(getConfigListEntry("  TMDB", config.plugins.xtraEvent.tmdb, _("source for backdrop...")))
 			if config.plugins.xtraEvent.tmdb.value :
 				list.append(getConfigListEntry("    TMDB BACKDROP SIZE", config.plugins.xtraEvent.TMDBbackdropsize, _("Choose backdrop sizes for TMDB")))
-				list.append(getConfigListEntry("—"*100))
+				list.append(getConfigListEntry("_"*100))
 			list.append(getConfigListEntry("  TVDB", config.plugins.xtraEvent.tvdb, _("source for backdrop...")))
 			if config.plugins.xtraEvent.tvdb.value :
 				list.append(getConfigListEntry("    TVDB BACKDROP SIZE", config.plugins.xtraEvent.TVDBbackdropsize, _("Choose backdrop sizes for TVDB")))
-				list.append(getConfigListEntry("—"*100))
+				list.append(getConfigListEntry("_"*100))
 			list.append(getConfigListEntry("  FANART", config.plugins.xtraEvent.fanart, _("source for backdrop...")))
 			if config.plugins.xtraEvent.fanart.value:
 				list.append(getConfigListEntry("    FANART BACKDROP SIZE", config.plugins.xtraEvent.FANARTresize, _("Choose backdrop sizes for FANART")))
-				list.append(getConfigListEntry("—"*100))
+				list.append(getConfigListEntry("_"*100))
 # info___________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("INFO", config.plugins.xtraEvent.info, _("Program information with omdb...")))
 		list.append(getConfigListEntry("—"*100))
