@@ -15,7 +15,7 @@ if os.path.ismount('/media/hdd'):
 elif os.path.ismount('/media/usb'):
 	if os.path.isdir("/media/usb/xtraEvent/"):
 		pathLoc = "/media/usb/xtraEvent/infos/"
-elif os.path.isdir("/media/usb/xtraEvent/"):
+elif os.path.isdir("/etc/enigma2/xtraEvent/"):
 	pathLoc = "/etc/enigma2/xtraEvent/infos/"
 else:
 	pathLoc = "/tmp/"

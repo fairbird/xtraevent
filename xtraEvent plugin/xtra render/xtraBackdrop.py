@@ -12,8 +12,6 @@ import os
 
 
 
-tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
-
 if os.path.ismount('/media/hdd'):
 	if os.path.isdir("/media/hdd/xtraEvent/"):
 		pathLoc = "/media/hdd/xtraEvent/backdrop/"

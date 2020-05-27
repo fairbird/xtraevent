@@ -16,7 +16,7 @@ if os.path.ismount('/media/hdd'):
 elif os.path.ismount('/media/usb'):
 	if os.path.isdir("/media/usb/xtraEvent/"):
 		pathLoc = "/media/usb/xtraEvent/poster/"
-elif os.path.isdir("/media/usb/xtraEvent/"):
+elif os.path.isdir("/etc/enigma2/xtraEvent/"):
 	pathLoc = "/etc/enigma2/xtraEvent/poster/"
 else:
 	pathLoc = "/tmp/"
@@ -79,6 +79,6 @@ class xtraPoster(Renderer):
 	def delay(self):
 		self.timer = eTimer()
 		self.timer.callback.append(self.showPoster)
-		self.timer.start(500, True)
+		self.timer.start(200, True)
 
 

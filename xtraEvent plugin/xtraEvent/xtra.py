@@ -31,31 +31,17 @@ from Screens.NumericalTextInputHelpDialog import NumericalTextInputHelpDialog
 
 from PIL import Image
 
+
+
+
+
 tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
 
 
 
 
 
-# try:
-	# folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(self.pathLoc, fname)), files)) for self.pathLoc, folders, files in os.walk(self.pathLoc)])
-	# posters_sz = "%0.1f" % (folder_size/(1024*1024.0))
-	# poster_nmbr = len(os.listdir(self.pathLoc))
 
-	# folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(self.pathLoc, fname)), files)) for self.pathLoc, folders, files in os.walk(self.pathLoc)])
-	# banners_sz = "%0.1f" % (folder_size/(1024*1024.0))
-	# banner_nmbr = len(os.listdir(self.pathLoc))
-
-	# folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_backdrop, fname)), files)) for path_backdrop, folders, files in os.walk(path_backdrop)])
-	# backdrops_sz = "%0.1f" % (folder_size/(1024*1024.0))
-	# backdrop_nmbr = len(os.listdir(path_backdrop))
-
-	# folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_info, fname)), files)) for path_info, folders, files in os.walk(path_info)])
-	# infos_sz = "%0.1f" % (folder_size/(1024*1024.0))
-	# info_nmbr = len(os.listdir(path_info))
-
-# except:
-	# pass
 
 def bqtList():
 	bouquets = []
@@ -139,11 +125,11 @@ config.plugins.xtraEvent.TVDBbackdropsize = ConfigSelection(default="thumbnail",
 	("original", "680x1000")])
 
 config.plugins.xtraEvent.FANARTresize = ConfigSelection(default="10", choices = [
-	("10", "100,142"), 
-	("5", "200,285"), 
-	("3", "333,475"), 
-	("2", "500,713"), 
-	("1", "1000,1426")])
+	("10", "100x142"), 
+	("5", "200x285"), 
+	("3", "333x475"), 
+	("2", "500x713"), 
+	("1", "1000x1426")])
 
 # config.plugins.xtraEvent.FANARTresize = ConfigSelection(default="10", choices = [
 	# ("(92,138)", "92x138"), 
@@ -193,7 +179,7 @@ class xtra(Screen, ConfigListScreen):
 			"red": self.exit,
 			"green": self.save,
 			"yellow": self.download,
-			"blue": self.ms,
+			"blue": self.currentEvent,
 			"cancel": self.exit,
 
 
@@ -204,16 +190,13 @@ class xtra(Screen, ConfigListScreen):
 		self['status'] = Label()
 		self['info'] = Label()
 		self["help"] = StaticText()
-		# self['info'].setText(_(
-			# "Total Poster : {} poster {} MB".format(poster_nmbr, posters_sz)+ 
-			# "\nTotal Banner : {} banner {} MB".format(banner_nmbr, banners_sz)+
-			# "\nTotal Backdrop : {} backdrop {} MB".format(backdrop_nmbr, backdrops_sz)+
-			# "\nTotal Info : {} info {} MB".format(info_nmbr, infos_sz)))
+
+
 		
 		self.timer = eTimer()
 		self.timer.callback.append(self.xtraList)
 		self.onLayoutFinish.append(self.xtraList)
-		
+
 
 	
 		if config.plugins.xtraEvent.locations.value == "hdd":
@@ -244,6 +227,39 @@ class xtra(Screen, ConfigListScreen):
 		else:
 			self.pathLoc = "/tmp/"
 
+		try:
+			path_poster = self.pathLoc+ "poster/"
+			path_banner = self.pathLoc+ "banner/"
+			path_backdrop = self.pathLoc+ "backdrop/"			
+			path_info = self.pathLoc+ "infos/"
+			
+			folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_poster, fname)), files)) for path_poster, folders, files in os.walk(path_poster)])
+			posters_sz = "%0.1f" % (folder_size/(1024*1024.0))
+			poster_nmbr = len(os.listdir(path_poster))
+
+			folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_banner, fname)), files)) for path_banner, folders, files in os.walk(path_banner)])
+			banners_sz = "%0.1f" % (folder_size/(1024*1024.0))
+			banner_nmbr = len(os.listdir(path_banner))
+
+			folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_backdrop, fname)), files)) for path_backdrop, folders, files in os.walk(path_backdrop)])
+			backdrops_sz = "%0.1f" % (folder_size/(1024*1024.0))
+			backdrop_nmbr = len(os.listdir(path_backdrop))
+
+			folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_info, fname)), files)) for path_info, folders, files in os.walk(path_info)])
+			infos_sz = "%0.1f" % (folder_size/(1024*1024.0))
+			info_nmbr = len(os.listdir(path_info))
+			
+			self['status'].setText(_("Storage ;"))
+			self['info'].setText(_(
+				"Total Poster : {} poster {} MB".format(poster_nmbr, posters_sz)+ 
+				"\nTotal Banner : {} banner {} MB".format(banner_nmbr, banners_sz)+
+				"\nTotal Backdrop : {} backdrop {} MB".format(backdrop_nmbr, backdrops_sz)+
+				"\nTotal Info : {} info {} MB".format(info_nmbr, infos_sz)))
+		except Exception as e:
+			print e
+			self['info'].setText(_(str(e)))
+
+
 	def delay(self):
 		self.timer.start(100, True)
 
@@ -254,35 +270,7 @@ class xtra(Screen, ConfigListScreen):
 		list = []
 		list.append(getConfigListEntry("—"*100))
 # path location_________________________________________________________________________________________________________________
-		list.append(getConfigListEntry("Location", config.plugins.xtraEvent.locations, _("select search mode...")))
-		if config.plugins.xtraEvent.locations.value == "hdd":
-			if os.path.ismount('/media/hdd'):
-				if not os.path.isdir("/media/hdd/xtraEvent/"):
-					os.makedirs("/media/hdd/xtraEvent/poster")
-					os.makedirs("/media/hdd/xtraEvent/banner")
-					os.makedirs("/media/hdd/xtraEvent/backdrop")
-					os.makedirs("/media/hdd/xtraEvent/infos")
-				self.pathLoc = "/media/hdd/xtraEvent/"
-
-		elif config.plugins.xtraEvent.locations.value == "usb":
-			if os.path.ismount('/media/usb'):
-				if not os.path.isdir("/media/usb/xtraEvent/"):
-					os.makedirs("/media/usb/xtraEvent/poster")
-					os.makedirs("/media/usb/xtraEvent/banner")
-					os.makedirs("/media/usb/xtraEvent/backdrop")
-					os.makedirs("/media/usb/xtraEvent/infos")
-				self.pathLoc = "/media/usb/xtraEvent/"
-
-		elif config.plugins.xtraEvent.locations.value == "internal":
-			if not os.path.isdir("/etc/enigma2/xtraEvent/"):
-				os.makedirs("/etc/enigma2/xtraEvent/poster")
-				os.makedirs("/etc/enigma2/xtraEvent/banner")
-				os.makedirs("/etc/enigma2/xtraEvent/backdrop")
-				os.makedirs("/etc/enigma2/xtraEvent/infos")
-			self.pathLoc = "/etc/enigma2/xtraEvent/"
-		else:
-			self.pathLoc = "/tmp/"
-
+		list.append(getConfigListEntry("Location", config.plugins.xtraEvent.locations, _("select locations...")))
 		list.append(getConfigListEntry("—"*100))
 # config_________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("SEARCH MODE", config.plugins.xtraEvent.searchMOD, _("select search mode...")))
@@ -301,17 +289,17 @@ class xtra(Screen, ConfigListScreen):
 			list.append(getConfigListEntry("  TMDB", config.plugins.xtraEvent.tmdb, _("best source for poster..."),))
 			if config.plugins.xtraEvent.tmdb.value :
 				list.append(getConfigListEntry("    TMDB POSTER SIZE", config.plugins.xtraEvent.TMDBpostersize, _("Choose poster sizes for TMDB")))
-
+				list.append(getConfigListEntry("—"*100))
 			list.append(getConfigListEntry("  TVDB", config.plugins.xtraEvent.tvdb, _("best source for banner...")))
 			if config.plugins.xtraEvent.tvdb.value :
 				list.append(getConfigListEntry("    TVDB POSTER SIZE", config.plugins.xtraEvent.TVDBpostersize, _("Choose poster sizes for TVDB")))
-
+				list.append(getConfigListEntry("—"*100))
 			list.append(getConfigListEntry("  OMDB", config.plugins.xtraEvent.omdb, _("best source for info...")))
 			list.append(getConfigListEntry("  MAZE(TV SHOWS)", config.plugins.xtraEvent.maze, _("best source for tv shows...")))
 			list.append(getConfigListEntry("  FANART", config.plugins.xtraEvent.fanart, _("alternative source for poster, banner, etc...")))	
 			if config.plugins.xtraEvent.fanart.value:
 				list.append(getConfigListEntry("    FANART POSTER SIZE", config.plugins.xtraEvent.FANARTresize, _("Choose poster sizes for FANART")))
-
+				
 
 			list.append(getConfigListEntry("—"*100))
 # banner__________________________________________________________________________________________________________________
@@ -325,13 +313,15 @@ class xtra(Screen, ConfigListScreen):
 			list.append(getConfigListEntry("  TMDB", config.plugins.xtraEvent.tmdb, _("source for backdrop...")))
 			if config.plugins.xtraEvent.tmdb.value :
 				list.append(getConfigListEntry("    TMDB BACKDROP SIZE", config.plugins.xtraEvent.TMDBbackdropsize, _("Choose backdrop sizes for TMDB")))
+				list.append(getConfigListEntry("—"*100))
 			list.append(getConfigListEntry("  TVDB", config.plugins.xtraEvent.tvdb, _("source for backdrop...")))
 			if config.plugins.xtraEvent.tvdb.value :
 				list.append(getConfigListEntry("    TVDB BACKDROP SIZE", config.plugins.xtraEvent.TVDBbackdropsize, _("Choose backdrop sizes for TVDB")))
+				list.append(getConfigListEntry("—"*100))
 			list.append(getConfigListEntry("  FANART", config.plugins.xtraEvent.fanart, _("source for backdrop...")))
 			if config.plugins.xtraEvent.fanart.value:
 				list.append(getConfigListEntry("    FANART BACKDROP SIZE", config.plugins.xtraEvent.FANARTresize, _("Choose backdrop sizes for FANART")))
-
+				list.append(getConfigListEntry("—"*100))
 # info___________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("INFO", config.plugins.xtraEvent.info, _("Program information with omdb...")))
 		list.append(getConfigListEntry("—"*100))
@@ -370,15 +360,6 @@ class xtra(Screen, ConfigListScreen):
 		cur = self["config"].getCurrent()
 		if cur:
 			self["help"].text = cur[2]
-
-	def posterQuantity(self):
-		try:
-			folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(self.pathLoc, fname)), files)) for self.pathLoc, folders, files in os.walk(self.pathLoc)])
-			posters_sz = "%0.1f" % (folder_size/(1024*1024.0))
-			poster_nmbr = len(os.listdir(self.pathLoc))
-			self['status'].setText(_("Total : {} poster {} MB".format(poster_nmbr, posters_sz)))
-		except:
-			pass
 
 	def save(self):
 		for x in self["config"].list:
@@ -466,13 +447,26 @@ class xtra(Screen, ConfigListScreen):
 			self['info'].setText(_(str(e)))
 
 	def currentEvent(self):
-			event = None
-			serviceref = self.session.nav.getCurrentlyPlayingServiceReference()
-			ref = serviceref.toString()
-			if ref:
-				events = self.epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
-				cevnt = events[0][4]
-				open("/tmp/cevnt","w").write(cevnt)
+		event = None
+		info = ""
+		import NavigationInstance
+		# ref = self.session.nav.getCurrentlyPlayingServiceReference().toString()
+		# ref = NavigationInstance.instance.getCurrentlyPlayingServiceReference().toString()
+		ref = self.source.service
+		info = ref and self.source.info
+		if info is None:
+			return
+		# playingref = eServiceCenter.getInstance()
+		# playingref = eServiceReference().toString()
+		# service = self.session.nav.getCurrentService()
+		if ref:
+			# events = self.epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
+			events = self.epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1)])
+			cevnt = events[1][4]
+			# open("/tmp/cevnt","w").write(cevnt)
+			self['info'].setText(_(str(cevnt)))
+
+
 
 # DOWNLOAD POSTERS ######################################################################################################
 
@@ -489,7 +483,7 @@ class xtra(Screen, ConfigListScreen):
 
 				titles = list(dict.fromkeys(titles))
 				n = len(titles)
-				open("/tmp/prgrs-poster", "w").write(str(n))
+				# open("/tmp/prgrs-poster", "w").write(str(n))
 				for i in xrange(n):
 					# self.i = i
 					title = titles[i]
@@ -499,12 +493,12 @@ class xtra(Screen, ConfigListScreen):
 					url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote(title))
 					if self.year != "":
 						url_tmdb += "&primary_release_year={}&year={}".format(self.year, self.year)
-					# open("/tmp/url_tmdb", "a+").write("%s\n"% str(url_tmdb))
+
 					try:
 						poster = json.load(urlopen(url_tmdb))['results'][0]['poster_path']
 						p_size = config.plugins.xtraEvent.TMDBpostersize.value
 						url_poster = "https://image.tmdb.org/t/p/{}{}".format(p_size, poster)
-						open("/tmp/url_poster", "a+").write("%s\n"% str(url_poster))
+						# open("/tmp/url_poster", "a+").write("%s\n"% str(url_poster))
 						dwn_poster = self.pathLoc + "poster/{}.jpg".format(title)
 						urlretrieve(url_poster, dwn_poster)
 
@@ -512,7 +506,7 @@ class xtra(Screen, ConfigListScreen):
 						pass
 
 				self['status'].setText(_("downloaded posters : {}".format(n)))
-				# self.posterQuantity()
+
 		except Exception as e:
 			print e
 			self['info'].setText(_(str(e)))
@@ -958,7 +952,7 @@ class xtra(Screen, ConfigListScreen):
 		except Exception as e:
 			print e
 			self['info'].setText(_(str(e)))
-
+			
 	def ms(self):
 		self.session.open(manuelSearch)
 		self.timer.start(1000, True)
@@ -974,10 +968,7 @@ class manuelSearch(Screen, ConfigListScreen):
 
     <widget source="Title" render="Label" position="40,40" size="745,40" font="Console; 30" foregroundColor="#c5c5c5" backgroundColor="#23262e" transparent="1" />
     <widget name="config" position="40,80" size="745,510" itemHeight="30" font="Regular;24" foregroundColor="#c5c5c5" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#23262e" backgroundColorSelected="#565d6d" foregroundColorSelected="#ffffff" />
-    <eLabel name="new eLabel" position="40,670" size="170,5" backgroundColor="red" zPosition="2" />
-    <eLabel name="new eLabel" position="230,670" size="170,5" backgroundColor="green" zPosition="2" />
-    <eLabel name="new eLabel" position="420,670" size="170,5" backgroundColor="yellow" zPosition="2" />
-    <eLabel name="new eLabel" position="610,670" size="170,5" backgroundColor="blue" zPosition="2" />
+
     <widget source="key_red" render="Label" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="40,640" size="170,30" halign="left" transparent="1" zPosition="1" />
     <widget source="key_green" render="Label" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="230,640" size="170,30" halign="left" transparent="1" zPosition="1" />
     <widget source="key_yellow" render="Label" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="420,640" size="170,30" halign="left" transparent="1" zPosition="1" />
