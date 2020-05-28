@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # by digiteng...05.2020...
+2020-05-27T19:58:28Z
 from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
 from Components.Label import Label
@@ -179,7 +180,7 @@ class xtra(Screen, ConfigListScreen):
 			"red": self.exit,
 			"green": self.save,
 			"yellow": self.download,
-			"blue": self.currentEvent,
+			"blue": self.ms,
 			"cancel": self.exit,
 
 
