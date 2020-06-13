@@ -42,7 +42,6 @@ class xtraPoster(Renderer):
 
 	def showPoster(self):
 		try:
-		
 			event = self.source.event
 			if event:
 				evnt = event.getEventName()
@@ -71,14 +70,14 @@ class xtraPoster(Renderer):
 					self.instance.hide()
 			else:
 				self.instance.hide()
-				return
-		except Exception as e: 
-			print(e)
-			open("/tmp/err.xml", "w").write(str(e))
+
+		except: 
+			self.instance.hide()
+			return
 
 	def delay(self):
 		self.timer = eTimer()
 		self.timer.callback.append(self.showPoster)
-		self.timer.start(200, True)
+		self.timer.start(500, True)
 
 

@@ -18,7 +18,7 @@ if os.path.ismount('/media/hdd'):
 elif os.path.ismount('/media/usb'):
 	if os.path.isdir("/media/usb/xtraEvent/"):
 		pathLoc = "/media/usb/xtraEvent/backdrop/"
-elif os.path.isdir("/media/usb/xtraEvent/"):
+elif os.path.isdir("/etc/enigma2/xtraEvent/"):
 	pathLoc = "/etc/enigma2/xtraEvent/backdrop/"
 else:
 	pathLoc = "/tmp/"
@@ -46,34 +46,37 @@ class xtraBackdrop(Renderer):
 			pass
 
 	def showBackdrop(self):
-		event = self.source.event
-		if event:
-			evnt = event.getEventName()
-			evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt)
-			evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-			self.dwn_backdrop = pathLoc + "{}.jpg".format(evntNm)
-			pstrNm = pathLoc + evntNm + ".jpg"
-			if os.path.exists(pstrNm):
-				size = self.instance.size()
-				self.picload = ePicLoad()
-				sc = AVSwitch().getFramebufferScale()
-				if self.picload:
-					self.picload.setPara((size.width(),
-					size.height(),
-					sc[0],
-					sc[1],
-					False,
-					1,
-					'#00000000'))
-				result = self.picload.startDecode(pstrNm, 0, 0, False)
-				if result == 0:
-					ptr = self.picload.getData()
-					if ptr != None:
-						self.instance.setPixmap(ptr)
-						self.instance.show()
+		try:
+			event = self.source.event
+			if event:
+				evnt = event.getEventName()
+				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt)
+				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+				self.dwn_backdrop = pathLoc + "{}.jpg".format(evntNm)
+				pstrNm = pathLoc + evntNm + ".jpg"
+				if os.path.exists(pstrNm):
+					size = self.instance.size()
+					self.picload = ePicLoad()
+					sc = AVSwitch().getFramebufferScale()
+					if self.picload:
+						self.picload.setPara((size.width(),
+						size.height(),
+						sc[0],
+						sc[1],
+						False,
+						1,
+						'#00000000'))
+					result = self.picload.startDecode(pstrNm, 0, 0, False)
+					if result == 0:
+						ptr = self.picload.getData()
+						if ptr != None:
+							self.instance.setPixmap(ptr)
+							self.instance.show()
+				else:
+					self.instance.hide()
 			else:
 				self.instance.hide()
-		else:
+		except:
 			self.instance.hide()
 			return
 
@@ -82,4 +85,4 @@ class xtraBackdrop(Renderer):
 	def delay(self):
 		self.timer = eTimer()
 		self.timer.callback.append(self.showBackdrop)
-		self.timer.start(100, True)
+		self.timer.start(500, True)
