@@ -58,11 +58,12 @@ def currentChEpgs():
 			events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 			n = config.plugins.xtraEvent.searchNUMBER.value
 
-			for i in xrange(n):
+			for i in xrange(int(n)):
 				title = events[i][4]
 				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
 				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
 				open(pathLoc+"events","a+").write("%s\n" % str(evntNm))
+			intCheck()
 			download()
 		except:
 			pass
@@ -81,7 +82,7 @@ def selBouquets():
 			for ref in chs:
 				events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 				n = config.plugins.xtraEvent.searchNUMBER.value
-				for i in xrange(n):
+				for i in xrange(int(n)):
 					title = events[i][4]
 					evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
 					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
