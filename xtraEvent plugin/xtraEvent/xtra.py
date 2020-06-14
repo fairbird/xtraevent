@@ -388,7 +388,7 @@ class xtra(Screen, ConfigListScreen):
 			try:
 				events = self.epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 				n = config.plugins.xtraEvent.searchNUMBER.value
-				for i in xrange(n):
+				for i in xrange(int(n)):
 					title = events[i][4]
 					evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
 					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
