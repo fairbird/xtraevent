@@ -3,23 +3,27 @@
 from Plugins.Plugin import PluginDescriptor
 from enigma import eTimer
 from Components.config import config
-from Components.ActionMap import ActionMap
-import Screens.Standby
+import threading
 import xtra
 import download
 
 def ddwn():
-	download.save()
+    download.save()
+    if config.plugins.xtraEvent.upMOD.value == True:
+        tmr = config.plugins.xtraEvent.timer.value
+        t = threading.Timer(60 * int(tmr), ddwn)
+        t.start()
 
 
-if config.plugins.xtraEvent.upMOD.value == True:
-	timer = eTimer()
-	timer.callback.append(ddwn)
-	timer.start(1000*30, 1)
-	Timer = eTimer()
-	Timer.callback.append(ddwn)
-	t = config.plugins.xtraEvent.timer.value
-	Timer.start(3600000*int(t), False) #1min-60 000msn, 1h-3 600 000 msn
+threading.Timer(10, ddwn).start()
+# t.cancel()
+	# timer = eTimer()
+	# timer.callback.append(ddwn)
+	# timer.start(1000*30, 1)
+	# timer2 = eTimer()
+	# timer2.callback.append(ddwn)
+	# t = config.plugins.xtraEvent.timer.value
+	# timer2.start(60000*int(t), False) #1min-60 000msn, 1h-3 600 000 msn
 
 def main(session, **kwargs):
 	reload(xtra)

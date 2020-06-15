@@ -603,7 +603,7 @@ class selBouquets(Screen):
 					if be[3]:
 						self.sources.append(be[0])
 			serviceHandler = eServiceCenter.getInstance()
-			self.channels = chList(self.sources)
+			channels = chList(self.sources)
 			if config.plugins.xtraEvent.locations.value == "hdd":
 				pathLoc = "/media/hdd/xtraEvent/"
 			elif config.plugins.xtraEvent.locations.value == "usb":
@@ -614,29 +614,29 @@ class selBouquets(Screen):
 				pathLoc = "/tmp/"
 			if os.path.exists(pathLoc+"bqts"):
 				os.remove(pathLoc+"bqts")
-			for r in self.channels:
-				open(pathLoc+"bqts", "a+").write("%s\n"%str(r))
+			for r in channels:
+				open(pathLoc + "bqts", "a+").write("%s\n"% str(r))
 		except:
 			pass
 		try:
 			if os.path.exists(pathLoc+"events"):
 				os.remove(pathLoc+"events")
 			ref = ""
-			refs = self.channels
+			refs = channels
 			for ref in refs:
 				try:
 					events = self.epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 					n = config.plugins.xtraEvent.searchNUMBER.value
-					for i in xrange(n):
+					for i in xrange(int(n)):
 						title = events[i][4]
 						evntN = re.sub('([\(\[]).*?([\)\]])|(: odc.\d+)|[?|$|.|!|,|:|/]', '', str(title))
 						evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").rstrip()
 						open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
-					self.close()
+					
 				except:
 					pass
 
-
+			self.close()
 		except:
 			pass
 

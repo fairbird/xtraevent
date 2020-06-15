@@ -7,6 +7,7 @@ from Components.AVSwitch import AVSwitch
 from urllib import urlretrieve
 from urllib2 import urlopen, quote
 import requests
+from twisted.web.client import downloadPage
 from enigma import eTimer, getDesktop, eLabel, eServiceCenter, eServiceReference, iServiceInformation, eEPGCache
 from Components.config import config
 from Components.ConfigList import ConfigListScreen
@@ -43,12 +44,12 @@ else:
 def save():
 	if config.plugins.xtraEvent.searchMOD.value == "Current Channel":
 		currentChEpgs()
-	elif config.plugins.xtraEvent.searchMOD.value == "Bouquets":
+	if config.plugins.xtraEvent.searchMOD.value == "Bouquets":
 		selBouquets()
 
 def currentChEpgs():
-	if os.path.exists(pathLoc+"events"):
-		os.remove(pathLoc+"events")
+	if os.path.exists(pathLoc + "events"):
+		os.remove(pathLoc + "events")
 	try:
 		events = None
 		import NavigationInstance
@@ -62,7 +63,8 @@ def currentChEpgs():
 				title = events[i][4]
 				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
 				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-				open(pathLoc+"events","a+").write("%s\n" % str(evntNm))
+				open(pathLoc + "events", "a+").write("%s\n" %str(evntNm))
+
 			intCheck()
 			download()
 		except:
@@ -72,25 +74,30 @@ def currentChEpgs():
 		pass
 
 def selBouquets():
-	if os.path.exists(pathLoc+"events"):
-		os.remove(pathLoc+"events")
-	if os.path.exists(pathLoc+"bqts"):
-		with open(pathLoc+"bqts", "r") as f:
-			chs = f.readlines()
-		# n = len(chs)
-		try:
-			for ref in chs:
+	if os.path.exists(pathLoc + "events"):
+		os.remove(pathLoc + "events")
+		
+	if os.path.exists(pathLoc + "bqts"):
+		with open(pathLoc + "bqts", "r") as f:
+			refs = f.readlines()
+		
+		nl=len(refs)
+		for i in xrange(nl):
+			ref = refs[i]
+			try:
 				events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 				n = config.plugins.xtraEvent.searchNUMBER.value
-				for i in xrange(int(n)):
-					title = events[i][4]
-					evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
-					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-					open(pathLoc+"events","a+").write("%s\n" % str(evntNm))
-			intCheck()
-			download()
-		except:
-			pass
+				for ii in xrange(int(n)):
+					title = events[ii][4]
+					evntN = re.sub('([\(\[]).*?([\)\]])|(: odc.\d+)|[?|$|.|!|,|:|/]', '', str(title))
+					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").rstrip()
+					open(pathLoc + "events", "a+").write("%s\n" %str(evntNm))
+				
+			except:
+				pass		
+		intCheck()
+		download()
+
 
 def intCheck():
 	try:
@@ -162,10 +169,11 @@ def tmdb_Poster():
 					poster = json.load(urlopen(url_tmdb))['results'][0]['poster_path']
 					p_size = config.plugins.xtraEvent.TMDBpostersize.value
 					url_poster = "https://image.tmdb.org/t/p/{}{}".format(p_size, poster)
-					dwn_poster = pathLoc + "poster/{}.jpg".format(title)
-					if not os.path.isfile(dwn_poster):
-						open(dwn_poster, 'wb').write(requests.get(url_poster, stream=True, allow_redirects=True).content)
-
+					if url_poster:
+						dwn_poster = pathLoc + "poster/{}.jpg".format(title)
+						if not os.path.isfile(dwn_poster):
+							# open(dwn_poster, 'wb').write(requests.get(url_poster, stream=True, allow_redirects=True).content)
+							downloadPage(str(url_poster), dwn_poster)
 				except:
 					pass
 
@@ -198,7 +206,8 @@ def tvdb_Poster():
 							url_poster = url_poster.replace(".jpg", "_t.jpg")
 						dwn_poster = pathLoc + "poster/{}.jpg".format(title)
 						if not os.path.isfile(dwn_poster):
-							open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
+							# open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
+							downloadPage(str(url_poster), dwn_poster)
 				except:
 					pass
 	except:
@@ -222,7 +231,8 @@ def omdb_Poster():
 					url_poster = json.load(urlopen(url_omdb))['Poster']
 					dwn_poster = pathLoc + "poster/{}.jpg".format(title)
 					if not os.path.isfile(dwn_poster):
-						open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
+						# open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
+						downloadPage(str(url_poster), dwn_poster)
 				except:
 					pass
 				continue
@@ -246,7 +256,8 @@ def maze_Poster():
 					url_poster = json.load(urlopen(url_maze))[0]['show']['image']['medium']
 					dwn_poster = pathLoc + "poster/{}.jpg".format(title)
 					if not os.path.isfile(dwn_poster):
-						open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
+						# open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
+						downloadPage(str(url_poster), dwn_poster)
 				except:
 					pass
 				continue
@@ -297,7 +308,8 @@ def fanart_Poster():
 											dwn_poster = pathLoc + "poster/{}.jpg".format(title)
 											dwn_poster=dwn_poster
 											if not os.path.isfile(dwn_poster):
-												open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
+												# open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
+												downloadPage(str(url_poster), dwn_poster)
 
 												scl = 1
 												im = Image.open(dwn_poster)
@@ -348,7 +360,8 @@ def Banner():
 					if url_banner:
 						dwn_banner = pathLoc + "banner/{}.jpg".format(title)
 						if not os.path.isfile(dwn_banner):
-							open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+							# open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+							downloadPage(str(url_banner), dwn_banner)
 
 			except:
 				try:
@@ -371,7 +384,8 @@ def Banner():
 							if url_banner:
 								dwn_banner = pathLoc + "banner/{}.jpg".format(title)
 								if not os.path.isfile(dwn_banner):
-									open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+									# open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+									downloadPage(str(url_banner), dwn_banner)
 
 				except:
 					try:
@@ -387,7 +401,8 @@ def Banner():
 								url_banner = "https://artworks.thetvdb.com%s" %(banner_img)
 								dwn_banner = pathLoc + "banner/{}.jpg".format(title)
 								if not os.path.isfile(dwn_banner):
-									open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+									# open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+									downloadPage(str(url_banner), dwn_banner)
 
 							if series_id:
 								try:
@@ -403,7 +418,8 @@ def Banner():
 										if url_banner:
 											dwn_banner = pathLoc + "banner/{}.jpg".format(title)
 											if not os.path.isfile(dwn_banner):
-												open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+												# open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+												downloadPage(str(url_banner), dwn_banner)
 
 								except:
 									pass
@@ -424,8 +440,8 @@ def tmdb_backdrop():
 				title = titles[i]
 				title = title.strip()
 				srch = "multi"
-				# tmdb_api = "3c3efcf47c3577558812bb9d64019d65" 
-				url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote(title))
+				lang = config.plugins.xtraEvent.searchLang.value
+				url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}&language={}".format(srch, tmdb_api, quote(title), lang)
 				try:
 					backdrop = json.load(urlopen(url_tmdb))['results'][0]['backdrop_path']
 					if backdrop:
@@ -433,8 +449,8 @@ def tmdb_backdrop():
 						url_backdrop = "https://image.tmdb.org/t/p/{}{}".format(backdrop_size, backdrop)
 						dwn_backdrop = pathLoc + "backdrop/{}.jpg".format(title)
 						if not os.path.isfile(dwn_backdrop):
-							open(dwn_backdrop, 'wb').write(requests.get(url_backdrop, allow_redirects=True).content)
-
+							# open(dwn_backdrop, 'wb').write(requests.get(url_backdrop, allow_redirects=True).content)
+							downloadPage(str(url_backdrop), dwn_backdrop)
 				except:
 					pass
 				
@@ -468,7 +484,8 @@ def tvdb_backdrop():
 
 							dwn_backdrop = pathLoc + "backdrop/{}.jpg".format(title)
 							if not os.path.isfile(dwn_backdrop):
-								open(dwn_backdrop, 'wb').write(requests.get(url_backdrop, allow_redirects=True).content)
+								# open(dwn_backdrop, 'wb').write(requests.get(url_backdrop, allow_redirects=True).content)
+								downloadPage(str(url_backdrop), dwn_backdrop)
 
 				except:
 					pass
@@ -523,7 +540,8 @@ def fanart_backdrop():
 										if url_backdrop:
 											dwn_backdrop = pathLoc + "backdrop/{}.jpg".format(title)
 											if not os.path.isfile(dwn_backdrop):
-												open(dwn_backdrop, 'wb').write(requests.get(url_backdrop, allow_redirects=True).content)
+												# open(dwn_backdrop, 'wb').write(requests.get(url_backdrop, allow_redirects=True).content)
+												downloadPage(str(url_backdrop), dwn_backdrop)
 
 								except:
 									pass
