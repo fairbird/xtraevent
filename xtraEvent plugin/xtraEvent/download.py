@@ -144,6 +144,8 @@ def download():
 
 
 def tmdb_Poster():
+	url = ""
+	dwn = ""
 	year = ""
 	try:
 		if os.path.exists(pathLoc+"event-year"):
@@ -168,12 +170,12 @@ def tmdb_Poster():
 					poster = ""
 					poster = json.load(urlopen(url_tmdb))['results'][0]['poster_path']
 					p_size = config.plugins.xtraEvent.TMDBpostersize.value
-					url_poster = "https://image.tmdb.org/t/p/{}{}".format(p_size, poster)
-					if url_poster:
-						dwn_poster = pathLoc + "poster/{}.jpg".format(title)
-						if not os.path.isfile(dwn_poster):
-							# open(dwn_poster, 'wb').write(requests.get(url_poster, stream=True, allow_redirects=True).content)
-							downloadPage(str(url_poster), dwn_poster)
+					url = "https://image.tmdb.org/t/p/{}{}".format(p_size, poster)
+					if url:
+						dwn = pathLoc + "poster/{}.jpg".format(title)
+						if not os.path.isfile(dwn):
+							open(dwn, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+							# #downloadPage(str(url), dwn)
 				except:
 					pass
 
@@ -182,6 +184,8 @@ def tmdb_Poster():
 		pass
 
 def tvdb_Poster():
+	url = ""
+	dwn = ""
 	try:
 		if os.path.exists(pathLoc+"events"):
 			with open(pathLoc+"events", "r") as f:
@@ -201,19 +205,21 @@ def tvdb_Poster():
 						url_read = urlopen(url_tvdb).read()
 						poster = re.findall('<poster>(.*?)</poster>', url_read)[0]
 
-						url_poster = "https://artworks.thetvdb.com/banners/{}".format(poster)
+						url = "https://artworks.thetvdb.com/banners/{}".format(poster)
 						if config.plugins.xtraEvent.TVDBpostersize.value == "thumbnail":
-							url_poster = url_poster.replace(".jpg", "_t.jpg")
-						dwn_poster = pathLoc + "poster/{}.jpg".format(title)
-						if not os.path.isfile(dwn_poster):
-							# open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
-							downloadPage(str(url_poster), dwn_poster)
+							url = url.replace(".jpg", "_t.jpg")
+						dwn = pathLoc + "poster/{}.jpg".format(title)
+						if not os.path.isfile(dwn):
+							open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
+							#downloadPage(str(url), dwn)
 				except:
 					pass
 	except:
 		pass
 
 def omdb_Poster():
+	url = ""
+	dwn = ""
 	try:
 		if os.path.exists(pathLoc+"events"):
 			with open(pathLoc+"events", "r") as f:
@@ -228,11 +234,11 @@ def omdb_Poster():
 					omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
 					omdb_api = random.sample(omdb_apis, 1)[0]
 					url_omdb = 'https://www.omdbapi.com/?apikey=%s&t=%s' %(omdb_api, quote(title))
-					url_poster = json.load(urlopen(url_omdb))['Poster']
-					dwn_poster = pathLoc + "poster/{}.jpg".format(title)
-					if not os.path.isfile(dwn_poster):
-						# open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
-						downloadPage(str(url_poster), dwn_poster)
+					url = json.load(urlopen(url_omdb))['Poster']
+					dwn = pathLoc + "poster/{}.jpg".format(title)
+					if not os.path.isfile(dwn):
+						open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
+						#downloadPage(str(url), dwn)
 				except:
 					pass
 				continue
@@ -240,6 +246,8 @@ def omdb_Poster():
 		pass
 
 def maze_Poster():
+	url = ""
+	dwn = ""
 	try:
 		if os.path.exists(pathLoc+"events"):
 			with open(pathLoc+"events", "r") as f:
@@ -253,11 +261,11 @@ def maze_Poster():
 		
 				url_maze = "http://api.tvmaze.com/search/shows?q={}".format(quote(title))
 				try:
-					url_poster = json.load(urlopen(url_maze))[0]['show']['image']['medium']
-					dwn_poster = pathLoc + "poster/{}.jpg".format(title)
-					if not os.path.isfile(dwn_poster):
-						# open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
-						downloadPage(str(url_poster), dwn_poster)
+					url = json.load(urlopen(url_maze))[0]['show']['image']['medium']
+					dwn = pathLoc + "poster/{}.jpg".format(title)
+					if not os.path.isfile(dwn):
+						open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
+						#downloadPage(str(url), dwn)
 				except:
 					pass
 				continue
@@ -265,6 +273,8 @@ def maze_Poster():
 		return
 
 def fanart_Poster():
+	url = ""
+	dwn = ""
 	try:
 		if os.path.exists(pathLoc+"events"):
 			with open(pathLoc+"events", "r") as f:
@@ -289,8 +299,8 @@ def fanart_Poster():
 							mm_type = m_type
 						
 
-						dwn_poster = pathLoc + "poster/{}.jpg".format(title)
-						if not os.path.exists(dwn_poster):
+						dwn = pathLoc + "poster/{}.jpg".format(title)
+						if not os.path.exists(dwn):
 							url_maze = "http://api.tvmaze.com/singlesearch/shows?q=%s" %quote(title)
 							mj = json.load(urlopen(url_maze))
 							tvdb_id = (mj['externals']['thetvdb'])
@@ -303,19 +313,19 @@ def fanart_Poster():
 											mm_type = (bnnr['results'][0]['media_type'])
 										else:
 											mm_type = m_type
-										url_poster = (fjs['tvposter'][0]['url'])
-										if url_poster:
-											dwn_poster = pathLoc + "poster/{}.jpg".format(title)
-											dwn_poster=dwn_poster
-											if not os.path.isfile(dwn_poster):
-												# open(dwn_poster, 'wb').write(requests.get(url_poster, allow_redirects=True).content)
-												downloadPage(str(url_poster), dwn_poster)
+										url = (fjs['tvposter'][0]['url'])
+										if url:
+											dwn = pathLoc + "poster/{}.jpg".format(title)
+											dwn=dwn
+											if not os.path.isfile(dwn):
+												open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
+												#downloadPage(str(url), dwn)
 
 												scl = 1
-												im = Image.open(dwn_poster)
+												im = Image.open(dwn)
 												scl = config.plugins.xtraEvent.FANARTresize.value
 												im1 = im.resize((im.size[0] // int(scl), im.size[1] // int(scl)), Image.ANTIALIAS)
-												im1.save(dwn_poster)
+												im1.save(dwn)
 
 								except:
 									pass
@@ -328,19 +338,21 @@ def fanart_Poster():
 
 # def Fnrtresz():
 	# scl = 1
-	# im = Image.open(dwn_poster)
+	# im = Image.open(dwn)
 	# scl = config.plugins.xtraEvent.FANARTresize.value
 	# im1 = im.resize((im.size[0] // int(scl), im.size[1] // int(scl)), Image.ANTIALIAS)
-	# im1.save(dwn_poster)
+	# im1.save(dwn)
 	
-	# image = Image.open(dwn_poster)
+	# image = Image.open(dwn)
 	# maxsize = config.plugins.xtraEvent.FANARTresize.value
 	# image.thumbnail(maxsize, Image.ANTIALIAS)
-	# image.save(dwn_poster)
+	# image.save(dwn)
 	
 # DOWNLOAD BANNERS ######################################################################################################
 
 def Banner():
+	url = ""
+	dwn = ""
 	if os.path.exists(pathLoc+"events"):
 		with open(pathLoc+"events", "r") as f:
 			titles = f.readlines()
@@ -360,8 +372,8 @@ def Banner():
 					if url_banner:
 						dwn_banner = pathLoc + "banner/{}.jpg".format(title)
 						if not os.path.isfile(dwn_banner):
-							# open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
-							downloadPage(str(url_banner), dwn_banner)
+							open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+							#downloadPage(str(url_banner), dwn_banner)
 
 			except:
 				try:
@@ -384,8 +396,8 @@ def Banner():
 							if url_banner:
 								dwn_banner = pathLoc + "banner/{}.jpg".format(title)
 								if not os.path.isfile(dwn_banner):
-									# open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
-									downloadPage(str(url_banner), dwn_banner)
+									open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+									#downloadPage(str(url_banner), dwn_banner)
 
 				except:
 					try:
@@ -401,8 +413,8 @@ def Banner():
 								url_banner = "https://artworks.thetvdb.com%s" %(banner_img)
 								dwn_banner = pathLoc + "banner/{}.jpg".format(title)
 								if not os.path.isfile(dwn_banner):
-									# open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
-									downloadPage(str(url_banner), dwn_banner)
+									open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+									#downloadPage(str(url_banner), dwn_banner)
 
 							if series_id:
 								try:
@@ -418,8 +430,8 @@ def Banner():
 										if url_banner:
 											dwn_banner = pathLoc + "banner/{}.jpg".format(title)
 											if not os.path.isfile(dwn_banner):
-												# open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
-												downloadPage(str(url_banner), dwn_banner)
+												open(dwn_banner, 'wb').write(requests.get(url_banner, allow_redirects=True).content)
+												#downloadPage(str(url_banner), dwn_banner)
 
 								except:
 									pass
@@ -429,6 +441,8 @@ def Banner():
 # DOWNLOAD BACKDROP ######################################################################################################
 
 def tmdb_backdrop():
+	url = ""
+	dwn = ""
 	try:
 		if os.path.exists(pathLoc+"events"):
 			with open(pathLoc+"events", "r") as f:
@@ -446,11 +460,11 @@ def tmdb_backdrop():
 					backdrop = json.load(urlopen(url_tmdb))['results'][0]['backdrop_path']
 					if backdrop:
 						backdrop_size = config.plugins.xtraEvent.TMDBbackdropsize.value
-						url_backdrop = "https://image.tmdb.org/t/p/{}{}".format(backdrop_size, backdrop)
-						dwn_backdrop = pathLoc + "backdrop/{}.jpg".format(title)
-						if not os.path.isfile(dwn_backdrop):
-							# open(dwn_backdrop, 'wb').write(requests.get(url_backdrop, allow_redirects=True).content)
-							downloadPage(str(url_backdrop), dwn_backdrop)
+						url = "https://image.tmdb.org/t/p/{}{}".format(backdrop_size, backdrop)
+						dwn = pathLoc + "backdrop/{}.jpg".format(title)
+						if not os.path.isfile(dwn):
+							open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
+							#downloadPage(str(url), dwn)
 				except:
 					pass
 				
@@ -458,6 +472,8 @@ def tmdb_backdrop():
 		pass
 
 def tvdb_backdrop():
+	url = ""
+	dwn = ""
 	try:
 		if os.path.exists(pathLoc+"events"):
 			with open(pathLoc+"events", "r") as f:
@@ -478,14 +494,14 @@ def tvdb_backdrop():
 						url_read = urlopen(url_tvdb).read()
 						backdrop = re.findall('<fanart>(.*?)</fanart>', url_read)[0]
 						if backdrop:
-							url_backdrop = "https://artworks.thetvdb.com/banners/{}".format(backdrop)
+							url = "https://artworks.thetvdb.com/banners/{}".format(backdrop)
 							if config.plugins.xtraEvent.TVDBbackdropsize.value == "thumbnail":
-								url_backdrop = url_backdrop.replace(".jpg", "_t.jpg")
+								url = url.replace(".jpg", "_t.jpg")
 
-							dwn_backdrop = pathLoc + "backdrop/{}.jpg".format(title)
-							if not os.path.isfile(dwn_backdrop):
-								# open(dwn_backdrop, 'wb').write(requests.get(url_backdrop, allow_redirects=True).content)
-								downloadPage(str(url_backdrop), dwn_backdrop)
+							dwn = pathLoc + "backdrop/{}.jpg".format(title)
+							if not os.path.isfile(dwn):
+								open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
+								#downloadPage(str(url), dwn)
 
 				except:
 					pass
@@ -494,6 +510,8 @@ def tvdb_backdrop():
 		pass
 
 def fanart_backdrop():
+	url = ""
+	dwn = ""
 	try:
 		if os.path.exists(pathLoc+"events"):
 			with open(pathLoc+"events", "r") as f:
@@ -518,8 +536,8 @@ def fanart_backdrop():
 							mm_type = m_type
 						
 
-						dwn_backdrop = pathLoc + "backdrop/{}.jpg".format(title)
-						if not os.path.exists(dwn_backdrop):
+						dwn = pathLoc + "backdrop/{}.jpg".format(title)
+						if not os.path.exists(dwn):
 							url_maze = "http://api.tvmaze.com/singlesearch/shows?q=%s" %quote(title)
 							
 							mj = json.load(urlopen(url_maze))
@@ -535,13 +553,13 @@ def fanart_backdrop():
 											mm_type = (bnnr['results'][0]['media_type'])
 										else:
 											mm_type = m_type
-										url_backdrop = (fjs['tvthumb'][0]['url'])
+										url = (fjs['tvthumb'][0]['url'])
 
-										if url_backdrop:
-											dwn_backdrop = pathLoc + "backdrop/{}.jpg".format(title)
-											if not os.path.isfile(dwn_backdrop):
-												# open(dwn_backdrop, 'wb').write(requests.get(url_backdrop, allow_redirects=True).content)
-												downloadPage(str(url_backdrop), dwn_backdrop)
+										if url:
+											dwn = pathLoc + "backdrop/{}.jpg".format(title)
+											if not os.path.isfile(dwn):
+												open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
+												#downloadPage(str(url), dwn)
 
 								except:
 									pass
