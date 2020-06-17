@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020
+# by digiteng...06.2020...
 from Screens.Screen import Screen
 from Components.Label import Label
 # from Components.ActionMap import ActionMap
@@ -175,7 +175,7 @@ def tmdb_Poster():
 						dwn = pathLoc + "poster/{}.jpg".format(title)
 						if not os.path.isfile(dwn):
 							open(dwn, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
-							# #downloadPage(str(url), dwn)
+							
 				except:
 					pass
 
@@ -211,7 +211,7 @@ def tvdb_Poster():
 						dwn = pathLoc + "poster/{}.jpg".format(title)
 						if not os.path.isfile(dwn):
 							open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
-							#downloadPage(str(url), dwn)
+							
 				except:
 					pass
 	except:
@@ -238,7 +238,7 @@ def omdb_Poster():
 					dwn = pathLoc + "poster/{}.jpg".format(title)
 					if not os.path.isfile(dwn):
 						open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
-						#downloadPage(str(url), dwn)
+						
 				except:
 					pass
 				continue
@@ -265,7 +265,7 @@ def maze_Poster():
 					dwn = pathLoc + "poster/{}.jpg".format(title)
 					if not os.path.isfile(dwn):
 						open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
-						#downloadPage(str(url), dwn)
+						
 				except:
 					pass
 				continue
@@ -319,7 +319,7 @@ def fanart_Poster():
 											dwn=dwn
 											if not os.path.isfile(dwn):
 												open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
-												#downloadPage(str(url), dwn)
+												
 
 												scl = 1
 												im = Image.open(dwn)
@@ -464,7 +464,7 @@ def tmdb_backdrop():
 						dwn = pathLoc + "backdrop/{}.jpg".format(title)
 						if not os.path.isfile(dwn):
 							open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
-							#downloadPage(str(url), dwn)
+							
 				except:
 					pass
 				
@@ -501,7 +501,7 @@ def tvdb_backdrop():
 							dwn = pathLoc + "backdrop/{}.jpg".format(title)
 							if not os.path.isfile(dwn):
 								open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
-								#downloadPage(str(url), dwn)
+								
 
 				except:
 					pass
@@ -559,7 +559,7 @@ def fanart_backdrop():
 											dwn = pathLoc + "backdrop/{}.jpg".format(title)
 											if not os.path.isfile(dwn):
 												open(dwn, 'wb').write(requests.get(url, allow_redirects=True).content)
-												#downloadPage(str(url), dwn)
+												
 
 								except:
 									pass
