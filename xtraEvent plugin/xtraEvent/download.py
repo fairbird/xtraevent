@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020...
+# by digiteng...06.2020..
 from Screens.Screen import Screen
 from Components.Label import Label
 # from Components.ActionMap import ActionMap
