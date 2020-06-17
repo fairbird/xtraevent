@@ -2,12 +2,12 @@
 # by digiteng...06.2020
 from Screens.Screen import Screen
 from Components.Label import Label
-from Components.ActionMap import ActionMap
+# from Components.ActionMap import ActionMap
 from Components.AVSwitch import AVSwitch
-from urllib import urlretrieve
+# from urllib import urlretrieve
 from urllib2 import urlopen, quote
 import requests
-from twisted.web.client import downloadPage
+# from twisted.web.client import downloadPage
 from enigma import eTimer, getDesktop, eLabel, eServiceCenter, eServiceReference, iServiceInformation, eEPGCache
 from Components.config import config
 from Components.ConfigList import ConfigListScreen
