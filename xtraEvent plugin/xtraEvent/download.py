@@ -171,7 +171,7 @@ def tmdb_Poster():
 					poster = json.load(urlopen(url_tmdb))['results'][0]['poster_path']
 					p_size = config.plugins.xtraEvent.TMDBpostersize.value
 					url = "https://image.tmdb.org/t/p/{}{}".format(p_size, poster)
-					if url:
+					if poster != "":
 						dwn = pathLoc + "poster/{}.jpg".format(title)
 						if not os.path.isfile(dwn):
 							open(dwn, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
