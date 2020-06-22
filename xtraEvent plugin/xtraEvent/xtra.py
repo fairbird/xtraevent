@@ -169,7 +169,7 @@ config.plugins.xtraEvent.searchType = ConfigSelection(default="tv", choices = [
 
 class xtra(Screen, ConfigListScreen):
 	skin = """
-  <screen name="xtra" position="center,center" size="1280,720" title="xtraEvent v1" backgroundColor="#ffffff">
+  <screen name="xtra" position="center,center" size="1280,720" title="xtraEvent v1" backgroundColor="#ffffff" flags="wfNoBorder">
     <ePixmap position="0,0" size="1280,720" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/bckg.png" transparent="1" />
     <widget source="Title" render="Label" position="40,35" size="745,40" font="Console; 30" foregroundColor="#c5c5c5" backgroundColor="#23262e" transparent="1" />
     <widget name="config" position="40,95" size="745,510" itemHeight="30" font="Regular;24" foregroundColor="#c5c5c5" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#23262e" backgroundColorSelected="#565d6d" foregroundColorSelected="#ffffff" />
@@ -445,14 +445,14 @@ class xtra(Screen, ConfigListScreen):
 
 class manuelSearch(Screen, ConfigListScreen):
 	skin = """
-  <screen name="manuelSearch" position="0,0" size="1280,720" title="Manuel Search..." backgroundColor="#ffffff" flags="wfNoBorder">
+  <screen name="manuelSearch" position="center,center" size="1280,720" title="Manuel Search..." backgroundColor="#ffffff" flags="wfNoBorder">
 	<ePixmap position="0,0" size="1280,720" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/bckg.png" transparent="1" />
     <widget source="Title" render="Label" position="40,40" size="745,40" font="Console; 30" foregroundColor="#c5c5c5" backgroundColor="#23262e" transparent="1" />
 	<widget source="session.CurrentService" render="Label" position="40,80" size="638,40" zPosition="2" font="Console; 30" transparent="1" backgroundColor="#23262e" valign="center">
 		<convert type="ServiceName">Name</convert>
 	</widget>
 	<widget name="config" position="40,150" size="745,550" itemHeight="30" font="Regular;24" foregroundColor="#c5c5c5" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#23262e" backgroundColorSelected="#565d6d" foregroundColorSelected="#ffffff" />
-    <widget name="status" position="840,300" size="400,30" transparent="1" font="Regular;22" foregroundColor="#92f1fc" backgroundColor="#23262e" />
+    <widget name="status" position="40,560" size="745,60" transparent="1" font="Regular;24" foregroundColor="#92f1fc" backgroundColor="#23262e" />
     <widget name="info" position="840,640" size="400,30" transparent="1" font="Regular;22" halign="center" foregroundColor="#c5c5c5" backgroundColor="#23262e" />
     <widget name="Picture" position="840,320" size="185,278" zPosition="5" transparent="1" />
 	
@@ -540,9 +540,9 @@ class manuelSearch(Screen, ConfigListScreen):
 			else:
 				list.append(getConfigListEntry(_("\tSize"), config.plugins.xtraEvent.TMDBbackdropsize))
 			
-		list.append(getConfigListEntry("—"*100))
+		list.append(getConfigListEntry("—"*50))
 		list.append(getConfigListEntry(_("Next Images"), config.plugins.xtraEvent.imgNmbr))
-		
+		list.append(getConfigListEntry("—"*50))
 		
 		
 		
@@ -602,31 +602,12 @@ class manuelSearch(Screen, ConfigListScreen):
 	def vkEdit(self, text=None):
 		if text:
 			self.text = text
+			config.plugins.xtraEvent.searchMANUEL.value = self.text
 			self.year = config.plugins.xtraEvent.searchMANUELyear.value
-			self.manuelSearchWrite()
 		else:
 			text = config.plugins.xtraEvent.searchMANUEL.value
 			self.year = config.plugins.xtraEvent.searchMANUELyear.value
 			self.text = text
-			self.manuelSearchWrite()
-
-	def manuelSearchWrite(self):
-		if config.plugins.xtraEvent.locations.value == "hdd":
-			self.pathLoc = "/media/hdd/xtraEvent/"
-		elif config.plugins.xtraEvent.locations.value == "usb":
-			self.pathLoc = "/media/usb/xtraEvent/"
-		elif config.plugins.xtraEvent.locations.value == "internal":
-			self.pathLoc = "/etc/enigma2/xtraEvent/"
-		else:
-			self.pathLoc = "/tmp/"
-		if os.path.exists(self.pathLoc+"events"):
-			os.remove(self.pathLoc+"events")
-		open(self.pathLoc+"events","w").write(self.text)
-		if os.path.exists(self.pathLoc+"events-year"):
-			os.remove(self.pathLoc+"events-year")
-		open(self.pathLoc+"events-year","w").write(str(self.year))
-		# self.close()
-
 
 	def pc(self):
 		self.text = config.plugins.xtraEvent.searchMANUEL.value
@@ -634,7 +615,7 @@ class manuelSearch(Screen, ConfigListScreen):
 		try:
 			self.iNmbr = config.plugins.xtraEvent.imgNmbr.value
 			self.pb = config.plugins.xtraEvent.PB.value
-			self.path = self.pathLoc + "mSearch/{}-{}-{}.jpg".format(self.text, self.pb, self.iNmbr)
+			self.path = self.pathLoc + "mSearch/{}-{}-{}.jpg".format(config.plugins.xtraEvent.searchMANUEL.value, self.pb, self.iNmbr)
 			self["Picture"].instance.setPixmap(loadJPG(self.path))
 			
 			if self.pb == "posters":
@@ -651,15 +632,23 @@ class manuelSearch(Screen, ConfigListScreen):
 
 	def inf(self):
 		try:
-			dir = self.pathLoc + "mSearch/"
-			tot = next(os.walk(dir))[2]
-			tot = len(tot)
-			# tot = any(x.startswith('{}'.format(self.text)) for x in os.listdir(dir))
-			# tot = len(tot)
+			msLoc = self.pathLoc + "mSearch/"
+			n = 0
+			for file in os.listdir(msLoc):
+				if file.startswith("{}-{}".format(self.text, self.pb)) == True:
+					e = os.path.join(msLoc, file)
+					n += 1
+			tot = n
 			cur = config.plugins.xtraEvent.imgNmbr.value
 			self['info'].setText(_(str(cur) + "/" + str(tot)))
 		except:
 			return
+
+	def dwn_inf():
+		pass
+		
+		
+		# self['status'].setText(_())
 
 	def append(self):
 		try:
@@ -676,16 +665,17 @@ class manuelSearch(Screen, ConfigListScreen):
 			return
 
 	def tmdb(self):
-		
 		try:
 			self.srch = config.plugins.xtraEvent.searchType.value
+			self.year = config.plugins.xtraEvent.searchMANUELyear.value
 			url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key=3c3efcf47c3577558812bb9d64019d65&query={}".format(self.srch, quote(self.text))
-			if self.year:
+			if self.year != 0:
 				url_tmdb += "&primary_release_year={}&year={}".format(self.year, self.year)
+
 			id = json.load(urlopen(url_tmdb))['results'][0]['id']
-			lang = config.plugins.xtraEvent.searchLang.value
-			url = "https://api.themoviedb.org/3/{}/{}?api_key=3c3efcf47c3577558812bb9d64019d65&append_to_response=images&language={}".format(self.srch, int(id), lang)
-			# pb = config.plugins.xtraEvent.PB.value
+			url = "https://api.themoviedb.org/3/{}/{}?api_key=3c3efcf47c3577558812bb9d64019d65&append_to_response=images".format(self.srch, int(id))
+			if config.plugins.xtraEvent.searchLang.value != "":
+				url += "&language={}".format(config.plugins.xtraEvent.searchLang.value)
 			if config.plugins.xtraEvent.PB.value == "posters":
 				sz = config.plugins.xtraEvent.TMDBpostersize.value
 			else:
@@ -696,7 +686,9 @@ class manuelSearch(Screen, ConfigListScreen):
 					url_poster = "https://image.tmdb.org/t/p/{}{}".format(sz, poster)
 					dwn = self.pathLoc + "mSearch/{}-{}-{}.jpg".format(self.text, self.pb, i+1)
 					open(dwn, 'wb').write(requests.get(url_poster, stream=True, allow_redirects=True).content)
-
+					# self.dwn_inf()
+					dwn_tot = i+1
+					self['status'].setText(_("Download : {}".format(str(dwn_tot))))
 		except:
 			return
 
