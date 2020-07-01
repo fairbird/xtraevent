@@ -87,12 +87,11 @@ def selBouquets():
 			try:
 				events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 				n = config.plugins.xtraEvent.searchNUMBER.value
-				for ii in xrange(int(n)):
-					title = events[ii][4]
+				for i in xrange(int(n)):
+					title = events[i][4]
 					evntN = re.sub('([\(\[]).*?([\)\]])|(: odc.\d+)|[?|$|.|!|,|:|/]', '', str(title))
 					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").rstrip()
-					open(pathLoc + "events", "a+").write("%s\n" %str(evntNm))
-				
+					open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
 			except:
 				pass		
 		intCheck()
