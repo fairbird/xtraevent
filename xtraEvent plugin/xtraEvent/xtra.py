@@ -126,19 +126,19 @@ config.plugins.xtraEvent.TVDBbackdropsize = ConfigSelection(default="thumbnail",
 	("thumbnail", "640x360"), 
 	("fileName", "original(1920x1080)")])
 
-config.plugins.xtraEvent.FANARTresize = ConfigSelection(default="10", choices = [
+config.plugins.xtraEvent.FANART_Poster_Resize = ConfigSelection(default="10", choices = [
 	("10", "100x142"), 
 	("5", "200x285"), 
 	("3", "333x475"), 
 	("2", "500x713"), 
 	("1", "1000x1426")])
 
-# config.plugins.xtraEvent.FANARTresize = ConfigSelection(default="10", choices = [
-	# ("(92,138)", "92x138"), 
-	# ("(185,278)", "185x278"), 
-	# ("(342,513)", "342x513"), 
-	# ("(500,750)", "500x750"), 
-	# ("(1000,1426)", "1000,1426")])
+config.plugins.xtraEvent.FANART_Backdrop_Resize = ConfigSelection(default="10", choices = [
+	("10", "192x108"), 
+	("5", "384x216"), 
+	("3", "634x357"), 
+	("2", "960x540"), 
+	("1", "1920x1080")])
 
 config.plugins.xtraEvent.searchMANUEL = ConfigText(default="event name", visible_width=100, fixed_size=False)
 choicelist = []
@@ -162,10 +162,13 @@ for i in range(1, 999):
 config.plugins.xtraEvent.imgNmbr = ConfigSelection(default = "1", choices = imglist)
 
 config.plugins.xtraEvent.searchType = ConfigSelection(default="tv", choices = [
-
-	('tv', 'TV'),
-	('movie', 'MOVIE'),
+	('tv', 'TV'), 
+	('movie', 'MOVIE'), 
 	('multi', 'MULTI')])
+
+config.plugins.xtraEvent.FanartSearchType = ConfigSelection(default="tv", choices = [
+	('tv', 'TV'),
+	('movies', 'MOVIE')])
 
 class xtra(Screen, ConfigListScreen):
 	skin = """
@@ -323,7 +326,7 @@ class xtra(Screen, ConfigListScreen):
 			list.append(getConfigListEntry("\tMAZE(TV SHOWS)", config.plugins.xtraEvent.maze, _("best source for tv shows...")))
 			list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart, _("alternative source for poster, banner, etc...")))	
 			if config.plugins.xtraEvent.fanart.value:
-				list.append(getConfigListEntry("\tFANART POSTER SIZE", config.plugins.xtraEvent.FANARTresize, _("Choose poster sizes for FANART")))
+				list.append(getConfigListEntry("\tFANART POSTER SIZE", config.plugins.xtraEvent.FANART_Poster_Resize, _("Choose poster sizes for FANART")))
 				list.append(getConfigListEntry("—"*100))
 # banner__________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("BANNER", config.plugins.xtraEvent.banner, _("tvdb and fanart for banner...")))
@@ -343,7 +346,7 @@ class xtra(Screen, ConfigListScreen):
 				list.append(getConfigListEntry("_"*100))
 			list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart, _("source for backdrop...")))
 			if config.plugins.xtraEvent.fanart.value:
-				list.append(getConfigListEntry("\tFANART BACKDROP SIZE", config.plugins.xtraEvent.FANARTresize, _("Choose backdrop sizes for FANART")))
+				list.append(getConfigListEntry("\tFANART BACKDROP SIZE", config.plugins.xtraEvent.FANART_Poster_Resize, _("Choose backdrop sizes for FANART")))
 				list.append(getConfigListEntry("_"*100))
 # info___________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("INFO", config.plugins.xtraEvent.info, _("Program information with omdb...")))
@@ -544,7 +547,14 @@ class manuelSearch(Screen, ConfigListScreen):
 				list.append(getConfigListEntry(_("\tSize"), config.plugins.xtraEvent.TVDBpostersize))
 			else:
 				list.append(getConfigListEntry(_("\tSize"), config.plugins.xtraEvent.TVDBbackdropsize))
-				
+		
+		if config.plugins.xtraEvent.imgs.value == "FANART":
+			list.append(getConfigListEntry(_("\tSearch Type"), config.plugins.xtraEvent.FanartSearchType))
+			if config.plugins.xtraEvent.PB.value == "posters":
+				list.append(getConfigListEntry(_("\tSize"), config.plugins.xtraEvent.FANART_Poster_Resize))
+			else:
+				list.append(getConfigListEntry(_("\tSize"), config.plugins.xtraEvent.FANART_Backdrop_Resize))
+
 		list.append(getConfigListEntry("—"*50))
 		list.append(getConfigListEntry(_("Next Images"), config.plugins.xtraEvent.imgNmbr))
 		list.append(getConfigListEntry("—"*50))
@@ -575,8 +585,8 @@ class manuelSearch(Screen, ConfigListScreen):
 			events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 			if events:
 				n = config.plugins.xtraEvent.searchMANUELnmbr.value
-				self.event = events[int(n)][4]
-				config.plugins.xtraEvent.searchMANUEL = ConfigText(default="{}".format(self.event), visible_width=100, fixed_size=False)
+				self.title = events[int(n)][4]
+				config.plugins.xtraEvent.searchMANUEL = ConfigText(default="{}".format(self.title), visible_width=100, fixed_size=False)
 
 		except:
 			pass
@@ -596,16 +606,16 @@ class manuelSearch(Screen, ConfigListScreen):
 					self.tmdb()
 				if config.plugins.xtraEvent.imgs.value == "TVDB":
 					self.tvdb()
-				# if config.plugins.xtraEvent.imgs.value == "FANART":
-					# fanart_Poster()
+				if config.plugins.xtraEvent.imgs.value == "FANART":
+					self.fanart()
 
 			if config.plugins.xtraEvent.PB.value == "backdrops":
 				if config.plugins.xtraEvent.imgs.value == "TMDB":
 					self.tmdb()
 				if config.plugins.xtraEvent.imgs.value == "TVDB":
 					self.tvdb()
-				# if config.plugins.xtraEvent.imgs.value == "FANART":
-					# fanart_Poster()
+				if config.plugins.xtraEvent.imgs.value == "FANART":
+					self.fanart()
 
 
 
@@ -622,7 +632,7 @@ class manuelSearch(Screen, ConfigListScreen):
 		else:
 			text = config.plugins.xtraEvent.searchMANUEL.value
 			self.year = config.plugins.xtraEvent.searchMANUELyear.value
-			self.title = text
+			self.title = config.plugins.xtraEvent.searchMANUEL.value
 
 	def pc(self):
 		self.year = config.plugins.xtraEvent.searchMANUELyear.value
@@ -697,7 +707,7 @@ class manuelSearch(Screen, ConfigListScreen):
 			url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key=3c3efcf47c3577558812bb9d64019d65&query={}".format(self.srch, quote(self.title))
 			if self.year != 0:
 				url_tmdb += "&primary_release_year={}&year={}".format(self.year, self.year)
-			open("/tmp/url","w").write(url_tmdb)
+
 			id = json.load(urlopen(url_tmdb))['results'][0]['id']
 			url = "https://api.themoviedb.org/3/{}/{}?api_key=3c3efcf47c3577558812bb9d64019d65&append_to_response=images".format(self.srch, int(id))
 			if config.plugins.xtraEvent.searchLang.value != "":
@@ -748,10 +758,88 @@ class manuelSearch(Screen, ConfigListScreen):
 
 		except:
 			return
-			# self['status'].setText(_(str(e)))
+
+	def fanart(self):
+		id = "-"
+		try:
+			if config.plugins.xtraEvent.FanartSearchType.value == "tv":
+				try:
+					url_maze = "http://api.tvmaze.com/singlesearch/shows?q={}".format(quote(self.title))
+					mj = json.load(urlopen(url_maze))
+					id = (mj['externals']['thetvdb'])
+				except:
+					pass
+			else:
+				try:
+					self.year = config.plugins.xtraEvent.searchMANUELyear.value
+					url_tmdb = "https://api.themoviedb.org/3/search/movie?api_key=3c3efcf47c3577558812bb9d64019d65&query={}".format(quote(self.title))
+					if self.year != 0:
+						url_tmdb += "&primary_release_year={}&year={}".format(self.year, self.year)
+					id = json.load(urlopen(url_tmdb))['results'][0]['id']
+				except:
+					pass
+
+			try:
+				m_type = config.plugins.xtraEvent.FanartSearchType.value
+				url_fanart = "https://webservice.fanart.tv/v3/{}/{}?api_key=6d231536dea4318a88cb2520ce89473b".format(m_type, id)
+				fjs = json.load(urlopen(url_fanart))
+
+				for i in xrange(99):
+					if config.plugins.xtraEvent.PB.value == "posters":
+						if config.plugins.xtraEvent.FanartSearchType.value == "tv":
+							url = (fjs['tvposter'][i]['url'])
+						else:
+							url = (fjs['movieposter'][i]['url'])
+					
+					if config.plugins.xtraEvent.PB.value == "backdrops":
+						if config.plugins.xtraEvent.FanartSearchType.value == "tv":
+							url = (fjs['showbackground'][i]['url'])
+						else:
+							url = (fjs['moviebackground'][i]['url'])
+							
+					if url:
+						dwn = self.pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
+						open(dwn, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+							
+						scl = 1
+						im = Image.open(dwn)
+						if config.plugins.xtraEvent.PB.value == "posters":
+							scl = config.plugins.xtraEvent.FANART_Poster_Resize.value
+						if config.plugins.xtraEvent.PB.value == "backdrops":
+							scl = config.plugins.xtraEvent.FANART_Backdrop_Resize.value
+						im1 = im.resize((im.size[0] // int(scl), im.size[1] // int(scl)), Image.ANTIALIAS)
+						im1.save(dwn)
+						dwn_tot = i+1
+						self['status'].setText(_("Download : {}".format(str(dwn_tot))))
+			except:
+				pass
+	
+		except:
+			pass
+				
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# self['status'].setText(_(str(e)))
 # self['info'].setText(_(str(e)))
-
-
 
 class selBouquets(Screen):
 	skin = """
