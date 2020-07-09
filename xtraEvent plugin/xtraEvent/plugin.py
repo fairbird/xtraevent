@@ -50,7 +50,7 @@ def ddwn():
         t = threading.Timer(3600*int(tmr), ddwn) # 1h=3600
         t.start()
 
-threading.Timer(10, ddwn).start()
+threading.Timer(60, ddwn).start()
 
 
 def main(session, **kwargs):
