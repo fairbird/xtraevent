@@ -7,20 +7,16 @@
 
 from Components.Converter.Converter import Converter
 from Components.Element import cached
+from Components.config import config
 import re
 import json
 import os
 
-if os.path.ismount('/media/hdd'):
-	if os.path.isdir("/media/hdd/xtraEvent/"):
-		pathLoc = "/media/hdd/xtraEvent/infos/"
-elif os.path.ismount('/media/usb'):
-	if os.path.isdir("/media/usb/xtraEvent/"):
-		pathLoc = "/media/usb/xtraEvent/infos/"
-elif os.path.isdir("/etc/enigma2/xtraEvent/"):
-	pathLoc = "/etc/enigma2/xtraEvent/infos/"
-else:
-	pathLoc = "/tmp/"
+try:
+	from Plugins.Extensions.xtraEvent.xtra import xtra
+	pathLoc = config.plugins.xtraEvent.loc.value
+except:
+	pass
 
 
 class xtraInfo(Converter, object):
@@ -34,7 +30,7 @@ class xtraInfo(Converter, object):
 	Director = "Director"
 	Writer = "Writer"
 	Actors = "Actors"
-	Plot = "Plot"
+	Plot = "Description"
 	Language = "Language"
 	Country = "Country"
 	Awards = "Awards"
@@ -56,7 +52,7 @@ class xtraInfo(Converter, object):
 				evntt = event.getEventName()
 				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evntt)
 				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-				rating_json = pathLoc + "{}.json".format(evntNm)
+				rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
 				if os.path.exists(rating_json):
 					with open(rating_json) as f:
 						read_json = json.load(f)
@@ -105,7 +101,7 @@ class xtraInfo(Converter, object):
 								elif type == self.Plot:
 									Plot = read_json["Plot"]
 									if Plot:
-										evnt.append("Plot : {}".format(Plot))
+										evnt.append("Description : {}".format(Plot))
 								elif type == self.Language:
 									Language = read_json["Language"]
 									if Language:

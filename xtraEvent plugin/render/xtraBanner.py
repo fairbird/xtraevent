@@ -1,25 +1,19 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020
+# by digiteng...06.2020, 07.2020,
 # <widget source="session.Event_Now" render="xtraBanner" position="0,0" size="762,141" zPosition="1" />
 from Renderer import Renderer
-from enigma import ePixmap, ePicLoad
+from enigma import ePixmap, ePicLoad, eTimer
 from Components.AVSwitch import AVSwitch
 from Components.Pixmap import Pixmap
-
+from Components.config import config
 import re
 import os
 
-
-if os.path.ismount('/media/hdd'):
-	if os.path.isdir("/media/hdd/xtraEvent/"):
-		pathLoc = "/media/hdd/xtraEvent/banner/"
-elif os.path.ismount('/media/usb'):
-	if os.path.isdir("/media/usb/xtraEvent/"):
-		pathLoc = "/media/usb/xtraEvent/banner/"
-elif os.path.isdir("/etc/enigma2/xtraEvent/"):
-	pathLoc = "/etc/enigma2/xtraEvent/banner/"
-else:
-	pathLoc = "/tmp/"
+try:
+	from Plugins.Extensions.xtraEvent.xtra import xtra
+	pathLoc = config.plugins.xtraEvent.loc.value
+except:
+	pass
 
 class xtraBanner(Renderer):
 
@@ -40,7 +34,6 @@ class xtraBanner(Renderer):
 		except:
 			return
 
-
 	def showBanner(self):
 		event = self.source.event
 		try:
@@ -48,8 +41,7 @@ class xtraBanner(Renderer):
 				evnt = event.getEventName()
 				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt)
 				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-				self.dwn = pathLoc + "%s.jpg" %(evntNm)
-				bannerName = pathLoc + evntNm + ".jpg"
+				bannerName = "{}xtraEvent/banner/{}.jpg".format(pathLoc, evntNm)
 
 				if os.path.exists(bannerName):
 					try:

@@ -1,27 +1,19 @@
 # -*- coding: utf-8 -*-
 # by digiteng...07.2020
-
 # <widget source="session.Event_Now" render="xtraPoster" position="0,0" size="185,278" zPosition="1" />
 from Renderer import Renderer
 from enigma import ePixmap, ePicLoad, eTimer
 from Components.AVSwitch import AVSwitch
 from Components.Pixmap import Pixmap
-
+from Components.config import config
 import re
 import os
 
-
-
-if os.path.ismount('/media/hdd'):
-	if os.path.isdir("/media/hdd/xtraEvent/"):
-		pathLoc = "/media/hdd/xtraEvent/poster/"
-elif os.path.ismount('/media/usb'):
-	if os.path.isdir("/media/usb/xtraEvent/"):
-		pathLoc = "/media/usb/xtraEvent/poster/"
-elif os.path.isdir("/etc/enigma2/xtraEvent/"):
-	pathLoc = "/etc/enigma2/xtraEvent/poster/"
-else:
-	pathLoc = "/tmp/"
+try:
+	from Plugins.Extensions.xtraEvent.xtra import xtra
+	pathLoc = config.plugins.xtraEvent.loc.value
+except:
+	pass
 
 
 class xtraPoster(Renderer):
@@ -52,8 +44,7 @@ class xtraPoster(Renderer):
 				evnt = event.getEventName()
 				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt)
 				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-				self.dwn_poster = pathLoc + "{}.jpg".format(evntNm)
-				pstrNm = pathLoc + evntNm + ".jpg"
+				pstrNm = "{}xtraEvent/poster/{}.jpg".format(pathLoc, evntNm)
 				if os.path.exists(pstrNm):
 					size = self.instance.size()
 					self.picload = ePicLoad()
@@ -79,8 +70,6 @@ class xtraPoster(Renderer):
 		except:
 			self.instance.hide()
 			return
-
-
 
 	def delay(self):
 		self.timer = eTimer()

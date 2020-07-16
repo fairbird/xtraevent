@@ -1,34 +1,22 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020
+# by digiteng...06.2020, 07.2020,
 from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
 from Components.Label import Label
 from Components.ActionMap import ActionMap
-# from Components.AVSwitch import AVSwitch
-# from Screens.MessageBox import MessageBox
-import re
-import os
-import json
-import random
-from urllib2 import urlopen, quote
-# from urllib import urlretrieve, quote
-import requests
-# from Components.Sources.Event import Event
-
-
+import os, re, random
 from Components.SelectionList import SelectionList, SelectionEntryComponent
-
-from Components.config import config, configfile, ConfigYesNo, ConfigSubsection, getConfigListEntry, ConfigSelection, ConfigText, ConfigInteger, ConfigSelectionNumber
+from Components.config import config, configfile, ConfigYesNo, ConfigSubsection, getConfigListEntry, ConfigSelection, ConfigText, ConfigInteger, ConfigSelectionNumber, ConfigDirectory
 from Components.ConfigList import ConfigListScreen
-# from Screens.ChoiceBox import ChoiceBox
 from enigma import eTimer, eLabel, eServiceCenter, eServiceReference, eEPGCache, ePixmap, eSize, ePoint, loadJPG
 from Components.Sources.List import List
-# from Components.Sources.ServiceList import ServiceList
-# from ServiceReference import ServiceReference
 from Components.Sources.StaticText import StaticText
 from Screens.VirtualKeyBoard import VirtualKeyBoard
 from Components.Pixmap import Pixmap
 from PIL import Image
+from Screens.LocationBox import LocationBox
+import requests
+
 
 epgcache = eEPGCache.getInstance()
 tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
@@ -67,26 +55,19 @@ def chList(bqtNm):
 		return channels
 	return
 
-
 config.plugins.xtraEvent = ConfigSubsection()
-config.plugins.xtraEvent.locations = ConfigSelection(default = "hdd", choices = [
-	("hdd"), 
-	("usb"),
-	("internal")
-	])
-
+config.plugins.xtraEvent.loc = ConfigDirectory(default='')
 config.plugins.xtraEvent.searchMOD = ConfigSelection(default = "Current Channel", choices = [("Bouquets"), ("Current Channel")])
-
 config.plugins.xtraEvent.searchNUMBER = ConfigSelectionNumber(0, 999, 1, default=0)
 config.plugins.xtraEvent.timer = ConfigSelectionNumber(1, 168, 1, default=1)
-config.plugins.xtraEvent.sMANUELnmbr = ConfigSelectionNumber(0, 999, 1, default=1)
-config.plugins.xtraEvent.sMANUELyear = ConfigInteger(default = 0, limits=(0, 9999))
+config.plugins.xtraEvent.searchMANUELnmbr = ConfigSelectionNumber(0, 999, 1, default=1)
+config.plugins.xtraEvent.searchMANUELyear = ConfigInteger(default = 0, limits=(0, 9999))
 config.plugins.xtraEvent.imgNmbr = ConfigSelectionNumber(0, 999, 1, default=1)
 
-
-config.plugins.xtraEvent.sMANUEL = ConfigText(default="event name", visible_width=100, fixed_size=False)
+config.plugins.xtraEvent.searchMANUEL = ConfigText(default="event name", visible_width=100, fixed_size=False)
 config.plugins.xtraEvent.searchLang = ConfigText(default="en", visible_width=100, fixed_size=False)
-config.plugins.xtraEvent.upMOD = ConfigYesNo(default = False)
+config.plugins.xtraEvent.timerMod = ConfigYesNo(default = False)
+# config.plugins.xtraEvent.EMC = ConfigYesNo(default = False)
 
 config.plugins.xtraEvent.tmdb = ConfigYesNo(default = False)
 config.plugins.xtraEvent.tvdb = ConfigYesNo(default = False)
@@ -173,8 +154,7 @@ class xtra(Screen, ConfigListScreen):
 	def __init__(self, session):
 		self.session = session
 		Screen.__init__(self, session)
-		
-		
+
 		self.epgcache = eEPGCache.getInstance()
 
 		list = []
@@ -185,7 +165,7 @@ class xtra(Screen, ConfigListScreen):
 		self['key_yellow'] = Label(_('Download'))
 		self['key_blue'] = Label(_('Manuel Search'))
 
-		self["actions"] = ActionMap(["OkCancelActions", "DirectionActions", "ColorActions", "EventViewActions", "VirtualKeyboardAction"],
+		self["actions"] = ActionMap(["OkCancelActions", "SetupActions", "DirectionActions", "ColorActions", "EventViewActions", "VirtualKeyboardAction"],
 		{
 			"left": self.keyLeft,
 			"down": self.keyDown,
@@ -196,7 +176,8 @@ class xtra(Screen, ConfigListScreen):
 			"yellow": self.dwnldFileld,
 			"blue": self.ms,
 			"cancel": self.exit,
-
+			"ok": self.keyOK
+			# "menu": self.okMn
 
 			# "info": self.about,
 		},-1)
@@ -205,44 +186,18 @@ class xtra(Screen, ConfigListScreen):
 		self['status'] = Label()
 		self['info'] = Label()
 		self["help"] = StaticText()
-
+		self.strg()
+		
 		self.timer = eTimer()
 		self.timer.callback.append(self.xtraList)
 		self.onLayoutFinish.append(self.xtraList)
 
-	
-		if config.plugins.xtraEvent.locations.value == "hdd":
-			if os.path.ismount('/media/hdd'):
-				if not os.path.isdir("/media/hdd/xtraEvent/"):
-					os.makedirs("/media/hdd/xtraEvent/poster")
-					os.makedirs("/media/hdd/xtraEvent/banner")
-					os.makedirs("/media/hdd/xtraEvent/backdrop")
-					os.makedirs("/media/hdd/xtraEvent/infos")
-				self.pathLoc = "/media/hdd/xtraEvent/"
-
-		elif config.plugins.xtraEvent.locations.value == "usb":
-			if os.path.ismount('/media/usb'):
-				if not os.path.isdir("/media/usb/xtraEvent/"):
-					os.makedirs("/media/usb/xtraEvent/poster")
-					os.makedirs("/media/usb/xtraEvent/banner")
-					os.makedirs("/media/usb/xtraEvent/backdrop")
-					os.makedirs("/media/usb/xtraEvent/infos")
-				self.pathLoc = "/media/usb/xtraEvent/"
-
-		elif config.plugins.xtraEvent.locations.value == "internal":
-			if not os.path.isdir("/etc/enigma2/xtraEvent/"):
-				os.makedirs("/etc/enigma2/xtraEvent/poster")
-				os.makedirs("/etc/enigma2/xtraEvent/banner")
-				os.makedirs("/etc/enigma2/xtraEvent/backdrop")
-				os.makedirs("/etc/enigma2/xtraEvent/infos")
-			self.pathLoc = "/etc/enigma2/xtraEvent/"
-
-
+	def strg(self):
 		try:
-			path_poster = self.pathLoc+ "poster/"
-			path_banner = self.pathLoc+ "banner/"
-			path_backdrop = self.pathLoc+ "backdrop/"			
-			path_info = self.pathLoc+ "infos/"
+			path_poster = pathLoc+ "poster/"
+			path_banner = pathLoc+ "banner/"
+			path_backdrop = pathLoc+ "backdrop/"
+			path_info = pathLoc+ "infos/"
 			
 			folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_poster, fname)), files)) for path_poster, folders, files in os.walk(path_poster)])
 			posters_sz = "%0.1f" % (folder_size/(1024*1024.0))
@@ -262,16 +217,29 @@ class xtra(Screen, ConfigListScreen):
 			
 			self['status'].setText(_("Storage ;"))
 			self['info'].setText(_(
-				"Total Poster : {} poster {} MB".format(poster_nmbr, posters_sz)+ 
-				"\nTotal Banner : {} banner {} MB".format(banner_nmbr, banners_sz)+
-				"\nTotal Backdrop : {} backdrop {} MB".format(backdrop_nmbr, backdrops_sz)+
-				"\nTotal Info : {} info {} MB".format(info_nmbr, infos_sz)))
-		except Exception as e:
-			print e
-			self['info'].setText(_(str(e)))
+				"Poster : {} poster {} MB".format(poster_nmbr, posters_sz)+ 
+				"\nBanner : {} banner {} MB".format(banner_nmbr, banners_sz)+
+				"\nBackdrop : {} backdrop {} MB".format(backdrop_nmbr, backdrops_sz)+
+				"\nInfo : {} info {} MB".format(info_nmbr, infos_sz)))
+		except:
+			pass
 
+	def keyOK(self):
+		if self['config'].getCurrent()[1] is config.plugins.xtraEvent.loc:
+			self.session.openWithCallback(self.pathSelected, LocationBox, text=_('Default Folder'), currDir=config.plugins.xtraEvent.loc.getValue(), minFree=100)
 
-		
+	def pathSelected(self, res):
+		if res is not None:
+			config.plugins.xtraEvent.loc.value = res
+			pathLoc = config.plugins.xtraEvent.loc.value + "xtraEvent/"
+			if not os.path.isdir(pathLoc):
+				os.makedirs(pathLoc + "poster")
+				os.makedirs(pathLoc + "banner")
+				os.makedirs(pathLoc + "backdrop")
+				os.makedirs(pathLoc + "infos")
+				os.makedirs(pathLoc + "mSearch")
+		return
+
 	def delay(self):
 		self.timer.start(100, True)
 
@@ -282,14 +250,14 @@ class xtra(Screen, ConfigListScreen):
 		list = []
 		list.append(getConfigListEntry("—"*100))
 # path location_________________________________________________________________________________________________________________
-		list.append(getConfigListEntry("LOCATION", config.plugins.xtraEvent.locations, _("select locations...")))
+		list.append(getConfigListEntry("LOCATION - OK -", config.plugins.xtraEvent.loc, _("select location downloads...")))
 		list.append(getConfigListEntry("—"*100))
 # config_________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("SEARCH MODE", config.plugins.xtraEvent.searchMOD, _("select search mode...")))		
 		list.append(getConfigListEntry("SEARCH NEXT EVENTS", config.plugins.xtraEvent.searchNUMBER, _("enter the number of next events to be scanned for each channel...")))
 		list.append(getConfigListEntry("SEARCH LANGUAGE", config.plugins.xtraEvent.searchLang, _("select search language...")))
-		list.append(getConfigListEntry("TIMER", config.plugins.xtraEvent.upMOD, _("select timer update for events..")))
-		if config.plugins.xtraEvent.upMOD.value == True:
+		list.append(getConfigListEntry("TIMER", config.plugins.xtraEvent.timerMod, _("select timer update for events..")))
+		if config.plugins.xtraEvent.timerMod.value == True:
 			list.append(getConfigListEntry("\tTIMER(hours)", config.plugins.xtraEvent.timer, _("..."),))
 		list.append(getConfigListEntry("—"*100))
 
@@ -313,8 +281,6 @@ class xtra(Screen, ConfigListScreen):
 # banner__________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("BANNER", config.plugins.xtraEvent.banner, _("tvdb and fanart for banner...")))
 
-
-
 # backdrop_______________________________________________________________________________________________________________
 		list.append(getConfigListEntry("BACKDROP", config.plugins.xtraEvent.backdrop, _("best source for poster...")))
 		if config.plugins.xtraEvent.backdrop.value == True:
@@ -333,8 +299,6 @@ class xtra(Screen, ConfigListScreen):
 # info___________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("INFO", config.plugins.xtraEvent.info, _("Program information with omdb...")))
 		list.append(getConfigListEntry("—"*100))
-
-
 
 		self["config"].list = list
 		self["config"].l.setList(list)
@@ -371,29 +335,29 @@ class xtra(Screen, ConfigListScreen):
 
 	def search(self):
 		if config.plugins.xtraEvent.searchMOD.value == "Current Channel":
-			self.currentChEpgs()
+			self.currentChEpgs() 
 		elif config.plugins.xtraEvent.searchMOD.value == "Bouquets":
 			self.session.open(selBouquets)
 		elif config.plugins.xtraEvent.searchMOD.value == "Manuel Search":
 			self.session.open(manuelSearch)
 
 	def currentChEpgs(self):
-		if os.path.exists(self.pathLoc+"events"):
-			os.remove(self.pathLoc+"events")
+		if os.path.exists(pathLoc+"events"):
+			os.remove(pathLoc+"events")
 		try:
 			events = None
 			ref = self.session.nav.getCurrentlyPlayingServiceReference().toString()
 			try:
 				events = self.epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 				n = config.plugins.xtraEvent.searchNUMBER.value
-				for i in xrange(int(n)):
+				for i in range(int(n)):
 					title = events[i][4]
 					evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
 					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-					open(self.pathLoc+"events","a+").write("%s\n" % str(evntNm))
+					open(pathLoc+"events","a+").write("%s\n" % str(evntNm))
 				
-				if os.path.exists(self.pathLoc+"events"):
-					with open(self.pathLoc+"events", "r") as f:
+				if os.path.exists(pathLoc+"events"):
+					with open(pathLoc+"events", "r") as f:
 						titles = f.readlines()
 					titles = list(dict.fromkeys(titles))
 					n = len(titles)
@@ -405,9 +369,6 @@ class xtra(Screen, ConfigListScreen):
 		except:
 			pass
 
-	
-    # from Screens.Standby import inStandby
-    # inStandby.onClose.append(onLeaveStandby)
 
 
 	def ms(self):
@@ -423,8 +384,6 @@ class xtra(Screen, ConfigListScreen):
 				x[1].save()
 		configfile.save()
 		self.close()
-
-
 
 class manuelSearch(Screen, ConfigListScreen):
 	skin = """
@@ -451,12 +410,10 @@ class manuelSearch(Screen, ConfigListScreen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
 
-		self.pathLoc = ""
 		self.title = ""
 		self.year = ""
 		self.evnt = ""
-		
-		
+
 		list = []
 		ConfigListScreen.__init__(self, list)
 
@@ -482,20 +439,6 @@ class manuelSearch(Screen, ConfigListScreen):
 		self['info'] = Label()
 		self["Picture"] = Pixmap()
 
-		if config.plugins.xtraEvent.locations.value == "hdd":
-			self.pathLoc = "/media/hdd/xtraEvent/"
-		elif config.plugins.xtraEvent.locations.value == "usb":
-			self.pathLoc = "/media/usb/xtraEvent/"
-		elif config.plugins.xtraEvent.locations.value == "internal":
-			self.pathLoc = "/etc/enigma2/xtraEvent/"
-		else:
-			self.pathLoc = "/tmp/"
-
-		if not os.path.isdir(self.pathLoc + "mSearch"):
-			os.makedirs(self.pathLoc + "mSearch")
-		# fs = os.listdir(self.pathLoc + "mSearch/")
-		# for f in fs:
-			# os.remove(self.pathLoc + "mSearch/" + f)
 
 		self.timer = eTimer()
 		self.timer.callback.append(self.msList)
@@ -512,11 +455,13 @@ class manuelSearch(Screen, ConfigListScreen):
 				x[1].save()
 	
 		list = []
-		list.append(getConfigListEntry(_("Events Next"), config.plugins.xtraEvent.sMANUELnmbr))
-		list.append(getConfigListEntry(_("Search Event"), config.plugins.xtraEvent.sMANUEL))
-		list.append(getConfigListEntry(_("Year"), config.plugins.xtraEvent.sMANUELyear))
+		list.append(getConfigListEntry(_("Events Next"), config.plugins.xtraEvent.searchMANUELnmbr))
+		list.append(getConfigListEntry(_("Search Event"), config.plugins.xtraEvent.searchMANUEL))
+		list.append(getConfigListEntry(_("Year"), config.plugins.xtraEvent.searchMANUELyear))
 		list.append(getConfigListEntry(_("Search Language"), config.plugins.xtraEvent.searchLang))
 		list.append(getConfigListEntry(_("Search Image"), config.plugins.xtraEvent.PB))
+		# list.append(getConfigListEntry(_("EMC-MoviePlayer Support"), config.plugins.xtraEvent.EMC))
+		
 		
 		list.append(getConfigListEntry(_("Search Source"), config.plugins.xtraEvent.imgs))
 		if config.plugins.xtraEvent.imgs.value == "TMDB":
@@ -564,7 +509,7 @@ class manuelSearch(Screen, ConfigListScreen):
 			ref = self.session.nav.getCurrentlyPlayingServiceReference().toString()
 			events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 			if events:
-				n = config.plugins.xtraEvent.sMANUELnmbr.value
+				n = config.plugins.xtraEvent.searchMANUELnmbr.value
 				self.evnt = events[int(n)][4]
 				self.vkEdit("")
 		except:
@@ -575,25 +520,26 @@ class manuelSearch(Screen, ConfigListScreen):
 
 	def vkEdit(self, text=None):
 		if text:
-			config.plugins.xtraEvent.sMANUEL = ConfigText(default="{}".format(text), visible_width=100, fixed_size=False)
-			self.title = config.plugins.xtraEvent.sMANUEL.value
+			config.plugins.xtraEvent.searchMANUEL = ConfigText(default="{}".format(text), visible_width=100, fixed_size=False)
+			self.title = config.plugins.xtraEvent.searchMANUEL.value
 			self['status'].setText(_("Event to Search : {}".format(str(self.title))))
 		else:
-			config.plugins.xtraEvent.sMANUEL = ConfigText(default="{}".format(self.evnt), visible_width=100, fixed_size=False)
-			self.title = config.plugins.xtraEvent.sMANUEL.value
+			config.plugins.xtraEvent.searchMANUEL = ConfigText(default="{}".format(self.evnt), visible_width=100, fixed_size=False)
+			self.title = config.plugins.xtraEvent.searchMANUEL.value
 
 	def mnlSrch(self):
 		try:
-			fs = os.listdir(self.pathLoc + "mSearch/")
+			fs = os.listdir(pathLoc + "mSearch/")
 			for f in fs:
-				os.remove(self.pathLoc + "mSearch/" + f)
+				os.remove(pathLoc + "mSearch/" + f)
 		except:
 			return
+		from requests.utils import quote
 		from download import intCheck
 		if intCheck():
 			if config.plugins.xtraEvent.PB.value == "posters":
 				if config.plugins.xtraEvent.imgs.value == "TMDB":
-					self.tmdb()
+					self.tmdb("")
 				if config.plugins.xtraEvent.imgs.value == "TVDB":
 					self.tvdb()
 				if config.plugins.xtraEvent.imgs.value == "FANART":
@@ -611,7 +557,7 @@ class manuelSearch(Screen, ConfigListScreen):
 		try:
 			self.iNmbr = config.plugins.xtraEvent.imgNmbr.value
 			self.pb = config.plugins.xtraEvent.PB.value
-			self.path = self.pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, self.iNmbr)
+			self.path = pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, self.iNmbr)
 			self["Picture"].instance.setPixmap(loadJPG(self.path))
 			
 			if self.pb == "posters":
@@ -634,7 +580,7 @@ class manuelSearch(Screen, ConfigListScreen):
 		tot = ""
 		cur = ""
 		try:
-			msLoc = self.pathLoc + "mSearch/"
+			msLoc = pathLoc + "mSearch/"
 			n = 0
 			for file in os.listdir(msLoc):
 				if file.startswith("{}-{}".format(self.title, self.pb)) == True:
@@ -643,7 +589,7 @@ class manuelSearch(Screen, ConfigListScreen):
 			tot = n
 			cur = config.plugins.xtraEvent.imgNmbr.value
 			
-			pb_path = self.pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, self.iNmbr)
+			pb_path = pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, self.iNmbr)
 			pb_sz = "{} KB".format(os.path.getsize(pb_path)/1024)
 
 			im = Image.open(pb_path)
@@ -657,9 +603,9 @@ class manuelSearch(Screen, ConfigListScreen):
 	def append(self):
 		try:
 			if config.plugins.xtraEvent.PB.value == "posters":
-				target = self.pathLoc + "poster/{}.jpg".format(self.title)
+				target = pathLoc + "poster/{}.jpg".format(self.title)
 			else:
-				target = self.pathLoc + "backdrop/{}.jpg".format(self.title)
+				target = pathLoc + "backdrop/{}.jpg".format(self.title)
 
 			import shutil
 			if os.path.exists(self.path):
@@ -670,12 +616,12 @@ class manuelSearch(Screen, ConfigListScreen):
 	def tmdb(self):
 		try:
 			self.srch = config.plugins.xtraEvent.searchType.value
-			self.year = config.plugins.xtraEvent.sMANUELyear.value
+			self.year = config.plugins.xtraEvent.searchMANUELyear.value
 			url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key=3c3efcf47c3577558812bb9d64019d65&query={}".format(self.srch, quote(self.title))
 			if self.year != 0:
 				url_tmdb += "&primary_release_year={}&year={}".format(self.year, self.year)
 
-			id = json.load(urlopen(url_tmdb))['results'][0]['id']
+			id = requests.get(url_tmdb).json()['results'][0]['id']
 			url = "https://api.themoviedb.org/3/{}/{}?api_key=3c3efcf47c3577558812bb9d64019d65&append_to_response=images".format(self.srch, int(id))
 			if config.plugins.xtraEvent.searchLang.value != "":
 				url += "&language={}".format(config.plugins.xtraEvent.searchLang.value)
@@ -683,11 +629,11 @@ class manuelSearch(Screen, ConfigListScreen):
 				sz = config.plugins.xtraEvent.TMDBpostersize.value
 			else:
 				sz = config.plugins.xtraEvent.TMDBbackdropsize.value
-			for i in xrange(99):
-				poster = json.load(urlopen(url))['images']['{}'.format(self.pb)][i]['file_path']
+			for i in range(99):
+				poster = requests.get(url).json()['images']['{}'.format(self.pb)][i]['file_path']
 				if poster:
 					url_poster = "https://image.tmdb.org/t/p/{}{}".format(sz, poster)
-					dwnldFile = self.pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
+					dwnldFile = pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
 					open(dwnldFile, 'wb').write(requests.get(url_poster, stream=True, allow_redirects=True).content)
 					dwnldFile_tot = i+1
 					self['status'].setText(_("Download : {}".format(str(dwnldFile_tot))))
@@ -697,12 +643,12 @@ class manuelSearch(Screen, ConfigListScreen):
 	def tvdb(self):
 		try:
 			self.srch = config.plugins.xtraEvent.searchType.value
-			self.year = config.plugins.xtraEvent.sMANUELyear.value
+			self.year = config.plugins.xtraEvent.searchMANUELyear.value
 			url = "https://thetvdb.com/api/GetSeries.php?seriesname={}".format(quote(self.title))
 			if self.year != 0:
 				url += "%20{}".format(self.year)
 			
-			url_read = urlopen(url).read()
+			url_read = requests.get(url).text
 			series_id = re.findall('<seriesid>(.*?)</seriesid>', url_read)[0]
 			if config.plugins.xtraEvent.PB.value == "posters":
 				keyType = "poster"
@@ -711,14 +657,14 @@ class manuelSearch(Screen, ConfigListScreen):
 			url = 'https://api.thetvdb.com/series/{}/images/query?keyType={}'.format(series_id, keyType)
 			u = requests.get(url, headers={"Accept-Language":"{}".format(config.plugins.xtraEvent.searchLang.value)})
 
-			for i in xrange(99):
+			for i in range(99):
 				if config.plugins.xtraEvent.PB.value == "posters":
 					img_pb = u.json()["data"][i]['{}'.format(config.plugins.xtraEvent.TVDBpostersize.value)]
 				else:
 					img_pb = u.json()["data"][i]['{}'.format(config.plugins.xtraEvent.TVDBbackdropsize.value)]
 				url = "https://artworks.thetvdb.com/banners/{}".format(img_pb)
 
-				dwnldFile = self.pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
+				dwnldFile = pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
 				open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
 				dwnldFile_tot = i+1
 				self['status'].setText(_("Download : {}".format(str(dwnldFile_tot))))
@@ -732,26 +678,26 @@ class manuelSearch(Screen, ConfigListScreen):
 			if config.plugins.xtraEvent.FanartSearchType.value == "tv":
 				try:
 					url_maze = "http://api.tvmaze.com/singlesearch/shows?q={}".format(quote(self.title))
-					mj = json.load(urlopen(url_maze))
+					mj = requests.get(url_maze).json()
 					id = (mj['externals']['thetvdb'])
 				except:
 					pass
 			else:
 				try:
-					self.year = config.plugins.xtraEvent.sMANUELyear.value
+					self.year = config.plugins.xtraEvent.searchMANUELyear.value
 					url_tmdb = "https://api.themoviedb.org/3/search/movie?api_key=3c3efcf47c3577558812bb9d64019d65&query={}".format(quote(self.title))
 					if self.year != 0:
 						url_tmdb += "&primary_release_year={}&year={}".format(self.year, self.year)
-					id = json.load(urlopen(url_tmdb))['results'][0]['id']
+					id = requests.get(url_tmdb).json()['results'][0]['id']
 				except:
 					pass
 
 			try:
 				m_type = config.plugins.xtraEvent.FanartSearchType.value
 				url_fanart = "https://webservice.fanart.tv/v3/{}/{}?api_key=6d231536dea4318a88cb2520ce89473b".format(m_type, id)
-				fjs = json.load(urlopen(url_fanart))
+				fjs = requests.get(url_fanart).json()
 
-				for i in xrange(99):
+				for i in range(99):
 					if config.plugins.xtraEvent.PB.value == "posters":
 						if config.plugins.xtraEvent.FanartSearchType.value == "tv":
 							url = (fjs['tvposter'][i]['url'])
@@ -765,7 +711,7 @@ class manuelSearch(Screen, ConfigListScreen):
 							url = (fjs['moviebackground'][i]['url'])
 							
 					if url:
-						dwnldFile = self.pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
+						dwnldFile = pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
 						open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
 							
 						scl = 1
@@ -835,19 +781,12 @@ class selBouquets(Screen):
 		self['status'] = Label()
 		self['info'] = Label()
 
+
 	def bouquetEpgs(self):
-		if config.plugins.xtraEvent.locations.value == "hdd":
-			self.pathLoc = "/media/hdd/xtraEvent/"
-		elif config.plugins.xtraEvent.locations.value == "usb":
-			self.pathLoc = "/media/usb/xtraEvent/"
-		elif config.plugins.xtraEvent.locations.value == "internal":
-			self.pathLoc = "/etc/enigma2/xtraEvent/"
-		else:
-			self.pathLoc = "/tmp/"
-		if os.path.exists(self.pathLoc+"bqts"):
-			os.remove(self.pathLoc+"bqts")
-		if os.path.exists(self.pathLoc+"events"):
-			os.remove(self.pathLoc+"events")
+		if os.path.exists(pathLoc+"bqts"):
+			os.remove(pathLoc+"bqts")
+		if os.path.exists(pathLoc+"events"):
+			os.remove(pathLoc+"events")
 		try:
 			self.sources = []
 			for idx,item in enumerate(self["list"].list):
@@ -859,34 +798,52 @@ class selBouquets(Screen):
 				serviceHandler = eServiceCenter.getInstance()
 				channels = chList(p)
 				for ref in channels:
-					open(self.pathLoc + "bqts", "a+").write("%s\n"% str(ref))
+					open(pathLoc + "bqts", "a+").write("%s\n"% str(ref))
 					try:
 						events = self.epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 						n = config.plugins.xtraEvent.searchNUMBER.value
-						for i in xrange(int(n)):
+						for i in range(int(n)):
 							title = events[i][4]
 							evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
 							evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-							open(self.pathLoc+"events","a+").write("%s\n"% str(evntNm))
+							open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
 					except:
 						pass
-
-
 			self.close()		
 		except:
 			pass
 
-
-		
-		
 	def cancel(self):
 		self.close(self.session, False)
-		
-		
-		
-		
-		
-		
-		
-		
-		
+
+class pathLocation():
+	def __init__(self):
+		self.location()
+
+	def location(self):
+		pathLoc = ""
+		if not os.path.isdir(config.plugins.xtraEvent.loc.value):
+			pathLoc = "/tmp/xtraEvent/"
+			try:
+				if not os.path.isdir(pathLoc):
+					os.makedirs(pathLoc + "poster")
+					os.makedirs(pathLoc + "banner")
+					os.makedirs(pathLoc + "backdrop")
+					os.makedirs(pathLoc + "infos")
+					os.makedirs(pathLoc + "mSearch")
+			except:
+				pass
+		else:	
+			pathLoc = config.plugins.xtraEvent.loc.value + "xtraEvent/"
+			try:
+				if not os.path.isdir(pathLoc):
+					os.makedirs(pathLoc + "poster")
+					os.makedirs(pathLoc + "banner")
+					os.makedirs(pathLoc + "backdrop")
+					os.makedirs(pathLoc + "infos")
+					os.makedirs(pathLoc + "mSearch")
+			except:
+				pass
+
+		return pathLoc
+pathLoc = pathLocation().location()

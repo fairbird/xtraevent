@@ -1,51 +1,33 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020..
-from Screens.Screen import Screen
-from Components.Label import Label
-# from Components.ActionMap import ActionMap
+# by digiteng...06.2020, 07.2020,
+
 from Components.AVSwitch import AVSwitch
-# from urllib import urlretrieve
-from urllib2 import urlopen, quote
-import requests
-# from twisted.web.client import downloadPage
-from enigma import eTimer, getDesktop, eLabel, eServiceCenter, eServiceReference, iServiceInformation, eEPGCache
+from enigma import eEPGCache
 from Components.config import config
-from Components.ConfigList import ConfigListScreen
 from ServiceReference import ServiceReference
-# from Components.Sources.CurrentService import CurrentService
-# from Components.Sources.ServiceList import ServiceList
-from PIL import Image
-# from Tools.Downloader import downloadWithProgress
 from Screens.MessageBox import MessageBox
-from Tools import Notifications
+import Tools.Notifications
+import requests
+from requests.utils import quote
+import os, re, random
+from PIL import Image
 import socket
-import os
-import re
-import json
-import random
 import xtra
+from datetime import datetime
+
 
 tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
 epgcache = eEPGCache.getInstance()
+pathLoc = xtra.pathLocation().location()
 
-
-if config.plugins.xtraEvent.locations.value == "hdd":
-	pathLoc = "/media/hdd/xtraEvent/"
-elif config.plugins.xtraEvent.locations.value == "usb":
-	pathLoc = "/media/usb/xtraEvent/"
-elif config.plugins.xtraEvent.locations.value == "internal":
-	pathLoc = "/etc/enigma2/xtraEvent/"
-else:
-	pathLoc = "/tmp/"
-
-# pathLoc = "/etc/enigma2/xtraEvent/"
-# open("/tmp/path","w").write(pathLoc)
+# open("/tmp/path","w").write(str(pathLoc))
 
 def save():
 	if config.plugins.xtraEvent.searchMOD.value == "Current Channel":
 		currentChEpgs()
 	if config.plugins.xtraEvent.searchMOD.value == "Bouquets":
 		selBouquets()
+
 
 def currentChEpgs():
 	if os.path.exists(pathLoc + "events"):
@@ -59,9 +41,9 @@ def currentChEpgs():
 			events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 			n = config.plugins.xtraEvent.searchNUMBER.value
 
-			for i in xrange(int(n)):
+			for i in range(int(n)):
 				title = events[i][4]
-				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
+				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
 				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
 				open(pathLoc + "events", "a+").write("%s\n" %str(evntNm))
 
@@ -82,15 +64,15 @@ def selBouquets():
 			refs = f.readlines()
 		
 		nl=len(refs)
-		for i in xrange(nl):
+		for i in range(nl):
 			ref = refs[i]
 			try:
 				events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
 				n = config.plugins.xtraEvent.searchNUMBER.value
-				for i in xrange(int(n)):
+				for i in range(int(n)):
 					title = events[i][4]
-					evntN = re.sub('([\(\[]).*?([\)\]])|(: odc.\d+)|[?|$|.|!|,|:|/]', '', str(title))
-					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").rstrip()
+					evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
+					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
 					open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
 			except:
 				pass		
@@ -107,6 +89,10 @@ def intCheck():
 		return False
 
 def download():
+	now = datetime.now()
+	dt = now.strftime("%d/%m/%Y %H:%M:%S")
+	with open("/tmp/up_report", "a+") as f:
+		f.write(str("start : {}\n".format(dt)))
 	try:
 		if intCheck():
 			if config.plugins.xtraEvent.poster.value == True:
@@ -135,7 +121,7 @@ def download():
 			if config.plugins.xtraEvent.info.value == True:
 				infos()
 		else:
-			Notifications.AddNotification(MessageBox, _("NO INTERNET CONNECTION !.."), MessageBox.TYPE_INFO, timeout = 5)
+			Tools.Notifications.AddNotification(MessageBox, _("NO INTERNET CONNECTION !.."), MessageBox.TYPE_INFO, timeout = 5)
 			return
 	except:
 		return
@@ -156,7 +142,8 @@ def tmdb_Poster():
 				titles = f.readlines()
 			titles = list(dict.fromkeys(titles))
 			n = len(titles)
-			for i in xrange(n):
+			downloaded = 0
+			for i in range(n):
 				title = titles[i]
 				title = title.strip()
 				
@@ -167,24 +154,30 @@ def tmdb_Poster():
 					url_tmdb += "&primary_release_year={}&year={}".format(year, year)
 				try:
 					poster = ""
-					poster = json.load(urlopen(url_tmdb))['results'][0]['poster_path']
+					poster = requests.get(url_tmdb).json()['results'][0]['poster_path']
 					p_size = config.plugins.xtraEvent.TMDBpostersize.value
 					url = "https://image.tmdb.org/t/p/{}{}".format(p_size, poster)
 					if poster != "":
 						dwnldFile = pathLoc + "poster/{}.jpg".format(title)
 						if not os.path.isfile(dwnldFile):
 							w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+							downloaded += 1
 							w.close()
+							
 				except:
 					pass
-
-
+			now = datetime.now()
+			dt = now.strftime("%d/%m/%Y %H:%M:%S")
+			with open("/tmp/up_report", "a+") as f:
+				f.write("tmdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+		
 	except:
 		pass
 
 def tvdb_Poster():
 	url = ""
 	dwnldFile = ""
+	downloaded = None
 	try:
 		if os.path.exists(pathLoc+"events"):
 			with open(pathLoc+"events", "r") as f:
@@ -192,16 +185,17 @@ def tvdb_Poster():
 
 			titles = list(dict.fromkeys(titles))
 			n = len(titles)
-			for i in xrange(n):
+			downloaded = 0
+			for i in range(n):
 				title = titles[i]
 				title = title.strip()
 				try:
 					url_tvdb = "https://thetvdb.com/api/GetSeries.php?seriesname={}".format(quote(title))
-					url_read = urlopen(url_tvdb).read()
+					url_read = requests.get(url_tvdb).text
 					series_id = re.findall('<seriesid>(.*?)</seriesid>', url_read)[0]
 					if series_id:
 						url_tvdb = "https://thetvdb.com/api/a99d487bb3426e5f3a60dea6d3d3c7ef/series/{}/en".format(series_id)
-						url_read = urlopen(url_tvdb).read()
+						url_read = requests.get(url_tvdb).text
 						poster = re.findall('<poster>(.*?)</poster>', url_read)[0]
 
 						url = "https://artworks.thetvdb.com/banners/{}".format(poster)
@@ -210,9 +204,15 @@ def tvdb_Poster():
 						dwnldFile = pathLoc + "poster/{}.jpg".format(title)
 						if not os.path.isfile(dwnldFile):
 							w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+							downloaded += 1
 							w.close()
+							
 				except:
 					pass
+			now = datetime.now()
+			dt = now.strftime("%d/%m/%Y %H:%M:%S")
+			with open("/tmp/up_report", "a+") as f:
+				f.write("tvdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 	except:
 		pass
 
@@ -226,21 +226,27 @@ def omdb_Poster():
 
 			titles = list(dict.fromkeys(titles))
 			n = len(titles)
-			for i in xrange(n):
+			downloaded = 0
+			for i in range(n):
 				title = titles[i]
 				title = title.strip()
 				try:
 					omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
 					omdb_api = random.sample(omdb_apis, 1)[0]
 					url_omdb = 'https://www.omdbapi.com/?apikey=%s&t=%s' %(omdb_api, quote(title))
-					url = json.load(urlopen(url_omdb))['Poster']
+					url = requests.get(url_omdb).json()['Poster']
 					dwnldFile = pathLoc + "poster/{}.jpg".format(title)
 					if not os.path.isfile(dwnldFile):
 						w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+						downloaded += 1
 						w.close()
 				except:
 					pass
 				continue
+			now = datetime.now()
+			dt = now.strftime("%d/%m/%Y %H:%M:%S")
+			with open("/tmp/up_report", "a+") as f:
+				f.write("omdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 	except:
 		pass
 
@@ -254,20 +260,26 @@ def maze_Poster():
 
 			titles = list(dict.fromkeys(titles))
 			n = len(titles)
-			for i in xrange(n):
+			downloaded = 0
+			for i in range(n):
 				title = titles[i]
 				title = title.strip()
 		
 				url_maze = "http://api.tvmaze.com/search/shows?q={}".format(quote(title))
 				try:
-					url = json.load(urlopen(url_maze))[0]['show']['image']['medium']
+					url = requests.get(url_maze).json()[0]['show']['image']['medium']
 					dwnldFile = pathLoc + "poster/{}.jpg".format(title)
 					if not os.path.isfile(dwnldFile):
 						w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+						downloaded += 1
 						w.close()
 				except:
 					pass
 				continue
+			now = datetime.now()
+			dt = now.strftime("%d/%m/%Y %H:%M:%S")
+			with open("/tmp/up_report", "a+") as f:
+				f.write("maze_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 	except:
 		return
 
@@ -281,14 +293,15 @@ def fanart_Poster():
 
 			titles = list(dict.fromkeys(titles))
 			n = len(titles)
-			for i in xrange(n):
+			downloaded = 0
+			for i in range(n):
 				title = titles[i]
 				title = title.strip()
 				title=title
 				try:
 					srch = "multi"
 					url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote(title))
-					bnnr = json.load(urlopen(url_tmdb))
+					bnnr = requests.get(url_tmdb).json()
 					tmdb_id = (bnnr['results'][0]['id'])
 					if tmdb_id:
 						m_type = (bnnr['results'][0]['media_type'])
@@ -301,12 +314,12 @@ def fanart_Poster():
 						dwnldFile = pathLoc + "poster/{}.jpg".format(title)
 						if not os.path.exists(dwnldFile):
 							url_maze = "http://api.tvmaze.com/singlesearch/shows?q=%s" %quote(title)
-							mj = json.load(urlopen(url_maze))
+							mj = requests.get(url_maze).json()
 							tvdb_id = (mj['externals']['thetvdb'])
 							if tvdb_id:
 								try:
 									url_fanart = "https://webservice.fanart.tv/v3/%s/%s?api_key=6d231536dea4318a88cb2520ce89473b" %(m_type, tvdb_id)
-									fjs = json.load(urlopen(url_fanart))
+									fjs = requests.get(url_fanart).json()
 									if fjs:
 										if m_type == "movies":
 											mm_type = (bnnr['results'][0]['media_type'])
@@ -318,6 +331,7 @@ def fanart_Poster():
 											dwnldFile=dwnldFile
 											if not os.path.isfile(dwnldFile):
 												w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+												downloaded += 1
 												w.close()
 												
 												scl = 1
@@ -331,6 +345,10 @@ def fanart_Poster():
 			
 				except:
 					pass
+			now = datetime.now()
+			dt = now.strftime("%d/%m/%Y %H:%M:%S")
+			with open("/tmp/up_report", "a+") as f:
+				f.write("fanart_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 	except:
 		pass
 
@@ -345,13 +363,14 @@ def Banner():
 
 		titles = list(dict.fromkeys(titles))
 		n = len(titles)
-		for i in xrange(n):
+		downloaded = 0
+		for i in range(n):
 			title = titles[i]
 			title = title.strip()
 			
 			try:
 				url_tvdb = "https://thetvdb.com/api/GetSeries.php?seriesname=%s" %quote(title)
-				url_read = urlopen(url_tvdb).read()			
+				url_read = requests.get(url_tvdb).text			
 				series_id = re.findall('<seriesid>(.*?)</seriesid>', url_read, re.I)[0]
 				if series_id:
 					url = "https://artworks.thetvdb.com/banners/graphical/%s-g_t.jpg" %(series_id)
@@ -359,6 +378,7 @@ def Banner():
 						dwnldFile = pathLoc + "banner/{}.jpg".format(title)
 						if not os.path.isfile(dwnldFile):
 							w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+							downloaded += 1
 							w.close()
 
 
@@ -366,7 +386,7 @@ def Banner():
 				try:
 					srch = "multi"
 					url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote(title))
-					bnnr = json.load(urlopen(url_tmdb))
+					bnnr = requests.get(url_tmdb).json()
 					tmdb_id = (bnnr['results'][0]['id'])
 					if tmdb_id:
 						m_type = (bnnr['results'][0]['media_type'])
@@ -375,7 +395,7 @@ def Banner():
 						else:
 							mm_type = m_type
 						url_fanart = "https://webservice.fanart.tv/v3/%s/%s?api_key=6d231536dea4318a88cb2520ce89473b" %(m_type, tmdb_id)
-						fjs = json.load(urlopen(url_fanart))
+						fjs = requests.get(url_fanart).json()
 						if fjs:
 							if m_type == "movies":
 								mm_type = (bnnr['results'][0]['media_type'])
@@ -384,17 +404,18 @@ def Banner():
 								dwnldFile = pathLoc + "banner/{}.jpg".format(title)
 								if not os.path.isfile(dwnldFile):
 									w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+									downloaded += 1
 									w.close()
 
 
 				except:
 					try:
 						url_maze = "http://api.tvmaze.com/singlesearch/shows?q=%s" %(title)
-						mj = json.load(urlopen(url_maze))
+						mj = requests.get(url_maze).json()
 						poster = (mj['externals']['thetvdb'])
 						if poster:
 							url_tvdb = "https://thetvdb.com/api/GetSeries.php?seriesname=%s" %quote(title)
-							url_read = urlopen(url_tvdb).read()
+							url_read = requests.get(url_tvdb).text
 							series_id = re.findall('<seriesid>(.*?)</seriesid>', url_read, re.I)[0]
 							banner_img = re.findall('<banner>(.*?)</banner>', url_read, re.I)[0]
 							if banner_img:
@@ -408,7 +429,7 @@ def Banner():
 							if series_id:
 								try:
 									url_fanart = "https://webservice.fanart.tv/v3/%s/%s?api_key=6d231536dea4318a88cb2520ce89473b" %(m_type, series_id)
-									fjs = json.load(urlopen(url_fanart))
+									fjs = requests.get(url_fanart).json()
 									if fjs:
 										if m_type == "movies":
 											mm_type = (bnnr['results'][0]['media_type'])
@@ -420,13 +441,17 @@ def Banner():
 											dwnldFile = pathLoc + "banner/{}.jpg".format(title)
 											if not os.path.isfile(dwnldFile):
 												w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+												downloaded += 1
 												w.close()
 
 								except:
 									pass
 					except:
 						pass
-
+		now = datetime.now()
+		dt = now.strftime("%d/%m/%Y %H:%M:%S")
+		with open("/tmp/up_report", "a+") as f:
+			f.write("banner end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 # DOWNLOAD BACKDROP ######################################################################################################
 
 def tmdb_backdrop():
@@ -439,24 +464,29 @@ def tmdb_backdrop():
 
 			titles = list(dict.fromkeys(titles))
 			n = len(titles)
-			for i in xrange(n):
+			downloaded = 0
+			for i in range(n):
 				title = titles[i]
 				title = title.strip()
 				srch = "multi"
 				lang = config.plugins.xtraEvent.searchLang.value
 				url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}&language={}".format(srch, tmdb_api, quote(title), lang)
 				try:
-					backdrop = json.load(urlopen(url_tmdb))['results'][0]['backdrop_path']
+					backdrop = requests.get(url_tmdb).json()['results'][0]['backdrop_path']
 					if backdrop:
 						backdrop_size = config.plugins.xtraEvent.TMDBbackdropsize.value
 						url = "https://image.tmdb.org/t/p/{}{}".format(backdrop_size, backdrop)
 						dwnldFile = pathLoc + "backdrop/{}.jpg".format(title)
 						if not os.path.isfile(dwnldFile):
 							w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+							downloaded += 1
 							w.close()
 				except:
 					pass
-				
+			now = datetime.now()
+			dt = now.strftime("%d/%m/%Y %H:%M:%S")
+			with open("/tmp/up_report", "a+") as f:
+				f.write("tmdb_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))				
 	except:
 		pass
 
@@ -470,17 +500,18 @@ def tvdb_backdrop():
 
 			titles = list(dict.fromkeys(titles))
 			n = len(titles)
-			for i in xrange(n):
+			downloaded = 0
+			for i in range(n):
 				title = titles[i]
 				title = title.strip()
 
 				try:
 					url_tvdb = "https://thetvdb.com/api/GetSeries.php?seriesname={}".format(quote(title))
-					url_read = urlopen(url_tvdb).read()
+					url_read = requests.get(url_tvdb).text
 					series_id = re.findall('<seriesid>(.*?)</seriesid>', url_read)[0]
 					if series_id:
 						url_tvdb = "https://thetvdb.com/api/a99d487bb3426e5f3a60dea6d3d3c7ef/series/{}/en".format(series_id)
-						url_read = urlopen(url_tvdb).read()
+						url_read = requests.get(url_tvdb).text
 						backdrop = re.findall('<fanart>(.*?)</fanart>', url_read)[0]
 						if backdrop:
 							url = "https://artworks.thetvdb.com/banners/{}".format(backdrop)
@@ -490,11 +521,15 @@ def tvdb_backdrop():
 							dwnldFile = pathLoc + "backdrop/{}.jpg".format(title)
 							if not os.path.isfile(dwnldFile):
 								w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+								downloaded += 1
 								w.close()
 
 				except:
 					pass
-
+			now = datetime.now()
+			dt = now.strftime("%d/%m/%Y %H:%M:%S")
+			with open("/tmp/up_report", "a+") as f:
+				f.write("tvdb_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 	except:
 		pass
 
@@ -508,14 +543,15 @@ def fanart_backdrop():
 
 			titles = list(dict.fromkeys(titles))
 			n = len(titles)
-			for i in xrange(n):
+			downloaded = 0
+			for i in range(n):
 				title = titles[i]
 				title = title.strip()
 				
 				try:
 					srch = "multi"
 					url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote(title))
-					bnnr = json.load(urlopen(url_tmdb))
+					bnnr = requests.get(url_tmdb).json()
 					tmdb_id = (bnnr['results'][0]['id'])
 					if tmdb_id:
 						m_type = (bnnr['results'][0]['media_type'])
@@ -529,13 +565,13 @@ def fanart_backdrop():
 						if not os.path.exists(dwnldFile):
 							url_maze = "http://api.tvmaze.com/singlesearch/shows?q=%s" %quote(title)
 							
-							mj = json.load(urlopen(url_maze))
+							mj = requests.get(url_maze).json()
 							tvdb_id = (mj['externals']['thetvdb'])
 							if tvdb_id:
 								try:
 									
 									url_fanart = "https://webservice.fanart.tv/v3/%s/%s?api_key=6d231536dea4318a88cb2520ce89473b" %(m_type, tvdb_id)
-									fjs = json.load(urlopen(url_fanart))
+									fjs = requests.get(url_fanart).json()
 									
 									if fjs:
 										if m_type == "movies":
@@ -548,45 +584,55 @@ def fanart_backdrop():
 											dwnldFile = pathLoc + "backdrop/{}.jpg".format(title)
 											if not os.path.isfile(dwnldFile):
 												w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+												downloaded += 1
 												w.close()
 
 								except:
 									pass
 				except:
 					pass
-
+			now = datetime.now()
+			dt = now.strftime("%d/%m/%Y %H:%M:%S")
+			with open("/tmp/up_report", "a+") as f:
+				f.write("fanart_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 	except:
 		pass
 
 # DOWNLOAD INFOS ######################################################################################################
 
 def infos():
-
+	import json
 	if os.path.exists(pathLoc+"events"):
 		with open(pathLoc+"events", "r") as f:
 			titles = f.readlines()
 
 		titles = list(dict.fromkeys(titles))
 		n = len(titles)
-		for i in xrange(n):
+		downloaded = 0
+		for i in range(n):
 			title = titles[i]
 			title = title.strip()
 
 			try:
-				url_find = 'https://m.imdb.com/find?q={}'.format(title)
-				ff = requests.get(url_find).text
-				rc = re.compile('<a href="/title/(.*?)/"', re.DOTALL)
-				imdb_id = rc.search(ff).group(1)
+				url = 'https://www.bing.com/search?q={}+imdb'.format(title)
+				headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
+				ff = requests.get(url, stream=True, headers=headers).text
+				rc = re.compile('https://www.imdb.com/title/tt(\d*)', re.DOTALL)
+				imdb_id = "tt" + rc.search(ff).group(1)
 				if imdb_id:
 					omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
 					omdb_api = random.choice(omdb_apis)
 					url_omdb = 'https://www.omdbapi.com/?apikey={}&i={}'.format(str(omdb_api), str(imdb_id))
-					# info_json = requests.get(url_omdb).json()
-					info_json = json.load(urlopen(url_omdb))
+					info_json = requests.get(url_omdb).json()
 					info_files = pathLoc + "infos/{}.json".format(title)
 					if not os.path.exists(info_files):
-						w = open(info_files,"w").write(json.dumps(info_json))
+						w = open(info_files,"wb").write(json.dumps(info_json))
+						downloaded += 1
 						w.close()
 
 			except:
 				pass
+		now = datetime.now()
+		dt = now.strftime("%d/%m/%Y %H:%M:%S")
+		with open("/tmp/up_report", "a+") as f:
+			f.write("infos end : {} (downloaded : {})\n".format(dt, str(downloaded)))

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# by digiteng...05.2020
+# by digiteng...05.2020, 07.2020, 
 # for channellist,
 # <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="1" position="840,420" size="100,60" zPosition="5" />
 # <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="2" position="940,420" size="100,60" zPosition="5" />
@@ -18,12 +18,9 @@ import os
 
 try:
 	from Plugins.Extensions.xtraEvent.xtra import xtra
-	if config.plugins.xtraEvent.locations.value == "internal":
-		pathLoc = "/etc/enigma2/xtraEvent/backdrop/"
-	else:
-		pathLoc = "/media/{}/xtraEvent/backdrop/".format(config.plugins.xtraEvent.locations.value)
+	pathLoc = config.plugins.xtraEvent.loc.value
 except:
-	pathLoc = "/"
+	pass
 
 
 class xtraNextEvents(Renderer):
@@ -74,7 +71,7 @@ class xtraNextEvents(Renderer):
 		try:
 			evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", cevnt)
 			evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-			pstrNm = pathLoc + evntNm + ".jpg"
+			pstrNm = "{}xtraEvent/backdrop/{}.jpg".format(pathLoc, evntNm)
 			if os.path.exists(pstrNm):
 				size = self.instance.size()
 				self.picload = ePicLoad()

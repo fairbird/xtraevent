@@ -5,20 +5,16 @@
 from Renderer import Renderer
 from enigma import ePixmap, eTimer, loadPNG
 from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN
+from Components.config import config
 import re
 import os
 import json
 
-if os.path.ismount('/media/hdd'):
-	if os.path.isdir("/media/hdd/xtraEvent/"):
-		pathLoc = "/media/hdd/xtraEvent/infos/"
-elif os.path.ismount('/media/usb'):
-	if os.path.isdir("/media/usb/xtraEvent/"):
-		pathLoc = "/media/usb/xtraEvent/infos/"
-elif os.path.isdir("/etc/enigma2/xtraEvent/"):
-	pathLoc = "/etc/enigma2/xtraEvent/infos/"
-else:
-	pathLoc = "/tmp/"
+try:
+	from Plugins.Extensions.xtraEvent.xtra import xtra
+	pathLoc = config.plugins.xtraEvent.loc.value
+except:
+	pass
 
 pratePath = resolveFilename(SCOPE_CURRENT_SKIN, 'parental')
 
@@ -56,7 +52,7 @@ class xtraParental(Renderer):
 					evnt = event.getEventName()
 					evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt)
 					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-					rating_json = pathLoc + "{}.json".format(evntNm)
+					rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
 
 					if os.path.exists(rating_json):
 						with open(rating_json) as f:
