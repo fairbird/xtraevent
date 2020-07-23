@@ -19,7 +19,6 @@ class xtraBanner(Renderer):
 
 	def __init__(self):
 		Renderer.__init__(self)
-		self.bannerName = ''
 
 	GUI_WIDGET = ePixmap
 	def changed(self, what):
@@ -35,6 +34,7 @@ class xtraBanner(Renderer):
 			return
 
 	def showBanner(self):
+		bannerName = ""
 		event = self.source.event
 		try:
 			if event:

@@ -9,6 +9,7 @@ from Components.config import config
 import re
 import os
 
+
 try:
 	from Plugins.Extensions.xtraEvent.xtra import xtra
 	pathLoc = config.plugins.xtraEvent.loc.value
@@ -19,8 +20,6 @@ class xtraBackdrop(Renderer):
 
 	def __init__(self):
 		Renderer.__init__(self)
-		self.pstrNm = ''
-		self.evntNm = ''
 
 	GUI_WIDGET = ePixmap
 	def changed(self, what):
@@ -35,6 +34,7 @@ class xtraBackdrop(Renderer):
 			pass
 
 	def showBackdrop(self):
+		evntNm = ""
 		try:
 			event = self.source.event
 			if event:
@@ -61,6 +61,7 @@ class xtraBackdrop(Renderer):
 						if ptr != None:
 							self.instance.setPixmap(ptr)
 							self.instance.show()
+
 				else:
 					self.instance.hide()
 			else:

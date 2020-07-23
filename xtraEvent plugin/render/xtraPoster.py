@@ -20,10 +20,6 @@ class xtraPoster(Renderer):
 
 	def __init__(self):
 		Renderer.__init__(self)
-		self.pstrNm = ''
-		self.evntNm = ''
-
-
 
 	GUI_WIDGET = ePixmap
 	def changed(self, what):
@@ -38,13 +34,15 @@ class xtraPoster(Renderer):
 			pass
 
 	def showposter(self):
+		evntNm = ""
 		try:
 			event = self.source.event
 			if event:
 				evnt = event.getEventName()
 				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt)
 				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-				pstrNm = "{}xtraEvent/poster/{}.jpg".format(pathLoc, evntNm)
+				pstrNm = pathLoc + "xtraEvent/poster/{}.jpg".format(evntNm)
+				
 				if os.path.exists(pstrNm):
 					size = self.instance.size()
 					self.picload = ePicLoad()

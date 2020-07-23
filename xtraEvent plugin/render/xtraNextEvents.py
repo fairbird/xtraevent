@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # by digiteng...05.2020, 07.2020, 
 # for channellist,
-# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="1" position="840,420" size="100,60" zPosition="5" />
-# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="2" position="940,420" size="100,60" zPosition="5" />
-# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="3" position="1040,420" size="100,60" zPosition="5" />
-# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="4" position="1140,420" size="100,60" zPosition="5" />
+# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="1" usedImage="backdrop" position="840,420" size="100,60" zPosition="5" />
+# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="2" usedImage="backdrop" position="940,420" size="100,60" zPosition="5" />
+# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="3" usedImage="backdrop" position="1040,420" size="100,60" zPosition="5" />
+# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="4" usedImage="backdrop" position="1140,420" size="100,60" zPosition="5" />
 # ...
 
 from Renderer import Renderer
@@ -32,6 +32,7 @@ class xtraNextEvents(Renderer):
 		self.evntNm = ''
 		
 		self.nxEvnt = 0
+		self.nxEvntUsed = ""
 		self.epgcache = eEPGCache.getInstance()
 
 	def applySkin(self, desktop, parent):
@@ -39,7 +40,9 @@ class xtraNextEvents(Renderer):
 		for attrib, value in self.skinAttributes:
 			if attrib == 'nextEvent':
 				self.nxEvnt = int(value)
-
+			elif attrib == 'usedImage':
+				self.nxEvntUsed = value
+			
 		self.skinAttributes = attribs
 		return Renderer.applySkin(self, desktop, parent)
 
@@ -71,7 +74,7 @@ class xtraNextEvents(Renderer):
 		try:
 			evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", cevnt)
 			evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-			pstrNm = "{}xtraEvent/backdrop/{}.jpg".format(pathLoc, evntNm)
+			pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
 			if os.path.exists(pstrNm):
 				size = self.instance.size()
 				self.picload = ePicLoad()
