@@ -162,7 +162,8 @@ class xtra(Screen, ConfigListScreen):
 			"yellow": self.dwnldFileld,
 			"blue": self.ms,
 			"cancel": self.exit,
-			"ok": self.keyOK
+			"ok": self.keyOK,
+			"info": self.strg
 			# "menu": self.okMn
 
 			# "info": self.about,
@@ -172,7 +173,7 @@ class xtra(Screen, ConfigListScreen):
 		self['status'] = Label()
 		self['info'] = Label()
 		self["help"] = StaticText()
-		self.strg()
+		# self.strg()
 		
 		self.timer = eTimer()
 		self.timer.callback.append(self.xtraList)
