@@ -98,7 +98,7 @@ config.plugins.xtraEvent.bingBackdropSize = ConfigSelection(default="mqdefault",
 	("mqdefault", "320x180"), 
 	("maxresdefault", "1280x720")])
 
-config.plugins.xtraEvent.PB = ConfigSelection(default="poster", choices = [
+config.plugins.xtraEvent.PB = ConfigSelection(default="posters", choices = [
 	("posters", "Poster"), 
 	("backdrops", "Backdrop")])
 
@@ -688,7 +688,7 @@ class manuelSearch(Screen, ConfigListScreen):
 			if os.path.exists(self.path):
 				shutil.copyfile(self.path, target)
 				if os.path.exists(target):
-					if config.plugins.xtraEvent.PB.value == "background":
+					if config.plugins.xtraEvent.PB.value == "backdrops":
 						im1 = Image.open(target) 
 						im1 = im1.resize((1280,720))
 						im1 = im1.save(target)
