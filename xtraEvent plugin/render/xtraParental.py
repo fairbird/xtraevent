@@ -50,8 +50,7 @@ class xtraParental(Renderer):
 						break
 				else:
 					evnt = event.getEventName()
-					evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt)
-					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
 					rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
 
 					if os.path.exists(rating_json):

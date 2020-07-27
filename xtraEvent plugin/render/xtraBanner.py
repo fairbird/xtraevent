@@ -39,8 +39,8 @@ class xtraBanner(Renderer):
 		try:
 			if event:
 				evnt = event.getEventName()
-				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt)
-				#evntNm = evntNm.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
+				
 				pstrNm = "{}xtraEvent/banner/{}.jpg".format(pathLoc, evntNm)
 				if not fileExists(pstrNm):
 					pstrNm = "/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/noCvr2.jpg"

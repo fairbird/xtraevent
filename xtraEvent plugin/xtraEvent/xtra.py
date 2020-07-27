@@ -348,7 +348,7 @@ class xtra(Screen, ConfigListScreen):
 				for i in range(int(n)):
 					title = events[i][4]
 					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
-					#evntNm = evntNm.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+					
 					open(pathLoc+"events","a+").write("%s\n" % str(evntNm))
 				
 				if os.path.exists(pathLoc+"events"):
@@ -969,7 +969,7 @@ class selBouquets(Screen):
 						for i in range(int(n)):
 							title = events[i][4]
 							evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
-							#evntNm = evntNm.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+							
 							open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
 					except:
 						pass

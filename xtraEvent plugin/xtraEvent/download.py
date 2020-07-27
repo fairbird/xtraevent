@@ -41,8 +41,7 @@ def currentChEpgs():
 
 			for i in range(int(n)):
 				title = events[i][4]
-				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
-				#evntNm = evntNm.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
 				open(pathLoc + "events", "a+").write("%s\n" %str(evntNm))
 
 			intCheck()
@@ -69,8 +68,7 @@ def selBouquets():
 				n = config.plugins.xtraEvent.searchNUMBER.value
 				for i in range(int(n)):
 					title = events[i][4]
-					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
-					#evntNm = evntNm.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
 					open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
 			except:
 				pass		
@@ -601,7 +599,6 @@ def extra_backdrop():
 
 			dwnldFile = "{}backdrop/{}.jpg".format(pathLoc, title)
 			if not os.path.isfile(dwnldFile):
-				# evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!|(\|)", "", title.replace(" ", "+"))
 				url = "http://capi.tvmovie.de/v1/broadcasts/search?q={}&page=1&rows=1".format(title.replace(" ", "+"))
 				try:
 					url = requests.get(url).json()['results'][0]['images'][0]['filepath']['android-image-320-180']
