@@ -40,8 +40,8 @@ class xtraInfos(Renderer, VariableText):
 		if event:
 			evnt = event.getEventName()
 			try:
-				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)", "", evnt)
-				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)", "", evnt)
+				#evntNm = evntNm.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
 				info_file = pathLoc + "{}".format(evntNm)
 				if os.path.exists(info_file):
 					with open(info_file, "r") as f:

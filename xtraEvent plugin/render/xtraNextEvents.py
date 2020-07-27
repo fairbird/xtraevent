@@ -13,8 +13,9 @@ from Components.AVSwitch import AVSwitch
 from Components.Pixmap import Pixmap
 from ServiceReference import ServiceReference
 from Components.config import config
+from Tools.Directories import fileExists
 import re
-import os
+# import os
 
 try:
 	from Plugins.Extensions.xtraEvent.xtra import xtra
@@ -62,6 +63,7 @@ class xtraNextEvents(Renderer):
 
 	def showEvents(self):
 		cevnt = ''
+		pstrNm = ''
 		try:
 			ref = self.source.service
 			events = self.epgcache.lookupEvent(['IBDCTM', (ref.toString(), 0, 1, -1)])
@@ -72,31 +74,31 @@ class xtraNextEvents(Renderer):
 		except:
 			pass
 		try:
-			evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", cevnt)
-			evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+			evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", cevnt)
+
 			pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
-			if os.path.exists(pstrNm):
-				size = self.instance.size()
-				self.picload = ePicLoad()
-				sc = AVSwitch().getFramebufferScale()
-				if self.picload:
-					self.picload.setPara((size.width(),
-					size.height(),
-					sc[0],
-					sc[1],
-					False,
-					1,
-					'#00000000'))
-				result = self.picload.startDecode(pstrNm, 0, 0, False)
-				if result == 0:
-					ptr = self.picload.getData()
-					if ptr != None:
-						self.instance.setPixmap(ptr)
-						self.instance.show()
+			if not fileExists(pstrNm):
+				pstrNm = "/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/noCvr2.jpg"
 			else:
-				noEvnt = "/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/plugin2.png"
-				self.instance.setPixmap(loadPNG(noEvnt))
-				self.instance.show()
+				pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
+			size = self.instance.size()
+			self.picload = ePicLoad()
+			sc = AVSwitch().getFramebufferScale()
+			if self.picload:
+				self.picload.setPara((size.width(),
+				size.height(),
+				sc[0],
+				sc[1],
+				False,
+				1,
+				'#00000000'))
+			result = self.picload.startDecode(pstrNm, 0, 0, False)
+			if result == 0:
+				ptr = self.picload.getData()
+				if ptr != None:
+					self.instance.setPixmap(ptr)
+					self.instance.show()
+			del self.picload
 		except:
 			self.instance.hide()
 		

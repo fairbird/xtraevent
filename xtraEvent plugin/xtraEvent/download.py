@@ -15,7 +15,6 @@ import socket
 import xtra
 from datetime import datetime
 
-
 tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
 epgcache = eEPGCache.getInstance()
 
@@ -28,7 +27,6 @@ def save():
 		currentChEpgs()
 	if config.plugins.xtraEvent.searchMOD.value == "Bouquets":
 		selBouquets()
-
 
 def currentChEpgs():
 	if os.path.exists(pathLoc + "events"):
@@ -43,8 +41,8 @@ def currentChEpgs():
 
 			for i in range(int(n)):
 				title = events[i][4]
-				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
-				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
+				#evntNm = evntNm.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
 				open(pathLoc + "events", "a+").write("%s\n" %str(evntNm))
 
 			intCheck()
@@ -71,14 +69,13 @@ def selBouquets():
 				n = config.plugins.xtraEvent.searchNUMBER.value
 				for i in range(int(n)):
 					title = events[i][4]
-					evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
-					evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
+					#evntNm = evntNm.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
 					open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
 			except:
 				pass		
 		intCheck()
 		download()
-
 
 def intCheck():
 	try:
@@ -92,7 +89,7 @@ def download():
 	now = datetime.now()
 	dt = now.strftime("%d/%m/%Y %H:%M:%S")
 	with open("/tmp/up_report", "a+") as f:
-		f.write(str("start : {}\n".format(dt)))
+		f.write(str("\nstart : {}\n".format(dt)))
 	try:
 		if intCheck():
 			if config.plugins.xtraEvent.poster.value == True:
@@ -117,28 +114,22 @@ def download():
 					tvdb_backdrop()
 				if config.plugins.xtraEvent.fanart.value == True:
 					fanart_backdrop()
-				if config.plugins.xtraEvent.bing.value == True:
-					bing_backdrop()
+				if config.plugins.xtraEvent.extra.value == True:
+					extra_backdrop()
 
 			if config.plugins.xtraEvent.info.value == True:
 				infos()
 		else:
-			Tools.Notifications.AddNotification(MessageBox, _("NO INTERNET CONNECTION !.."), MessageBox.TYPE_INFO, timeout = 5)
+			Tools.Notifications.AddNotification(MessageBox, _("NO INTERNET CONNECTION !.."), MessageBox.TYPE_INFO, timeout = 10)
 			return
 	except:
 		return
 # DOWNLOAD POSTERS ######################################################################################################
 
-
 def tmdb_Poster():
 	url = ""
 	dwnldFile = ""
-	year = ""
 	try:
-		if os.path.exists(pathLoc+"event-year"):
-			with open(pathLoc+"event-year", "r") as f:
-				year = f.read()
-				
 		if os.path.exists(pathLoc+"events"):
 			with open(pathLoc+"events", "r") as f:
 				titles = f.readlines()
@@ -153,8 +144,6 @@ def tmdb_Poster():
 					srch = "multi"
 					lang = config.plugins.xtraEvent.searchLang.value
 					url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}&language={}".format(srch, tmdb_api, quote(title), lang)
-					if year != "0":
-						url_tmdb += "&primary_release_year={}&year={}".format(year, year)
 					try:
 						poster = ""
 						poster = requests.get(url_tmdb).json()['results'][0]['poster_path']
@@ -172,8 +161,8 @@ def tmdb_Poster():
 			with open("/tmp/up_report", "a+") as f:
 				f.write("tmdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 		
-	except:
-		pass
+	except Exception as e:
+		open("/tmp/err","w").write(str(e))
 
 def tvdb_Poster():
 	url = ""
@@ -598,9 +587,7 @@ def fanart_backdrop():
 	except:
 		pass
 
-
-
-def bing_backdrop():
+def extra_backdrop():
 	if os.path.exists(pathLoc+"events"):
 		with open(pathLoc+"events", "r") as f:
 			titles = f.readlines()
@@ -611,31 +598,36 @@ def bing_backdrop():
 		for i in range(n):
 			title = titles[i]
 			title = title.strip()
+
 			dwnldFile = "{}backdrop/{}.jpg".format(pathLoc, title)
 			if not os.path.isfile(dwnldFile):
-				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!|(\|)", "", title.replace(" ", "+"))
-				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
-				url="https://www.bing.com/search?q={}+poster+jpg".format(evntNm)
-				headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
-				ff = requests.get(url, stream=True, headers=headers).text
+				# evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!|(\|)", "", title.replace(" ", "+"))
+				url = "http://capi.tvmovie.de/v1/broadcasts/search?q={}&page=1&rows=1".format(title.replace(" ", "+"))
+				try:
+					url = requests.get(url).json()['results'][0]['images'][0]['filepath']['android-image-320-180']
+				except:
+					try:
+						url="https://www.bing.com/search?q={}+poster+jpg".format(title.replace(" ", "+"))
+						headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
+						ff = requests.get(url, stream=True, headers=headers).text
+						p='ihk=\"\/th\?id=(.*?)&'
+						f= re.findall(p, ff)
+						url = "https://www.bing.com/th?id="+f[0]
+					except:
+						pass
+					
 
 				try:
-					p='ihk=\"\/th\?id=(.*?)&'
-					f= re.findall(p, ff)
-					url = "https://www.bing.com/th?id="+f[0]
-					# dwnldFile = "{}backdrop/{}.jpg".format(pathLoc, title)
 					w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
 					downloaded += 1
 					w.close()
-
 				except:
 					pass
 
 		now = datetime.now()
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
-			f.write("bing_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-
+			f.write("extra_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 
 # DOWNLOAD INFOS ######################################################################################################
 
@@ -674,4 +666,5 @@ def infos():
 		now = datetime.now()
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
-			f.write("infos end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+			f.write("infos end : {} (downloaded : {})\n\n".format(dt, str(downloaded)))
+

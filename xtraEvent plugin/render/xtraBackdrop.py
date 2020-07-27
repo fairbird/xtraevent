@@ -7,7 +7,7 @@ from Components.AVSwitch import AVSwitch
 from Components.Pixmap import Pixmap
 from Components.config import config
 import re
-import os
+from Tools.Directories import fileExists
 
 
 try:
@@ -35,35 +35,37 @@ class xtraBackdrop(Renderer):
 
 	def showBackdrop(self):
 		evntNm = ""
+		pstrNm = ""
 		try:
 			event = self.source.event
 			if event:
 				evnt = event.getEventName()
-				evntN = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt)
-				evntNm = evntN.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt)
+				#evntNm = evntNm.replace("Die ", "The ").replace("Das ", "The ").replace("und ", "and ").replace("LOS ", "The ").rstrip()
 				pstrNm = "{}xtraEvent/backdrop/{}.jpg".format(pathLoc, evntNm)
-
-				if os.path.exists(pstrNm):
-					size = self.instance.size()
-					self.picload = ePicLoad()
-					sc = AVSwitch().getFramebufferScale()
-					if self.picload:
-						self.picload.setPara((size.width(),
-						size.height(),
-						sc[0],
-						sc[1],
-						False,
-						1,
-						'#00000000'))
-					result = self.picload.startDecode(pstrNm, 0, 0, False)
-					if result == 0:
-						ptr = self.picload.getData()
-						if ptr != None:
-							self.instance.setPixmap(ptr)
-							self.instance.show()
-
+				if not fileExists(pstrNm):
+					pstrNm = "/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/noCvr2.jpg"
 				else:
-					self.instance.hide()
+					pstrNm = "{}xtraEvent/backdrop/{}.jpg".format(pathLoc, evntNm)
+				size = self.instance.size()
+				self.picload = ePicLoad()
+				sc = AVSwitch().getFramebufferScale()
+				if self.picload:
+					self.picload.setPara((size.width(),
+					size.height(),
+					sc[0],
+					sc[1],
+					False,
+					1,
+					'#00000000'))
+				result = self.picload.startDecode(pstrNm, 0, 0, False)
+				if result == 0:
+					ptr = self.picload.getData()
+					if ptr != None:
+						self.instance.setPixmap(ptr)
+						self.instance.show()
+				del self.picload
+
 			else:
 				self.instance.hide()
 		except:

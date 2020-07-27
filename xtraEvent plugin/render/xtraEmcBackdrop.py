@@ -6,7 +6,7 @@ from enigma import ePixmap, eTimer, loadJPG
 from Components.Sources.ServiceEvent import ServiceEvent
 from Components.Sources.CurrentService import CurrentService
 from Components.config import config
-import os
+from Tools.Directories import fileExists
 
 try:
 	from Plugins.Extensions.xtraEvent.xtra import xtra
@@ -19,7 +19,7 @@ class xtraEmcBackdrop(Renderer):
 	def __init__(self):
 		Renderer.__init__(self)
 		self.pstrNm = ''
-		self.evntNm = ''
+
 
 	GUI_WIDGET = ePixmap
 	def changed(self, what):
@@ -32,20 +32,17 @@ class xtraEmcBackdrop(Renderer):
 
 	def showBackdrop(self):
 		try:
-			from datetime import datetime
-			start_time = datetime.now()
 			service = self.source.getCurrentService()
 			if service:
 				evnt = service.getPath()
 				movieNm = evnt.split('-')[-1].split(".")[0].strip()
 				pstrNm = pathLoc + "xtraEvent/EMC/{}-backdrop.jpg".format(movieNm)
-				if os.path.exists(pstrNm):
+				if fileExists(pstrNm):
 					self.instance.setPixmap(loadJPG(pstrNm))
 					self.instance.show()
-					end_time = datetime.now()
 				else:
-					self.instance.hide()
-			open("/tmp/perEmc","w").write(str(end_time-start_time))
+					self.instance.setPixmap(loadJPG("/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/noMovie.jpg"))
+					self.instance.show()
 		except:
 			return
 
