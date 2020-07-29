@@ -371,10 +371,12 @@ class xtra(Screen, ConfigListScreen):
 		if os.path.exists(filepath):
 			lstdr = os.listdir(filepath)
 			for j in lstdr:
-				if os.path.isfile(filepath+"/"+j):
-					im = Image.open(filepath+"/"+j)
-					im.save(filepath+"/"+j, "JPEG", quality=75)
-				continue
+				try:
+					if os.path.isfile(filepath+"/"+j):
+						im = Image.open(filepath+"/"+j)
+						im.save(filepath+"/"+j, "JPEG", quality=75)
+				except:
+					pass
 
 			folder_size = sum([sum(map(lambda fname: os.path.getsize(os.path.join(filepath, fname)), files)) for filepath, folders, files in os.walk(filepath)])
 			new_size = "%0.1f" % (folder_size/(1024))
