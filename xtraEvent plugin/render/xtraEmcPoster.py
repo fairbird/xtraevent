@@ -38,28 +38,25 @@ class xtraEmcPoster(Renderer):
 				evnt = service.getPath()
 				movieNm = evnt.split('-')[-1].split(".")[0].strip()
 				pstrNm = "{}xtraEvent/EMC/{}-poster.jpg".format(pathLoc, movieNm)
-				if not fileExists(pstrNm):
-					pstrNm = "/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/noCvr.jpg"
-				else:
-					pstrNm = "{}xtraEvent/EMC/{}-poster.jpg".format(pathLoc, movieNm)
-				size = self.instance.size()
-				self.picload = ePicLoad()
-				sc = AVSwitch().getFramebufferScale()
-				if self.picload:
-					self.picload.setPara((size.width(),
-					size.height(),
-					sc[0],
-					sc[1],
-					False,
-					1,
-					'#00000000'))
-				result = self.picload.startDecode(pstrNm, 0, 0, False)
-				if result == 0:
-					ptr = self.picload.getData()
-					if ptr != None:
-						self.instance.setPixmap(ptr)
-						self.instance.show()
-				del self.picload
+				if fileExists(pstrNm):
+					size = self.instance.size()
+					self.picload = ePicLoad()
+					sc = AVSwitch().getFramebufferScale()
+					if self.picload:
+						self.picload.setPara((size.width(),
+						size.height(),
+						sc[0],
+						sc[1],
+						False,
+						1,
+						'#00000000'))
+					result = self.picload.startDecode(pstrNm, 0, 0, False)
+					if result == 0:
+						ptr = self.picload.getData()
+						if ptr != None:
+							self.instance.setPixmap(ptr)
+							self.instance.show()
+					del self.picload
 			else:
 				self.instance.hide()
 				return

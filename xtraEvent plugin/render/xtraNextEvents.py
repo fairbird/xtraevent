@@ -15,7 +15,7 @@ from ServiceReference import ServiceReference
 from Components.config import config
 from Tools.Directories import fileExists
 import re
-# import os
+
 
 try:
 	from Plugins.Extensions.xtraEvent.xtra import xtra
@@ -70,35 +70,37 @@ class xtraNextEvents(Renderer):
 			if events:
 				cevnt = events[self.nxEvnt][4]
 			else:
-				pass
+				self.instance.hide()
+				return
 		except:
-			pass
+			self.instance.hide()
+			return		
+
 		try:
 			evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", cevnt).rstrip()
-
 			pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
-			if not fileExists(pstrNm):
-				pstrNm = "/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/noCvr2.jpg"
+			if fileExists(pstrNm):	
+				size = self.instance.size()
+				self.picload = ePicLoad()
+				sc = AVSwitch().getFramebufferScale()
+				if self.picload:
+					self.picload.setPara((size.width(),
+					size.height(),
+					sc[0],
+					sc[1],
+					False,
+					1,
+					'#00000000'))
+				result = self.picload.startDecode(pstrNm, 0, 0, False)
+				if result == 0:
+					ptr = self.picload.getData()
+					if ptr != None:
+						self.instance.setPixmap(ptr)
+						self.instance.show()
+				del self.picload
 			else:
-				pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
-			size = self.instance.size()
-			self.picload = ePicLoad()
-			sc = AVSwitch().getFramebufferScale()
-			if self.picload:
-				self.picload.setPara((size.width(),
-				size.height(),
-				sc[0],
-				sc[1],
-				False,
-				1,
-				'#00000000'))
-			result = self.picload.startDecode(pstrNm, 0, 0, False)
-			if result == 0:
-				ptr = self.picload.getData()
-				if ptr != None:
-					self.instance.setPixmap(ptr)
-					self.instance.show()
-			del self.picload
+				self.instance.hide()
+				return
 		except:
 			self.instance.hide()
 		

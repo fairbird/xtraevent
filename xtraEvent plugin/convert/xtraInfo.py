@@ -8,9 +8,10 @@
 from Components.Converter.Converter import Converter
 from Components.Element import cached
 from Components.config import config
+from Tools.Directories import fileExists
 import re
 import json
-import os
+
 
 try:
 	from Plugins.Extensions.xtraEvent.xtra import xtra
@@ -51,9 +52,8 @@ class xtraInfo(Converter, object):
 			if self.types:
 				evntt = event.getEventName()
 				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
-
 				rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
-				if os.path.exists(rating_json):
+				if fileExists(rating_json):
 					with open(rating_json) as f:
 						read_json = json.load(f)
 					evnt = []

@@ -15,9 +15,15 @@ import socket
 import xtra
 from datetime import datetime
 
-tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
-epgcache = eEPGCache.getInstance()
+if config.plugins.xtraEvent.tmdbAPI.value != "":
+	tmdb_api = config.plugins.xtraEvent.tmdbAPI.value
+else:
+	tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
 
+
+
+
+epgcache = eEPGCache.getInstance()
 pathLoc = xtra.pathLocation().location()
 
 # open("/tmp/path","w").write(str(pathLoc))
@@ -41,7 +47,8 @@ def currentChEpgs():
 
 			for i in range(int(n)):
 				title = events[i][4]
-				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
+				evntNm = evntNm.rstrip()
 				open(pathLoc + "events", "a+").write("%s\n" %str(evntNm))
 
 			intCheck()
@@ -68,7 +75,8 @@ def selBouquets():
 				n = config.plugins.xtraEvent.searchNUMBER.value
 				for i in range(int(n)):
 					title = events[i][4]
-					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
+					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
+					evntNm = evntNm.rstrip()
 					open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
 			except:
 				pass		
@@ -205,40 +213,40 @@ def tvdb_Poster():
 	except:
 		pass
 
-def omdb_Poster():
-	url = ""
-	dwnldFile = ""
-	try:
-		if os.path.exists(pathLoc+"events"):
-			with open(pathLoc+"events", "r") as f:
-				titles = f.readlines()
+# def omdb_Poster():
+	# url = ""
+	# dwnldFile = ""
+	# try:
+		# if os.path.exists(pathLoc+"events"):
+			# with open(pathLoc+"events", "r") as f:
+				# titles = f.readlines()
 
-			titles = list(dict.fromkeys(titles))
-			n = len(titles)
-			downloaded = 0
-			for i in range(n):
-				title = titles[i]
-				title = title.strip()
-				dwnldFile = pathLoc + "poster/{}.jpg".format(title)
-				if not os.path.isfile(dwnldFile):
-					try:
-						omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
-						omdb_api = random.sample(omdb_apis, 1)[0]
-						url_omdb = 'https://www.omdbapi.com/?apikey=%s&t=%s' %(omdb_api, quote(title))
-						url = requests.get(url_omdb).json()['Poster']
-						if url:
-							w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
-							downloaded += 1
-							w.close()
-					except:
-						pass
+			# titles = list(dict.fromkeys(titles))
+			# n = len(titles)
+			# downloaded = 0
+			# for i in range(n):
+				# title = titles[i]
+				# title = title.strip()
+				# dwnldFile = pathLoc + "poster/{}.jpg".format(title)
+				# if not os.path.isfile(dwnldFile):
+					# try:
+						# omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
+						# omdb_api = random.sample(omdb_apis, 1)[0]
+						# url_omdb = 'https://www.omdbapi.com/?apikey=%s&t=%s' %(omdb_api, quote(title))
+						# url = requests.get(url_omdb).json()['Poster']
+						# if url:
+							# w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+							# downloaded += 1
+							# w.close()
+					# except:
+						# pass
 
-			now = datetime.now()
-			dt = now.strftime("%d/%m/%Y %H:%M:%S")
-			with open("/tmp/up_report", "a+") as f:
-				f.write("omdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-	except:
-		pass
+			# now = datetime.now()
+			# dt = now.strftime("%d/%m/%Y %H:%M:%S")
+			# with open("/tmp/up_report", "a+") as f:
+				# f.write("omdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+	# except:
+		# pass
 
 def maze_Poster():
 	url = ""
@@ -598,7 +606,7 @@ def extra_backdrop():
 			title = title.strip()
 
 			dwnldFile = "{}backdrop/{}.jpg".format(pathLoc, title)
-			if not os.path.isfile(dwnldFile):
+			if not os.path.exists(dwnldFile):
 				url = "http://capi.tvmovie.de/v1/broadcasts/search?q={}&page=1&rows=1".format(title.replace(" ", "+"))
 				try:
 					url = requests.get(url).json()['results'][0]['images'][0]['filepath']['android-image-320-180']
@@ -612,8 +620,6 @@ def extra_backdrop():
 						url = "https://www.bing.com/th?id="+f[0]
 					except:
 						pass
-					
-
 				try:
 					w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
 					downloaded += 1
@@ -624,7 +630,32 @@ def extra_backdrop():
 		now = datetime.now()
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
-			f.write("extra_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+			f.write("extra_backdrop(tvmovie+bing) end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+		downloaded = 0
+		for i in range(n):
+			title = titles[i]
+			title = title.strip()
+
+			dwnldFile = "{}backdrop/{}.jpg".format(pathLoc, title)
+			if not os.path.exists(dwnldFile):
+				try:
+					url = "https://www.google.com/search?q={}&tbm=isch&tbs=sbd:0".format(title.replace(" ", "+"))
+
+					headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
+					ff = requests.get(url, stream=True, headers=headers).text
+					p = re.findall('"https://(.*?).jpg",(\d*),(\d*)', ff)
+					url = "https://" + p[i+1][0] + ".jpg"
+
+					w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+					downloaded += 1
+					w.close()
+				except:
+					pass
+
+		now = datetime.now()
+		dt = now.strftime("%d/%m/%Y %H:%M:%S")
+		with open("/tmp/up_report", "a+") as f:
+			f.write("extra_backdrop(google) end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 
 # DOWNLOAD INFOS ######################################################################################################
 
@@ -649,8 +680,11 @@ def infos():
 					rc = re.compile('https://www.imdb.com/title/tt(\d*)', re.DOTALL)
 					imdb_id = "tt" + rc.search(ff).group(1)
 					if imdb_id:
-						omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
-						omdb_api = random.choice(omdb_apis)
+						if config.plugins.xtraEvent.omdbAPI.value != "":
+							omdb_api = config.plugins.xtraEvent.omdbAPI.value
+						else:
+							omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
+							omdb_api = random.choice(omdb_apis)
 						url_omdb = 'https://www.omdbapi.com/?apikey={}&i={}'.format(str(omdb_api), str(imdb_id))
 						info_json = requests.get(url_omdb).json()
 

@@ -4,11 +4,13 @@ from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
 from Components.Label import Label
 from Components.ActionMap import ActionMap
+from Screens.MessageBox import MessageBox
+import Tools.Notifications
 import os, re, random
 from Components.SelectionList import SelectionList, SelectionEntryComponent
 from Components.config import config, configfile, ConfigYesNo, ConfigSubsection, getConfigListEntry, ConfigSelection, ConfigText, ConfigInteger, ConfigSelectionNumber, ConfigDirectory
 from Components.ConfigList import ConfigListScreen
-from enigma import eTimer, eLabel, eServiceCenter, eServiceReference, eEPGCache, ePixmap, eSize, ePoint, loadJPG, iServiceInformation, eEPGCache, getBestPlayableServiceReference
+from enigma import eTimer, eLabel, eServiceCenter, eServiceReference, ePixmap, eSize, ePoint, loadJPG, iServiceInformation, eEPGCache, getBestPlayableServiceReference, getDesktop
 from Components.Sources.List import List
 from Components.Sources.StaticText import StaticText
 from Screens.VirtualKeyBoard import VirtualKeyBoard
@@ -17,7 +19,7 @@ from PIL import Image, ImageDraw, ImageFilter
 from Screens.LocationBox import LocationBox
 import requests
 
-
+desktop_size = getDesktop(0).size().width()
 epgcache = eEPGCache.getInstance()
 tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
 
@@ -32,6 +34,8 @@ config.plugins.xtraEvent.imgNmbr = ConfigSelectionNumber(0, 999, 1, default=1)
 
 config.plugins.xtraEvent.searchModManuel = ConfigSelection(default = "TV List", choices = [("TV List"), ("Movies List")])
 config.plugins.xtraEvent.EMCloc = ConfigDirectory(default='')
+config.plugins.xtraEvent.tmdbAPI = ConfigText(default="", visible_width=100, fixed_size=True)
+config.plugins.xtraEvent.omdbAPI = ConfigText(default="", visible_width=100, fixed_size=False)
 config.plugins.xtraEvent.searchMANUEL_EMC = ConfigText(default="movies name", visible_width=100, fixed_size=False)
 config.plugins.xtraEvent.searchMANUEL = ConfigText(default="event name", visible_width=100, fixed_size=False)
 config.plugins.xtraEvent.searchLang = ConfigText(default="en", visible_width=100, fixed_size=False)
@@ -100,11 +104,12 @@ config.plugins.xtraEvent.PB = ConfigSelection(default="posters", choices = [
 	("backdrops", "Backdrop")])
 
 config.plugins.xtraEvent.imgs = ConfigSelection(default="TMDB", choices = [
-	('TMDB', 'TMDB'),
-	('TVDB', 'TVDB'),
-	('FANART', 'FANART'),
-	('IMDB(poster)', 'IMDB(poster)'),
-	('EXTRA(backdrop)', 'EXTRA(backdrop)')])
+	('TMDB', 'TMDB'), 
+	('TVDB', 'TVDB'), 
+	('FANART', 'FANART'), 
+	('IMDB(poster)', 'IMDB(poster)'), 
+	('Bing', 'Bing'), 
+	('Google', 'Google')])
 
 config.plugins.xtraEvent.searchType = ConfigSelection(default="tv", choices = [
 	('tv', 'TV'), 
@@ -115,24 +120,48 @@ config.plugins.xtraEvent.FanartSearchType = ConfigSelection(default="tv", choice
 	('tv', 'TV'),
 	('movies', 'MOVIE')])
 	
-
+  # <ePixmap position="0,0" size="1280,720" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/xtra_hd.png" transparent="1" />
 
 class xtra(Screen, ConfigListScreen):
-	skin = """
-  <screen name="xtra" position="0,0" size="1280,720" title="xtraEvent v1" flags="wfNoBorder">
-    <ePixmap position="0,0" size="1280,720" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/bckg.png" transparent="1" />
-    <widget source="Title" render="Label" position="40,35" size="745,40" font="Console; 30" foregroundColor="csd_sel" backgroundColor="un23262e" transparent="1" />
-    <widget name="config" position="40,95" size="745,510" itemHeight="30" font="Regular;24" foregroundColor="csd_sel" scrollbarMode="showOnDemand" transparent="1" backgroundColor="un23262e" backgroundColorSelected="#565d6d" foregroundColorSelected="#ffffff" />
-    <widget source="help" position="840,600" size="400,26" render="Label" font="Regular;22" foregroundColor="unf3fc92" backgroundColor="un23262e" halign="left" valign="center" transparent="1" />
-    <widget name="status" position="840,300" size="400,30" transparent="1" font="Regular;22" foregroundColor="un92f1fc" backgroundColor="un23262e" />
-    <widget name="info" position="840,330" size="400,260" transparent="1" font="Regular;22" foregroundColor="csd_sel" backgroundColor="un23262e" halign="left" valign="top" />
-    <widget source="key_red" render="Label" font="Regular;22" foregroundColor="csd_sel" backgroundColor="un23262e" position="45,640" size="170,30" halign="left" transparent="1" zPosition="1" />
-    <widget source="key_green" render="Label" font="Regular;22" foregroundColor="csd_sel" backgroundColor="un23262e" position="235,640" size="170,30" halign="left" transparent="1" zPosition="1" />
-    <widget source="key_yellow" render="Label" font="Regular;22" foregroundColor="csd_sel" backgroundColor="un23262e" position="425,640" size="170,30" halign="left" transparent="1" zPosition="1" />
-    <widget source="key_blue" render="Label" font="Regular; 20" foregroundColor="csd_sel" backgroundColor="un23262e" position="615,640" size="170,30" halign="left" transparent="1" zPosition="1" />
-    <eLabel name="" text="v1" position="840, 35" size="400, 40" transparent="1" halign="center" font="Console; 30" backgroundColor="background" />
-  </screen>
-	"""
+	if desktop_size <= 1280:
+		skin = """
+<screen name="xtra" position="0,0" size="1280,720" title="xtraEvent v1" flags="wfNoBorder" backgroundColor="transparent">
+  <ePixmap position="0,0" size="1280,720" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/xtra_hd.png" transparent="1" />
+  <widget source="Title" render="Label" position="40,35" size="745,40" font="Console; 30" foregroundColor="#c5c5c5" backgroundColor="#23262e" transparent="1" />
+  <widget name="config" position="40,95" size="745,510" itemHeight="30" font="Regular;24" foregroundColor="#c5c5c5" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#23262e" backgroundColorSelected="#565d6d" foregroundColorSelected="#ffffff" />
+  <widget source="help" position="840,600" size="400,26" render="Label" font="Regular;22" foregroundColor="#f3fc92" backgroundColor="#23262e" halign="left" valign="center" transparent="1" />
+  <widget name="status" position="840,300" size="400,30" transparent="1" font="Regular;22" foregroundColor="#92f1fc" backgroundColor="#23262e" />
+  <widget name="info" position="840,330" size="400,260" transparent="1" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" halign="left" valign="top" />
+  <widget source="key_red" render="Label" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="45,640" size="170,30" halign="left" transparent="1" zPosition="1" />
+  <widget source="key_green" render="Label" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="235,640" size="170,30" halign="left" transparent="1" zPosition="1" />
+  <widget source="key_yellow" render="Label" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="425,640" size="170,30" halign="left" transparent="1" zPosition="1" />
+  <widget source="key_blue" render="Label" font="Regular; 20" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="615,640" size="170,30" halign="left" transparent="1" zPosition="1" />
+  <widget source="global.CurrentTime" render="Label" position="839,40" size="400,30" font="Console; 25" valign="center" halign="center" transparent="1" foregroundColor="#c5c5c5" backgroundColor="#23262e" zPosition="2">
+    <convert type="ClockToText">Default</convert>
+  </widget>
+  <eLabel name="" text=" INFO" position="1150,640" size="100,30" transparent="1" halign="center" font="Console; 20" />
+</screen>
+		"""
+
+	else:
+		skin = """
+<screen name="xtra" position="0,0" size="1920,1080" title="xtraEvent v1" flags="wfNoBorder" backgroundColor="transparent">
+  <ePixmap position="0,0" size="1920,1080" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/xtra_fhd.png" transparent="1" />
+  <widget source="Title" render="Label" position="60,53" size="1118,60" font="Console; 45" foregroundColor="#c5c5c5" backgroundColor="#23262e" transparent="1" />
+  <widget name="config" position="60,143" size="1118,765" itemHeight="45" font="Regular;36" foregroundColor="#c5c5c5" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#23262e" backgroundColorSelected="#565d6d" foregroundColorSelected="#ffffff" />
+  <widget source="help" position="1260,900" size="600,39" render="Label" font="Regular;33" foregroundColor="#f3fc92" backgroundColor="#23262e" halign="left" valign="center" transparent="1" />
+  <widget name="status" position="1260,450" size="600,45" transparent="1" font="Regular;33" foregroundColor="#92f1fc" backgroundColor="#23262e" />
+  <widget name="info" position="1260,495" size="600,390" transparent="1" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" halign="left" valign="top" />
+  <widget source="key_red" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="68,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+  <widget source="key_green" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="353,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+  <widget source="key_yellow" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="638,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+  <widget source="key_blue" render="Label" font="Regular; 30" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="923,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+  <widget source="global.CurrentTime" render="Label" position="1259,60" size="600,45" font="Console; 38" valign="center" halign="center" transparent="1" foregroundColor="#c5c5c5" backgroundColor="#23262e" zPosition="2">
+    <convert type="ClockToText">Default</convert>
+  </widget>
+  <eLabel name="" text=" INFO" position="1725,960" size="150,45" transparent="1" halign="center" font="Console; 30" />
+</screen>
+		"""
 
 	def __init__(self, session):
 		self.session = session
@@ -141,7 +170,7 @@ class xtra(Screen, ConfigListScreen):
 		self.epgcache = eEPGCache.getInstance()
 
 		list = []
-		ConfigListScreen.__init__(self, list)
+		ConfigListScreen.__init__(self, list, session=session)
 
 		self['key_red'] = Label(_('Close'))
 		self['key_green'] = Label(_('Search'))
@@ -245,6 +274,8 @@ class xtra(Screen, ConfigListScreen):
 			list.append(getConfigListEntry("    OPTIMIZE IMAGES", config.plugins.xtraEvent.opt_Images, _("optimize images...")))
 			if config.plugins.xtraEvent.opt_Images.value:
 				list.append(getConfigListEntry("\tOPTIMIZE IMAGES SELECT", config.plugins.xtraEvent.cnfgSel, _("'OK' select for optimize images...")))
+			list.append(getConfigListEntry("    TMDB API", config.plugins.xtraEvent.tmdbAPI, _("enter your own api key...")))
+			list.append(getConfigListEntry("    OMDB API", config.plugins.xtraEvent.omdbAPI, _("enter your own api key...")))
 			list.append(getConfigListEntry("—"*100))
 # config_________________________________________________________________________________________________________________
 			list.append(getConfigListEntry("    SEARCH MODE", config.plugins.xtraEvent.searchMOD, _("select search mode...")))		
@@ -253,7 +284,9 @@ class xtra(Screen, ConfigListScreen):
 			list.append(getConfigListEntry("    TIMER", config.plugins.xtraEvent.timerMod, _("select timer update for events..")))
 			if config.plugins.xtraEvent.timerMod.value == True:
 				list.append(getConfigListEntry("\tTIMER(hours)", config.plugins.xtraEvent.timer, _("..."),))
-			list.append(getConfigListEntry("—"*100))
+		list.append(getConfigListEntry("—"*100))
+		list.append(getConfigListEntry("IMAGE SOURCES"))
+		list.append(getConfigListEntry("—"*100))
 
 # poster__________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("POSTER", config.plugins.xtraEvent.poster, _("...")))
@@ -289,9 +322,9 @@ class xtra(Screen, ConfigListScreen):
 				list.append(getConfigListEntry("_"*100))
 			list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart, _("source for backdrop...")))
 			if config.plugins.xtraEvent.fanart.value:
-				list.append(getConfigListEntry("\tFANART BACKDROP SIZE", config.plugins.xtraEvent.FANART_Poster_Resize, _("Choose backdrop sizes for FANART")))
+				list.append(getConfigListEntry("\tFANART BACKDROP SIZE", config.plugins.xtraEvent.FANART_Backdrop_Resize, _("Choose backdrop sizes for FANART")))
 				list.append(getConfigListEntry("_"*100))
-			list.append(getConfigListEntry("\tEXTRA", config.plugins.xtraEvent.extra, _("source for backdrop...")))
+			list.append(getConfigListEntry("\tEXTRA", config.plugins.xtraEvent.extra, _("tvmovie.de, bing, google search images...")))
 			list.append(getConfigListEntry("—"*100))
 # info___________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("INFO", config.plugins.xtraEvent.info, _("Program information with OMDB...")))
@@ -347,7 +380,7 @@ class xtra(Screen, ConfigListScreen):
 				n = config.plugins.xtraEvent.searchNUMBER.value
 				for i in range(int(n)):
 					title = events[i][4]
-					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
+					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title).rstrip()
 					
 					open(pathLoc+"events","a+").write("%s\n" % str(evntNm))
 				
@@ -397,9 +430,10 @@ class xtra(Screen, ConfigListScreen):
 		self.close()
 
 class manuelSearch(Screen, ConfigListScreen):
-	skin = """
+	if desktop_size <= 1280:
+		skin = """
   <screen name="manuelSearch" position="center,center" size="1280,720" title="Manuel Search..." backgroundColor="#ffffff" flags="wfNoBorder">
-	<ePixmap position="0,0" size="1280,720" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/bckg.png" transparent="1" />
+	<ePixmap position="0,0" size="1280,720" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/xtra_hd.png" transparent="1" />
     <widget source="Title" render="Label" position="40,40" size="745,40" font="Console; 30" foregroundColor="#c5c5c5" backgroundColor="#23262e" transparent="1" />
 	<widget source="session.CurrentService" render="Label" position="40,80" size="638,40" zPosition="2" font="Console; 30" transparent="1" backgroundColor="#23262e" valign="center">
 		<convert type="ServiceName">Name</convert>
@@ -416,7 +450,27 @@ class manuelSearch(Screen, ConfigListScreen):
     <eLabel name="" position="40,120" size="745, 1" backgroundColor="#898989" />
     <eLabel name="" position="840,675" size="400, 1" backgroundColor="#898989" />
   </screen>
-  """
+		"""
+	else:
+		skin = """
+  <screen name="manuelSearch" position="center,center" size="1920,1080" title="Manuel Search..." backgroundColor="#ffffff" flags="wfNoBorder">
+	<ePixmap position="0,0" size="1920,1080" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/xtra_fhd.png" transparent="1" />
+    <widget source="Title" render="Label" position="60,60" size="1118,60" font="Console; 45" foregroundColor="#c5c5c5" backgroundColor="#23262e" transparent="1" />
+	<widget source="session.CurrentService" render="Label" position="60,120" size="957,60" zPosition="2" font="Console; 45" transparent="1" backgroundColor="#23262e" valign="center">
+		<convert type="ServiceName">Name</convert>
+	</widget>
+	<widget name="config" position="60,225" size="1118,825" itemHeight="45" font="Regular;36" foregroundColor="#c5c5c5" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#23262e" backgroundColorSelected="#565d6d" foregroundColorSelected="#ffffff" />
+    <widget name="status" position="60,840" size="1118,90" transparent="1" font="Regular;36" foregroundColor="#92f1fc" backgroundColor="#23262e" />
+    <widget name="info" position="1260,960" size="600,45" transparent="1" font="Regular;33" halign="center" foregroundColor="#c5c5c5" backgroundColor="#23262e" />
+    <widget name="Picture" position="1260,480" size="278,417" zPosition="5" transparent="1" />
+	<widget source="key_red" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="60,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+    <widget source="key_green" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="345,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+    <widget source="key_yellow" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="630,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+    <widget source="key_blue" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="915,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+    <eLabel name="" position="60,180" size="1118, 2" backgroundColor="#898989" />
+    <eLabel name="" position="1260,1013" size="600, 2" backgroundColor="#898989" />
+  </screen>			
+		"""
 
 	def __init__(self, session):
 		Screen.__init__(self, session)
@@ -426,7 +480,7 @@ class manuelSearch(Screen, ConfigListScreen):
 		self.evnt = ""
 
 		list = []
-		ConfigListScreen.__init__(self, list)
+		ConfigListScreen.__init__(self, list, session=session)
 
 		self.setTitle(_("Manuel Search Events..."))
 		self["key_red"] = StaticText(_("Exit"))
@@ -443,7 +497,7 @@ class manuelSearch(Screen, ConfigListScreen):
 				"ok": self.keyOK,
 				"green": self.mnlSrch,
 				"yellow": self.append,
-				"blue": self.vk,
+				"blue": self.vk
 			}, -2)
 		
 		self['status'] = Label()
@@ -452,9 +506,10 @@ class manuelSearch(Screen, ConfigListScreen):
 		
 
 		self.timer = eTimer()
-		self.timer.callback.append(self.msList)
-		self.timer.callback.append(self.pc)
+		# self.timer.callback.append(self.msList)
+		# self.timer.callback.append(self.pc)
 		self.onLayoutFinish.append(self.msList)
+
 
 	def keyOK(self):
 		if self['config'].getCurrent()[1] is config.plugins.xtraEvent.EMCloc:
@@ -599,8 +654,10 @@ class manuelSearch(Screen, ConfigListScreen):
 					self.fanart()
 				if config.plugins.xtraEvent.imgs.value == "IMDB(poster)":
 					self.imdb()
-				if config.plugins.xtraEvent.imgs.value == "EXTRA(backdrop)":
-					self.extra_backdrop()
+				if config.plugins.xtraEvent.imgs.value == "Bing":
+					self.bing()
+				if config.plugins.xtraEvent.imgs.value == "Google":
+					self.google()
 
 			if config.plugins.xtraEvent.PB.value == "backdrops":
 				if config.plugins.xtraEvent.imgs.value == "TMDB":
@@ -609,8 +666,10 @@ class manuelSearch(Screen, ConfigListScreen):
 					self.tvdb()
 				if config.plugins.xtraEvent.imgs.value == "FANART":
 					self.fanart()
-				if config.plugins.xtraEvent.imgs.value == "EXTRA(backdrop)":
-					self.extra_backdrop()
+				if config.plugins.xtraEvent.imgs.value == "Bing":
+					self.bing()
+				if config.plugins.xtraEvent.imgs.value == "Google":
+					self.google()
 
 	def pc(self):
 		try:
@@ -620,15 +679,24 @@ class manuelSearch(Screen, ConfigListScreen):
 			if config.plugins.xtraEvent.imgs.value == "IMDB(poster)":
 				self.path = pathLoc + "mSearch/{}-poster-1.jpg".format(self.title)
 			self["Picture"].instance.setPixmap(loadJPG(self.path))
-			
-			if self.pb == "posters":
-				self["Picture"].instance.setScale(1)
-				self["Picture"].instance.resize(eSize(185,278))
-				self["Picture"].instance.move(ePoint(930,325))
+			if desktop_size <= 1280:
+				if self.pb == "posters":
+					self["Picture"].instance.setScale(1)
+					self["Picture"].instance.resize(eSize(185,278))
+					self["Picture"].instance.move(ePoint(930,325))
+				else:
+					self["Picture"].instance.setScale(1)
+					self["Picture"].instance.resize(eSize(300,170))
+					self["Picture"].instance.move(ePoint(890,375))
 			else:
-				self["Picture"].instance.setScale(1)
-				self["Picture"].instance.resize(eSize(300,170))
-				self["Picture"].instance.move(ePoint(890,375))
+				if self.pb == "posters":
+					self["Picture"].instance.setScale(1)
+					self["Picture"].instance.resize(eSize(185,278))
+					self["Picture"].instance.move(ePoint(1450,550))
+				else:
+					self["Picture"].instance.setScale(1)
+					self["Picture"].instance.resize(eSize(300,170))
+					self["Picture"].instance.move(ePoint(1400,600))				
 
 			self['Picture'].show()
 			self.inf()
@@ -673,7 +741,7 @@ class manuelSearch(Screen, ConfigListScreen):
 				if config.plugins.xtraEvent.searchModManuel.value == "TV List":
 					target = pathLoc + "backdrop/{}.jpg".format(self.title)
 					if config.plugins.xtraEvent.imgs.value == "bing":
-						evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", self.title)
+						evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", self.title).rstrip()
 						target = pathLoc + "backdrop/{}.jpg".format(evntNm)
 				else:
 					target = pathLoc + "EMC/{}-backdrop.jpg".format(self.title)
@@ -697,7 +765,8 @@ class manuelSearch(Screen, ConfigListScreen):
 		except:
 			return
 
-	def tmdb(self):
+	def tmdb(self): 
+		
 		try:
 			self.srch = config.plugins.xtraEvent.searchType.value
 			self.year = config.plugins.xtraEvent.searchMANUELyear.value
@@ -723,9 +792,9 @@ class manuelSearch(Screen, ConfigListScreen):
 					open(dwnldFile, 'wb').write(requests.get(url_poster, stream=True, allow_redirects=True).content)
 					dwnldFile_tot = i+1
 					self['status'].setText(_("Download : {}".format(str(dwnldFile_tot))))
+					
 		except:
 			return
-
 
 	def tvdb(self):
 		try:
@@ -819,7 +888,6 @@ class manuelSearch(Screen, ConfigListScreen):
 		except:
 			pass
 
-
 	def imdb(self):
 		try:
 			from requests.utils import quote
@@ -837,34 +905,67 @@ class manuelSearch(Screen, ConfigListScreen):
 		except:
 			pass
 
-	def extra_backdrop(self):
-		url = "http://capi.tvmovie.de/v1/broadcasts/search?q={}&page=1&rows=1".format(self.title.replace(" ", "+"))
+	def bing(self):
 		try:
-			url = requests.get(url).json()['results'][0]['images'][0]['filepath']['android-image-320-180']
-			dwnldFile = pathLoc + "mSearch/{}-poster-1.jpg".format(self.title)
-			w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
-			self['status'].setText(_("Download : 1"))
-			w.close()
+			url="https://www.bing.com/search?q={}+poster+jpg".format(self.title.replace(" ", "+"))
+			headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
+			ff = requests.get(url, stream=True, headers=headers).text
+
+			p = re.findall('ihk=\"\/th\?id=(.*?)&', ff)
+			n = len(p)
+
+			for i in range(n):
+				url = "https://www.bing.com/th?id={}".format(p[i])
+				dwnldFile = pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
+				open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+				dwnldFile_tot = i+1
+				self['status'].setText(_("Download : {}".format(str(dwnldFile_tot))))
 		except:
-			try:
-				url="https://www.bing.com/search?q={}+poster+jpg".format(self.title.replace(" ", "+"))
-				headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
-				ff = requests.get(url, stream=True, headers=headers).text
-				p='ihk=\"\/th\?id=(.*?)&'
-				f= re.findall(p, ff)
-				n = len(f)
+			pass
 
-				for i in range(n):
-					url = "https://www.bing.com/th?id={}".format(f[i])
-					dwnldFile = pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
-					open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
-					dwnldFile_tot = i+1
-					self['status'].setText(_("Download : {}".format(str(dwnldFile_tot))))
-			except:
-				pass
+	def google(self):
+		try:
+			url = "https://www.google.com/search?q={}&tbm=isch&tbs=sbd:0".format(self.title.replace(" ", "+"))
+			headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
+			ff = requests.get(url, stream=True, headers=headers).text
+			p = re.findall('"https://(.*?).jpg",(\d*),(\d*)', ff)
+			for i in range(9):
+				url = "https://" + p[i+1][0] + ".jpg"
+				dwnldFile = pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
+				open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+				dwnldFile_tot = i+1
+				self['status'].setText(_("Download : {}".format(str(dwnldFile_tot))))
+			
+		except:
+			pass
+	
+	def msgg(self):
+		self.session.open(msg)
+	
+class msg(Screen):
 
+	skin = """<screen name="dp" position="830,130" zPosition="10" size="250,30" title="dp..." backgroundColor="#31000000" >
+			<widget name="message_label" font="Regular;24" position="0,0" zPosition="2" valign="center" halign="center" size="250,30" backgroundColor="#31000000" transparent="1" />
+		</screen>"""
 
+	def __init__(self, session):
+		Screen.__init__(self, session)
 
+		self["actions"] = ActionMap(["OkCancelActions"], {"cancel": self.cancel, "ok": self.cancel}, -1)
+
+		self['message_label'] = Label(_("Starting"))
+		self.Timer = eTimer()
+		self.Timer.callback.append(self.prg)
+		self.Timer.start(100)
+
+	def prg(self):
+		self['message_label'].setText(_("eeeeeee"))
+
+	def end(self):
+		self['message_label'].setText(_("xxxxxxxxxxxx"))
+
+	def cancel(self):
+		self.close()
 # self['status'].setText(_(str(e)))
 # self['info'].setText(_(str(e)))
 def bqtList():
@@ -902,9 +1003,10 @@ def chList(bqtNm):
 	return
 
 class selBouquets(Screen):
-	skin = """
+	if desktop_size <= 1280:
+		skin = """
   <screen name="selBouquets" position="center,center" size="1280,720" title="xtraEvent v1" backgroundColor="#ffffff">
-    <ePixmap position="0,0" size="1280,720" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/bckg.png" transparent="1" />
+    <ePixmap position="0,0" size="1280,720" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/xtra_hd.png" transparent="1" />
     <widget source="Title" render="Label" position="40,35" size="745,40" font="Console; 30" foregroundColor="#c5c5c5" backgroundColor="#23262e" transparent="1" />
     <widget name="list" position="40,95" size="745,510" itemHeight="30" font="Regular;24" foregroundColor="#c5c5c5" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#23262e" backgroundColorSelected="#565d6d" foregroundColorSelected="#ffffff" />
 
@@ -915,9 +1017,24 @@ class selBouquets(Screen):
     <widget source="key_yellow" render="Label" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="420,640" size="170,30" halign="left" transparent="1" zPosition="1" />
     <widget source="key_blue" render="Label" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="610,640" size="170,30" halign="left" transparent="1" zPosition="1" />
 
-    <eLabel name="" text="v1" position="840, 35" size="400, 40" transparent="1" halign="center" font="Console; 30" backgroundColor="background" />
+    <eLabel name="" text="v1" position="840, 35" size="400, 40" transparent="1" halign="center" font="Console; 30" backgroundColor="#0023262e" />
   </screen>
-	"""
+		"""
+	else:
+		skin = """
+  <screen name="selBouquets" position="center,center" size="1920,1080" title="xtraEvent v1" backgroundColor="#ffffff">
+    <ePixmap position="0,0" size="1920,1080" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/xtra_fhd.png" transparent="1" />
+    <widget source="Title" render="Label" position="60,53" size="1118,60" font="Console; 45" foregroundColor="#c5c5c5" backgroundColor="#23262e" transparent="1" />
+    <widget name="list" position="60,143" size="1118,765" itemHeight="45" font="Regular;36" foregroundColor="#c5c5c5" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#23262e" backgroundColorSelected="#565d6d" foregroundColorSelected="#ffffff" />
+    <widget name="status" position="1260,450" size="600,45" transparent="1" font="Regular;33" foregroundColor="#92f1fc" backgroundColor="#23262e" />
+    <widget name="info" position="1260,495" size="600,405" transparent="1" font="Regular;15" foregroundColor="#c5c5c5" backgroundColor="#23262e" halign="left" valign="top" />
+    <widget source="key_red" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="60,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+    <widget source="key_green" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="345,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+    <widget source="key_yellow" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="630,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+    <widget source="key_blue" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="915,960" size="255,45" halign="left" transparent="1" zPosition="1" />
+    <eLabel name="" text="v1" position="1260, 53" size="600, 60" transparent="1" halign="center" font="Console; 45" backgroundColor="#0023262e" />
+  </screen>
+		"""		
 
 	def __init__(self, session):
 		self.session = session
@@ -970,7 +1087,7 @@ class selBouquets(Screen):
 						n = config.plugins.xtraEvent.searchNUMBER.value
 						for i in range(int(n)):
 							title = events[i][4]
-							evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
+							evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title).rstrip()
 							
 							open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
 					except:

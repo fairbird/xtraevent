@@ -6,8 +6,8 @@ from Renderer import Renderer
 from enigma import ePixmap, eTimer, loadPNG
 from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN
 from Components.config import config
+from Tools.Directories import fileExists
 import re
-import os
 import json
 
 try:
@@ -53,7 +53,7 @@ class xtraParental(Renderer):
 					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
 					rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
 
-					if os.path.exists(rating_json):
+					if fileExists(rating_json):
 						with open(rating_json) as f:
 							prate = json.load(f)['Rated']
 

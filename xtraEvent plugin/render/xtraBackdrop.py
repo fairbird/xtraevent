@@ -6,8 +6,9 @@ from enigma import ePixmap, ePicLoad, eTimer
 from Components.AVSwitch import AVSwitch
 from Components.Pixmap import Pixmap
 from Components.config import config
-import re
 from Tools.Directories import fileExists
+import re
+
 
 
 try:
@@ -42,31 +43,31 @@ class xtraBackdrop(Renderer):
 				evnt = event.getEventName()
 				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
 				pstrNm = "{}xtraEvent/backdrop/{}.jpg".format(pathLoc, evntNm)
-				if not fileExists(pstrNm):
-					pstrNm = "/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/noCvr2.jpg"
+				if fileExists(pstrNm):
+					size = self.instance.size()
+					self.picload = ePicLoad()
+					sc = AVSwitch().getFramebufferScale()
+					if self.picload:
+						self.picload.setPara((size.width(),
+						size.height(),
+						sc[0],
+						sc[1],
+						False,
+						1,
+						'#00000000'))
+					result = self.picload.startDecode(pstrNm, 0, 0, False)
+					if result == 0:
+						ptr = self.picload.getData()
+						if ptr != None:
+							self.instance.setPixmap(ptr)
+							self.instance.show()
+					del self.picload
 				else:
-					pstrNm = "{}xtraEvent/backdrop/{}.jpg".format(pathLoc, evntNm)
-				size = self.instance.size()
-				self.picload = ePicLoad()
-				sc = AVSwitch().getFramebufferScale()
-				if self.picload:
-					self.picload.setPara((size.width(),
-					size.height(),
-					sc[0],
-					sc[1],
-					False,
-					1,
-					'#00000000'))
-				result = self.picload.startDecode(pstrNm, 0, 0, False)
-				if result == 0:
-					ptr = self.picload.getData()
-					if ptr != None:
-						self.instance.setPixmap(ptr)
-						self.instance.show()
-				del self.picload
-
+					self.instance.hide()
+					return
 			else:
 				self.instance.hide()
+				return
 		except:
 			self.instance.hide()
 			return
