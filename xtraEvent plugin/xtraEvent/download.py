@@ -15,11 +15,27 @@ import socket
 import xtra
 from datetime import datetime
 
+
 if config.plugins.xtraEvent.tmdbAPI.value != "":
 	tmdb_api = config.plugins.xtraEvent.tmdbAPI.value
 else:
 	tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
 
+if config.plugins.xtraEvent.tvdbAPI.value != "":
+	tvdb_api = config.plugins.xtraEvent.tvdbAPI.value
+else:
+	tvdb_api = "a99d487bb3426e5f3a60dea6d3d3c7ef"
+
+if config.plugins.xtraEvent.fanartAPI.value != "":
+	fanart_api = config.plugins.xtraEvent.fanartAPI.value
+else:
+	fanart_api = "6d231536dea4318a88cb2520ce89473b"
+
+if config.plugins.xtraEvent.omdbAPI.value != "":
+	omdb_api = config.plugins.xtraEvent.omdbAPI.value
+else:
+	omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
+	omdb_api = random.choice(omdb_apis)
 
 
 
@@ -192,7 +208,7 @@ def tvdb_Poster():
 						url_read = requests.get(url_tvdb).text
 						series_id = re.findall('<seriesid>(.*?)</seriesid>', url_read)[0]
 						if series_id:
-							url_tvdb = "https://thetvdb.com/api/a99d487bb3426e5f3a60dea6d3d3c7ef/series/{}/en".format(series_id)
+							url_tvdb = "https://thetvdb.com/api/{}/series/{}/en".format(tvdb_api, series_id)
 							url_read = requests.get(url_tvdb).text
 							poster = re.findall('<poster>(.*?)</poster>', url_read)[0]
 
@@ -317,7 +333,7 @@ def fanart_Poster():
 							tvdb_id = (mj['externals']['thetvdb'])
 							if tvdb_id:
 								try:
-									url_fanart = "https://webservice.fanart.tv/v3/%s/%s?api_key=6d231536dea4318a88cb2520ce89473b" %(m_type, tvdb_id)
+									url_fanart = "https://webservice.fanart.tv/v3/{}/{}?api_key={}".format(m_type, tvdb_id, tvdb_api)
 									fjs = requests.get(url_fanart).json()
 									if fjs:
 										if m_type == "movies":
@@ -392,7 +408,7 @@ def Banner():
 									m_type = (bnnr['results'][0]['media_type']) + "s"
 								else:
 									mm_type = m_type
-								url_fanart = "https://webservice.fanart.tv/v3/%s/%s?api_key=6d231536dea4318a88cb2520ce89473b" %(m_type, tmdb_id)
+								url_fanart = "https://webservice.fanart.tv/v3/{}/{}?api_key={}".format(m_type, tmdb_id, fanart_api)
 								fjs = requests.get(url_fanart).json()
 								if fjs:
 									if m_type == "movies":
@@ -424,7 +440,7 @@ def Banner():
 
 									if series_id:
 										try:
-											url_fanart = "https://webservice.fanart.tv/v3/%s/%s?api_key=6d231536dea4318a88cb2520ce89473b" %(m_type, series_id)
+											url_fanart = "https://webservice.fanart.tv/v3/{}/{}?api_key={}".format(m_type, series_id, fanart_api)
 											fjs = requests.get(url_fanart).json()
 											if fjs:
 												if m_type == "movies":
@@ -507,7 +523,7 @@ def tvdb_backdrop():
 						url_read = requests.get(url_tvdb).text
 						series_id = re.findall('<seriesid>(.*?)</seriesid>', url_read)[0]
 						if series_id:
-							url_tvdb = "https://thetvdb.com/api/a99d487bb3426e5f3a60dea6d3d3c7ef/series/{}/en".format(series_id)
+							url_tvdb = "https://thetvdb.com/api/{}/series/{}/en".format(tvdb_api, series_id)
 							url_read = requests.get(url_tvdb).text
 							backdrop = re.findall('<fanart>(.*?)</fanart>', url_read)[0]
 							if backdrop:
@@ -566,7 +582,7 @@ def fanart_backdrop():
 							if tvdb_id:
 								try:
 									
-									url_fanart = "https://webservice.fanart.tv/v3/%s/%s?api_key=6d231536dea4318a88cb2520ce89473b" %(m_type, tvdb_id)
+									url_fanart = "https://webservice.fanart.tv/v3/{}/{}?api_key={}" %(m_type, tvdb_id, fanart_api)
 									fjs = requests.get(url_fanart).json()
 									
 									if fjs:
@@ -680,11 +696,6 @@ def infos():
 					rc = re.compile('https://www.imdb.com/title/tt(\d*)', re.DOTALL)
 					imdb_id = "tt" + rc.search(ff).group(1)
 					if imdb_id:
-						if config.plugins.xtraEvent.omdbAPI.value != "":
-							omdb_api = config.plugins.xtraEvent.omdbAPI.value
-						else:
-							omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
-							omdb_api = random.choice(omdb_apis)
 						url_omdb = 'https://www.omdbapi.com/?apikey={}&i={}'.format(str(omdb_api), str(imdb_id))
 						info_json = requests.get(url_omdb).json()
 

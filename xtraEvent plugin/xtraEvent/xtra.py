@@ -21,7 +21,10 @@ import requests
 
 desktop_size = getDesktop(0).size().width()
 epgcache = eEPGCache.getInstance()
-tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
+
+
+
+
 
 config.plugins.xtraEvent = ConfigSubsection()
 config.plugins.xtraEvent.loc = ConfigDirectory(default='')
@@ -34,8 +37,12 @@ config.plugins.xtraEvent.imgNmbr = ConfigSelectionNumber(0, 999, 1, default=1)
 
 config.plugins.xtraEvent.searchModManuel = ConfigSelection(default = "TV List", choices = [("TV List"), ("Movies List")])
 config.plugins.xtraEvent.EMCloc = ConfigDirectory(default='')
-config.plugins.xtraEvent.tmdbAPI = ConfigText(default="", visible_width=100, fixed_size=True)
+
+config.plugins.xtraEvent.tmdbAPI = ConfigText(default="", visible_width=100, fixed_size=False)
+config.plugins.xtraEvent.tvdbAPI = ConfigText(default="", visible_width=100, fixed_size=False)
 config.plugins.xtraEvent.omdbAPI = ConfigText(default="", visible_width=100, fixed_size=False)
+config.plugins.xtraEvent.fanartAPI = ConfigText(default="", visible_width=100, fixed_size=False)
+
 config.plugins.xtraEvent.searchMANUEL_EMC = ConfigText(default="movies name", visible_width=100, fixed_size=False)
 config.plugins.xtraEvent.searchMANUEL = ConfigText(default="event name", visible_width=100, fixed_size=False)
 config.plugins.xtraEvent.searchLang = ConfigText(default="en", visible_width=100, fixed_size=False)
@@ -275,7 +282,9 @@ class xtra(Screen, ConfigListScreen):
 			if config.plugins.xtraEvent.opt_Images.value:
 				list.append(getConfigListEntry("\tOPTIMIZE IMAGES SELECT", config.plugins.xtraEvent.cnfgSel, _("'OK' select for optimize images...")))
 			list.append(getConfigListEntry("    TMDB API", config.plugins.xtraEvent.tmdbAPI, _("enter your own api key...")))
+			list.append(getConfigListEntry("    TVDB API", config.plugins.xtraEvent.tvdbAPI, _("enter your own api key...")))
 			list.append(getConfigListEntry("    OMDB API", config.plugins.xtraEvent.omdbAPI, _("enter your own api key...")))
+			list.append(getConfigListEntry("    FANART API", config.plugins.xtraEvent.fanartAPI, _("enter your own api key...")))
 			list.append(getConfigListEntry("—"*100))
 # config_________________________________________________________________________________________________________________
 			list.append(getConfigListEntry("    SEARCH MODE", config.plugins.xtraEvent.searchMOD, _("select search mode...")))		
@@ -299,7 +308,7 @@ class xtra(Screen, ConfigListScreen):
 			if config.plugins.xtraEvent.tvdb.value :
 				list.append(getConfigListEntry("\tTVDB POSTER SIZE", config.plugins.xtraEvent.TVDBpostersize, _("Choose poster sizes for TVDB")))
 				list.append(getConfigListEntry("_"*100))
-			list.append(getConfigListEntry("\tOMDB", config.plugins.xtraEvent.omdb, _("source for info event...")))
+			# list.append(getConfigListEntry("\tOMDB", config.plugins.xtraEvent.omdb, _("source for info event...")))
 			list.append(getConfigListEntry("\tMAZE(TV SHOWS)", config.plugins.xtraEvent.maze, _("source for tv shows...")))
 			list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart, _("source for poster...")))	
 			if config.plugins.xtraEvent.fanart.value:
@@ -506,8 +515,8 @@ class manuelSearch(Screen, ConfigListScreen):
 		
 
 		self.timer = eTimer()
-		# self.timer.callback.append(self.msList)
-		# self.timer.callback.append(self.pc)
+		self.timer.callback.append(self.msList)
+		self.timer.callback.append(self.pc)
 		self.onLayoutFinish.append(self.msList)
 
 
@@ -771,12 +780,12 @@ class manuelSearch(Screen, ConfigListScreen):
 			self.srch = config.plugins.xtraEvent.searchType.value
 			self.year = config.plugins.xtraEvent.searchMANUELyear.value
 			from requests.utils import quote
-			url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key=3c3efcf47c3577558812bb9d64019d65&query={}".format(self.srch, quote(self.title))
+			url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(self.srch, tmdb_api, quote(self.title))
 			if self.year != 0:
 				url_tmdb += "&primary_release_year={}&year={}".format(self.year, self.year)
 			
 			id = requests.get(url_tmdb).json()['results'][0]['id']
-			url = "https://api.themoviedb.org/3/{}/{}?api_key=3c3efcf47c3577558812bb9d64019d65&append_to_response=images".format(self.srch, int(id))
+			url = "https://api.themoviedb.org/3/{}/{}?api_key={}&append_to_response=images".format(self.srch, int(id), tmdb_api)
 			if config.plugins.xtraEvent.searchLang.value != "":
 				url += "&language={}".format(config.plugins.xtraEvent.searchLang.value)
 			if config.plugins.xtraEvent.PB.value == "posters":
@@ -843,7 +852,7 @@ class manuelSearch(Screen, ConfigListScreen):
 			else:
 				try:
 					self.year = config.plugins.xtraEvent.searchMANUELyear.value
-					url_tmdb = "https://api.themoviedb.org/3/search/movie?api_key=3c3efcf47c3577558812bb9d64019d65&query={}".format(quote(self.title))
+					url_tmdb = "https://api.themoviedb.org/3/search/movie?api_key={}&query={}".format(tmdb_api, quote(self.title))
 					if self.year != 0:
 						url_tmdb += "&primary_release_year={}&year={}".format(self.year, self.year)
 					id = requests.get(url_tmdb).json()['results'][0]['id']
@@ -852,7 +861,7 @@ class manuelSearch(Screen, ConfigListScreen):
 
 			try:
 				m_type = config.plugins.xtraEvent.FanartSearchType.value
-				url_fanart = "https://webservice.fanart.tv/v3/{}/{}?api_key=6d231536dea4318a88cb2520ce89473b".format(m_type, id)
+				url_fanart = "https://webservice.fanart.tv/v3/{}/{}?api_key={}".format(m_type, id, fanart_api)
 				fjs = requests.get(url_fanart).json()
 
 				for i in range(99):
@@ -1132,3 +1141,14 @@ class pathLocation():
 
 		return pathLoc
 pathLoc = pathLocation().location()
+
+
+if config.plugins.xtraEvent.tmdbAPI.value != "":
+	tmdb_api = config.plugins.xtraEvent.tmdbAPI.value
+else:
+	tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
+
+if config.plugins.xtraEvent.fanartAPI.value != "":
+	fanart_api = config.plugins.xtraEvent.fanartAPI.value
+else:
+	fanart_api = "6d231536dea4318a88cb2520ce89473b"
