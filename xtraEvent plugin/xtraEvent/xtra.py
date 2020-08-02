@@ -22,10 +22,6 @@ import requests
 desktop_size = getDesktop(0).size().width()
 epgcache = eEPGCache.getInstance()
 
-
-
-
-
 config.plugins.xtraEvent = ConfigSubsection()
 config.plugins.xtraEvent.loc = ConfigDirectory(default='')
 config.plugins.xtraEvent.searchMOD = ConfigSelection(default = "Current Channel", choices = [("Bouquets"), ("Current Channel")])
@@ -50,7 +46,7 @@ config.plugins.xtraEvent.timerMod = ConfigYesNo(default = False)
 
 config.plugins.xtraEvent.tmdb = ConfigYesNo(default = False)
 config.plugins.xtraEvent.tvdb = ConfigYesNo(default = False)
-config.plugins.xtraEvent.omdb = ConfigYesNo(default = False)
+# config.plugins.xtraEvent.omdb = ConfigYesNo(default = False)
 config.plugins.xtraEvent.maze = ConfigYesNo(default = False)
 config.plugins.xtraEvent.fanart = ConfigYesNo(default = False)
 config.plugins.xtraEvent.bing = ConfigYesNo(default = False)
@@ -126,8 +122,6 @@ config.plugins.xtraEvent.searchType = ConfigSelection(default="tv", choices = [
 config.plugins.xtraEvent.FanartSearchType = ConfigSelection(default="tv", choices = [
 	('tv', 'TV'),
 	('movies', 'MOVIE')])
-	
-  # <ePixmap position="0,0" size="1280,720" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/xtra_hd.png" transparent="1" />
 
 class xtra(Screen, ConfigListScreen):
 	if desktop_size <= 1280:
@@ -775,7 +769,6 @@ class manuelSearch(Screen, ConfigListScreen):
 			return
 
 	def tmdb(self): 
-		
 		try:
 			self.srch = config.plugins.xtraEvent.searchType.value
 			self.year = config.plugins.xtraEvent.searchMANUELyear.value
@@ -919,10 +912,8 @@ class manuelSearch(Screen, ConfigListScreen):
 			url="https://www.bing.com/search?q={}+poster+jpg".format(self.title.replace(" ", "+"))
 			headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
 			ff = requests.get(url, stream=True, headers=headers).text
-
 			p = re.findall('ihk=\"\/th\?id=(.*?)&', ff)
 			n = len(p)
-
 			for i in range(n):
 				url = "https://www.bing.com/th?id={}".format(p[i])
 				dwnldFile = pathLoc + "mSearch/{}-{}-{}.jpg".format(self.title, self.pb, i+1)
@@ -944,39 +935,9 @@ class manuelSearch(Screen, ConfigListScreen):
 				open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
 				dwnldFile_tot = i+1
 				self['status'].setText(_("Download : {}".format(str(dwnldFile_tot))))
-			
 		except:
 			pass
-	
-	def msgg(self):
-		self.session.open(msg)
-	
-class msg(Screen):
 
-	skin = """<screen name="dp" position="830,130" zPosition="10" size="250,30" title="dp..." backgroundColor="#31000000" >
-			<widget name="message_label" font="Regular;24" position="0,0" zPosition="2" valign="center" halign="center" size="250,30" backgroundColor="#31000000" transparent="1" />
-		</screen>"""
-
-	def __init__(self, session):
-		Screen.__init__(self, session)
-
-		self["actions"] = ActionMap(["OkCancelActions"], {"cancel": self.cancel, "ok": self.cancel}, -1)
-
-		self['message_label'] = Label(_("Starting"))
-		self.Timer = eTimer()
-		self.Timer.callback.append(self.prg)
-		self.Timer.start(100)
-
-	def prg(self):
-		self['message_label'].setText(_("eeeeeee"))
-
-	def end(self):
-		self['message_label'].setText(_("xxxxxxxxxxxx"))
-
-	def cancel(self):
-		self.close()
-# self['status'].setText(_(str(e)))
-# self['info'].setText(_(str(e)))
 def bqtList():
 	bouquets = []
 	serviceHandler = eServiceCenter.getInstance()
@@ -1141,7 +1102,6 @@ class pathLocation():
 
 		return pathLoc
 pathLoc = pathLocation().location()
-
 
 if config.plugins.xtraEvent.tmdbAPI.value != "":
 	tmdb_api = config.plugins.xtraEvent.tmdbAPI.value

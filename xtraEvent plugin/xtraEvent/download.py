@@ -38,11 +38,9 @@ else:
 	omdb_api = random.choice(omdb_apis)
 
 
-
 epgcache = eEPGCache.getInstance()
 pathLoc = xtra.pathLocation().location()
 
-# open("/tmp/path","w").write(str(pathLoc))
 
 def save():
 	if config.plugins.xtraEvent.searchMOD.value == "Current Channel":
@@ -709,4 +707,3 @@ def infos():
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
 			f.write("infos end : {} (downloaded : {})\n\n".format(dt, str(downloaded)))
-

@@ -16,13 +16,11 @@ from Components.config import config
 from Tools.Directories import fileExists
 import re
 
-
 try:
 	from Plugins.Extensions.xtraEvent.xtra import xtra
 	pathLoc = config.plugins.xtraEvent.loc.value
 except:
 	pass
-
 
 class xtraNextEvents(Renderer):
 
@@ -31,7 +29,6 @@ class xtraNextEvents(Renderer):
 
 		self.pstrNm = ''
 		self.evntNm = ''
-		
 		self.nxEvnt = 0
 		self.nxEvntUsed = ""
 		self.epgcache = eEPGCache.getInstance()
@@ -56,8 +53,6 @@ class xtraNextEvents(Renderer):
 				self.instance.hide()
 			if what[0] != self.CHANGED_CLEAR:
 				self.delay()
-
-
 		except:
 			pass
 

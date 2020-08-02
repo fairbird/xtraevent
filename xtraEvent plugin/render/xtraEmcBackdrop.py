@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # by digiteng...07.2020
-# <widget source="Service" render="xtraEmcBackdrop" position="0,0" size="1920,1080" zPosition="0"
+# <widget source="Service" render="xtraEmcBackdrop" position="0,0" size="1280,720" zPosition="0"
 from Renderer import Renderer
 from enigma import ePixmap, eTimer, loadJPG
 from Components.Sources.ServiceEvent import ServiceEvent
@@ -19,7 +19,6 @@ class xtraEmcBackdrop(Renderer):
 	def __init__(self):
 		Renderer.__init__(self)
 		self.pstrNm = ''
-
 
 	GUI_WIDGET = ePixmap
 	def changed(self, what):

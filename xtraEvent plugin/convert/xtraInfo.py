@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # by digiteng...07.2020
 
-# <widget source="session.Event_Now" render="Label" position="50,545" size="930,40" font="Regular; 32" halign="left" transparent="1" zPosition="2" backgroundColor="back_color" valign="center">
-  	# <convert type="xtraInfo">Title,Year</convert>
+# <widget source="session.Event_Now" render="Label" position="50,545" size="930,400" font="Regular; 32" halign="left" transparent="1" zPosition="2" backgroundColor="back_color" valign="center">
+  	# <convert type="xtraInfo">Title,Year,Description</convert>
 # </widget>
 
 from Components.Converter.Converter import Converter
@@ -11,7 +11,6 @@ from Components.config import config
 from Tools.Directories import fileExists
 import re
 import json
-
 
 try:
 	from Plugins.Extensions.xtraEvent.xtra import xtra
@@ -140,5 +139,3 @@ class xtraInfo(Converter, object):
 		else:
 			return ""
 	text = property(getText)
-
-

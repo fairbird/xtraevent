@@ -15,7 +15,6 @@ try:
 except:
 	pass
 
-
 class xtraPoster(Renderer):
 
 	def __init__(self):

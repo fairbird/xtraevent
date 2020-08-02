@@ -9,11 +9,6 @@ import threading
 import xtra
 import download
 
-
-
-# if os.path.exists("/tmp/up_report"):
-	# os.remove("/tmp/up_report")
-
 def ddwn():
     download.save()
     if config.plugins.xtraEvent.timerMod.value == True:
@@ -22,7 +17,6 @@ def ddwn():
         t.start()
 
 threading.Timer(60, ddwn).start()
-
 
 def main(session, **kwargs):
 	reload(xtra)
@@ -35,4 +29,4 @@ def main(session, **kwargs):
 		traceback.print_exc()
 
 def Plugins(**kwargs):
-	return [PluginDescriptor(name="xtraEvent", description="xtraEvent plugin...", where = PluginDescriptor.WHERE_PLUGINMENU, icon="plugin.png", fnc=main)]
+	return [PluginDescriptor(name="xtraEvent", description="extra event material and info...", where = PluginDescriptor.WHERE_PLUGINMENU, icon="plugin.png", fnc=main)]

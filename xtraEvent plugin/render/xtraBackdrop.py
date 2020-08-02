@@ -9,8 +9,6 @@ from Components.config import config
 from Tools.Directories import fileExists
 import re
 
-
-
 try:
 	from Plugins.Extensions.xtraEvent.xtra import xtra
 	pathLoc = config.plugins.xtraEvent.loc.value

@@ -25,9 +25,7 @@ class xtraStar(VariableValue, Renderer):
 		self.__start = 0
 		self.__end = 100
 
-
 	GUI_WIDGET = eSlider
-
 	def changed(self, what):
 		rtng = None
 		if what[0] == self.CHANGED_CLEAR:
