@@ -1,3 +1,4 @@
+from __future__ import print_function
 # PiconUni
 # Copyright (c) 2boom 2012-16
 # 
@@ -76,7 +77,7 @@ class PiconUni(Renderer):
 			if not what[0] is self.CHANGED_CLEAR:
 				sname = self.source.text
 				sname = sname.upper().replace('.', '').replace('\xc2\xb0', '')
-				print sname
+				print(sname)
 				#if sname.startswith('4097'):
 				if not sname.startswith('1'):
 					sname = sname.replace('4097', '1', 1).replace('5001', '1', 1).replace('5002', '1', 1)
