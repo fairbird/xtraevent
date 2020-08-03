@@ -37,10 +37,8 @@ else:
 	omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
 	omdb_api = random.choice(omdb_apis)
 
-
 epgcache = eEPGCache.getInstance()
 pathLoc = xtra.pathLocation().location()
-
 
 def save():
 	if config.plugins.xtraEvent.searchMOD.value == "Current Channel":
@@ -117,8 +115,7 @@ def download():
 					tmdb_Poster()
 				if config.plugins.xtraEvent.tvdb.value == True:
 					tvdb_Poster()
-				if config.plugins.xtraEvent.omdb.value == True:
-					omdb_Poster()
+
 				if config.plugins.xtraEvent.maze.value == True:
 					maze_Poster()
 				if config.plugins.xtraEvent.fanart.value == True:
@@ -160,7 +157,7 @@ def tmdb_Poster():
 				title = titles[i]
 				title = title.strip()
 				dwnldFile = pathLoc + "poster/{}.jpg".format(title)
-				if not os.path.isfile(dwnldFile):				
+				if not os.path.exists(dwnldFile):				
 					srch = "multi"
 					lang = config.plugins.xtraEvent.searchLang.value
 					url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}&language={}".format(srch, tmdb_api, quote(title), lang)
@@ -200,7 +197,7 @@ def tvdb_Poster():
 				title = titles[i]
 				title = title.strip()
 				dwnldFile = pathLoc + "poster/{}.jpg".format(title)
-				if not os.path.isfile(dwnldFile):
+				if not os.path.exists(dwnldFile):
 					try:
 						url_tvdb = "https://thetvdb.com/api/GetSeries.php?seriesname={}".format(quote(title))
 						url_read = requests.get(url_tvdb).text
@@ -227,75 +224,38 @@ def tvdb_Poster():
 	except:
 		pass
 
-# def omdb_Poster():
-	# url = ""
-	# dwnldFile = ""
-	# try:
-		# if os.path.exists(pathLoc+"events"):
-			# with open(pathLoc+"events", "r") as f:
-				# titles = f.readlines()
-
-			# titles = list(dict.fromkeys(titles))
-			# n = len(titles)
-			# downloaded = 0
-			# for i in range(n):
-				# title = titles[i]
-				# title = title.strip()
-				# dwnldFile = pathLoc + "poster/{}.jpg".format(title)
-				# if not os.path.isfile(dwnldFile):
-					# try:
-						# omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
-						# omdb_api = random.sample(omdb_apis, 1)[0]
-						# url_omdb = 'https://www.omdbapi.com/?apikey=%s&t=%s' %(omdb_api, quote(title))
-						# url = requests.get(url_omdb).json()['Poster']
-						# if url:
-							# w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
-							# downloaded += 1
-							# w.close()
-					# except:
-						# pass
-
-			# now = datetime.now()
-			# dt = now.strftime("%d/%m/%Y %H:%M:%S")
-			# with open("/tmp/up_report", "a+") as f:
-				# f.write("omdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-	# except:
-		# pass
-
 def maze_Poster():
-	url = ""
-	dwnldFile = ""
-	try:
-		if os.path.exists(pathLoc+"events"):
-			with open(pathLoc+"events", "r") as f:
-				titles = f.readlines()
+	# open("/tmp/maze","a+").write("{}".format(str("eeeee")))
+	if os.path.exists(pathLoc+"events"):
+		with open(pathLoc+"events", "r") as f:
+			titles = f.readlines()
 
-			titles = list(dict.fromkeys(titles))
-			n = len(titles)
-			downloaded = 0
-			for i in range(n):
-				title = titles[i]
-				title = title.strip()
-				dwnldFile = pathLoc + "poster/{}.jpg".format(title)
-				if not os.path.isfile(dwnldFile):		
-					url_maze = "http://api.tvmaze.com/search/shows?q={}".format(quote(title))
-					try:
-						url = requests.get(url_maze).json()[0]['show']['image']['medium']
+		titles = list(dict.fromkeys(titles))
+		n = len(titles)
+		downloaded = 0
+		for i in range(n):
+			title = titles[i]
+			title = title.strip()
+			
+			dwnldFile = pathLoc + "poster/{}.jpg".format(title)
+			url = "http://api.tvmaze.com/search/shows?q={}".format(quote(title))
+			try:
+				url = requests.get(url).json()
+				url = url[0]['show']['image']['medium']
+				if url:
+					w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+					downloaded += 1
+					w.close()
+			except:
+				pass
 
-						w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
-						downloaded += 1
-						w.close()
-					except:
-						pass
-
-			now = datetime.now()
-			dt = now.strftime("%d/%m/%Y %H:%M:%S")
-			with open("/tmp/up_report", "a+") as f:
-				f.write("maze_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-	except:
-		return
+		now = datetime.now()
+		dt = now.strftime("%d/%m/%Y %H:%M:%S")
+		with open("/tmp/up_report", "a+") as f:
+			f.write("maze_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 
 def fanart_Poster():
+	# pass
 	url = ""
 	dwnldFile = ""
 	try:
@@ -311,6 +271,7 @@ def fanart_Poster():
 				title = title.strip()
 				
 				dwnldFile = pathLoc + "poster/{}.jpg".format(title)
+				
 				if not os.path.exists(dwnldFile):				
 					try:
 						srch = "multi"
@@ -324,15 +285,13 @@ def fanart_Poster():
 							else:
 								mm_type = m_type
 							
-
-
-							url_maze = "http://api.tvmaze.com/singlesearch/shows?q=%s" %quote(title)
+							url_maze = "http://api.tvmaze.com/singlesearch/shows?q={}".format(quote(title))
 							mj = requests.get(url_maze).json()
 							tvdb_id = (mj['externals']['thetvdb'])
 							if tvdb_id:
 								try:
-									url_fanart = "https://webservice.fanart.tv/v3/{}/{}?api_key={}".format(m_type, tvdb_id, tvdb_api)
-									fjs = requests.get(url_fanart).json()
+									url = "https://webservice.fanart.tv/v3/{}/{}?api_key={}".format(m_type, tvdb_id, fanart_api)
+									fjs = requests.get(url).json()
 									if fjs:
 										if m_type == "movies":
 											mm_type = (bnnr['results'][0]['media_type'])
@@ -340,16 +299,16 @@ def fanart_Poster():
 											mm_type = m_type
 										url = (fjs['tvposter'][0]['url'])
 										if url:
-
+											# print url
 											w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
 											downloaded += 1
-											w.close()
-											
+
 											scl = 1
 											im = Image.open(dwnldFile)
-											scl = config.plugins.xtraEvent.FANARTresize.value
+											scl = config.plugins.xtraEvent.FANART_Poster_Resize.value
 											im1 = im.resize((im.size[0] // int(scl), im.size[1] // int(scl)), Image.ANTIALIAS)
 											im1.save(dwnldFile)
+											w.close()
 
 								except:
 									pass
@@ -379,7 +338,7 @@ def Banner():
 			title = titles[i]
 			title = title.strip()
 			dwnldFile = pathLoc + "banner/{}.jpg".format(title)
-			if not os.path.isfile(dwnldFile):			
+			if not os.path.exists(dwnldFile):			
 				try:
 					url_tvdb = "https://thetvdb.com/api/GetSeries.php?seriesname=%s" %quote(title)
 					url_read = requests.get(url_tvdb).text			
@@ -395,7 +354,7 @@ def Banner():
 				except:
 					try:
 						dwnldFile = pathLoc + "banner/{}.jpg".format(title)
-						if not os.path.isfile(dwnldFile):
+						if not os.path.exists(dwnldFile):
 							srch = "multi"
 							url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote(title))
 							bnnr = requests.get(url_tmdb).json()
@@ -421,7 +380,7 @@ def Banner():
 					except:
 						try:
 							dwnldFile = pathLoc + "banner/{}.jpg".format(title)
-							if not os.path.isfile(dwnldFile):
+							if not os.path.exists(dwnldFile):
 								url_maze = "http://api.tvmaze.com/singlesearch/shows?q=%s" %(title)
 								mj = requests.get(url_maze).json()
 								poster = (mj['externals']['thetvdb'])
@@ -478,7 +437,7 @@ def tmdb_backdrop():
 				title = titles[i]
 				title = title.strip()
 				dwnldFile = pathLoc + "backdrop/{}.jpg".format(title)
-				if not os.path.isfile(dwnldFile):				
+				if not os.path.exists(dwnldFile):				
 					srch = "multi"
 					lang = config.plugins.xtraEvent.searchLang.value
 					url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}&language={}".format(srch, tmdb_api, quote(title), lang)
@@ -515,7 +474,7 @@ def tvdb_backdrop():
 				title = titles[i]
 				title = title.strip()
 				dwnldFile = pathLoc + "backdrop/{}.jpg".format(title)
-				if not os.path.isfile(dwnldFile):
+				if not os.path.exists(dwnldFile):
 					try:
 						url_tvdb = "https://thetvdb.com/api/GetSeries.php?seriesname={}".format(quote(title))
 						url_read = requests.get(url_tvdb).text
@@ -561,40 +520,41 @@ def fanart_backdrop():
 				if not os.path.exists(dwnldFile):				
 					try:
 						srch = "multi"
-						url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote(title))
-						bnnr = requests.get(url_tmdb).json()
-						tmdb_id = (bnnr['results'][0]['id'])
+						url = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote(title))
+						bckdrp = requests.get(url).json()
+						tmdb_id = (bckdrp['results'][0]['id'])
 						if tmdb_id:
-							m_type = (bnnr['results'][0]['media_type'])
+							m_type = (bckdrp['results'][0]['media_type'])
 							if m_type == "movie":
-								m_type = (bnnr['results'][0]['media_type']) + "s"
+								m_type = (bckdrp['results'][0]['media_type']) + "s"
 							else:
 								mm_type = m_type
-							
 
-
-							url_maze = "http://api.tvmaze.com/singlesearch/shows?q=%s" %quote(title)
-							
-							mj = requests.get(url_maze).json()
-							tvdb_id = (mj['externals']['thetvdb'])
+							url = "http://api.tvmaze.com/singlesearch/shows?q=%s" %quote(title)
+							bckdrp = requests.get(url).json()
+							tvdb_id = (bckdrp['externals']['thetvdb'])
 							if tvdb_id:
 								try:
 									
-									url_fanart = "https://webservice.fanart.tv/v3/{}/{}?api_key={}" %(m_type, tvdb_id, fanart_api)
-									fjs = requests.get(url_fanart).json()
+									url = "https://webservice.fanart.tv/v3/{}/{}?api_key={}" %(m_type, tvdb_id, fanart_api)
+									bckdrp = requests.get(url).json()
 									
-									if fjs:
+									if bckdrp:
 										if m_type == "movies":
-											mm_type = (bnnr['results'][0]['media_type'])
+											mm_type = (bckdrp['results'][0]['media_type'])
 										else:
 											mm_type = m_type
-										url = (fjs['tvthumb'][0]['url'])
-
+										url = (bckdrp['tvthumb'][0]['url'])
 										if url:
-
 											w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
 											downloaded += 1
 											w.close()
+											
+											scl = 1
+											im = Image.open(dwnldFile)
+											scl = config.plugins.xtraEvent.FANART_Backdrop_Resize.value
+											im1 = im.resize((im.size[0] // int(scl), im.size[1] // int(scl)), Image.ANTIALIAS)
+											im1.save(dwnldFile)
 
 								except:
 									pass
