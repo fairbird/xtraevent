@@ -129,10 +129,8 @@ class xtraInfo(Converter, object):
 									totalSeasons = read_json["totalSeasons"]
 									if totalSeasons:
 										evnt.append("totalSeasons : {}".format(totalSeasons))
-
 								else:
 									return ""
-
 						return "\n".join(evnt)
 					except:
 						return ""

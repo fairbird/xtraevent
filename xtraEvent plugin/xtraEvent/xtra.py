@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020, 07.2020, 08.2020
+# by digiteng...06.2020, 07.2020,
 from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
 from Components.Label import Label

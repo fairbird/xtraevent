@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020, 07.2020,08.2020
+# by digiteng...06.2020, 07.2020,
 
 from Components.AVSwitch import AVSwitch
 from enigma import eEPGCache
