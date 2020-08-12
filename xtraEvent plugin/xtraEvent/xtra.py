@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020, 07.2020,
+# by digiteng...06.2020, 07.2020, 08.2020
 from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
 from Components.Label import Label
@@ -302,13 +302,11 @@ class xtra(Screen, ConfigListScreen):
 			if config.plugins.xtraEvent.tvdb.value :
 				list.append(getConfigListEntry("\tTVDB POSTER SIZE", config.plugins.xtraEvent.TVDBpostersize, _("Choose poster sizes for TVDB")))
 				list.append(getConfigListEntry("_"*100))
-			# list.append(getConfigListEntry("\tOMDB", config.plugins.xtraEvent.omdb, _("source for info event...")))
-			list.append(getConfigListEntry("\tMAZE(TV SHOWS)", config.plugins.xtraEvent.maze, _("source for tv shows...")))
 			list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart, _("source for poster...")))	
 			if config.plugins.xtraEvent.fanart.value:
 				list.append(getConfigListEntry("\tFANART POSTER SIZE", config.plugins.xtraEvent.FANART_Poster_Resize, _("Choose poster sizes for FANART")))
 				list.append(getConfigListEntry("—"*100))
-
+			list.append(getConfigListEntry("\tMAZE(TV SHOWS)", config.plugins.xtraEvent.maze, _("source for tv shows...")))
 # banner__________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("BANNER", config.plugins.xtraEvent.banner, _("tvdb and fanart for BANNER...")))
 
@@ -383,7 +381,7 @@ class xtra(Screen, ConfigListScreen):
 				n = config.plugins.xtraEvent.searchNUMBER.value
 				for i in range(int(n)):
 					title = events[i][4]
-					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title).rstrip()
+					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title).rstrip().lower()
 					
 					open(pathLoc+"events","a+").write("%s\n" % str(evntNm))
 				
@@ -451,7 +449,7 @@ class manuelSearch(Screen, ConfigListScreen):
     <widget source="key_yellow" render="Label" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="420,640" size="170,30" halign="left" transparent="1" zPosition="1" />
     <widget source="key_blue" render="Label" font="Regular;22" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="610,640" size="170,30" halign="left" transparent="1" zPosition="1" />
     <eLabel name="" position="40,120" size="745, 1" backgroundColor="#898989" />
-    <eLabel name="" position="840,675" size="400, 1" backgroundColor="#898989" />
+
   </screen>
 		"""
 	else:
@@ -471,7 +469,7 @@ class manuelSearch(Screen, ConfigListScreen):
     <widget source="key_yellow" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="630,960" size="255,45" halign="left" transparent="1" zPosition="1" />
     <widget source="key_blue" render="Label" font="Regular;33" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="915,960" size="255,45" halign="left" transparent="1" zPosition="1" />
     <eLabel name="" position="60,180" size="1118, 2" backgroundColor="#898989" />
-    <eLabel name="" position="1260,1013" size="600, 2" backgroundColor="#898989" />
+
   </screen>			
 		"""
 
@@ -733,6 +731,7 @@ class manuelSearch(Screen, ConfigListScreen):
 
 	def append(self):
 		try:
+			self.title = self.title.lower()
 			if config.plugins.xtraEvent.PB.value == "posters":
 				if config.plugins.xtraEvent.imgs.value == "bing":
 					target = pathLoc + "poster/{}.jpg".format(self.title)
@@ -744,7 +743,7 @@ class manuelSearch(Screen, ConfigListScreen):
 				if config.plugins.xtraEvent.searchModManuel.value == "TV List":
 					target = pathLoc + "backdrop/{}.jpg".format(self.title)
 					if config.plugins.xtraEvent.imgs.value == "bing":
-						evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", self.title).rstrip()
+						evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", self.title).rstrip().lower()
 						target = pathLoc + "backdrop/{}.jpg".format(evntNm)
 				else:
 					target = pathLoc + "EMC/{}-backdrop.jpg".format(self.title)
@@ -762,7 +761,7 @@ class manuelSearch(Screen, ConfigListScreen):
 							if os.path.exists(target):
 								im1 = Image.open(target)
 								im2 = Image.open("/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/emc_background.jpg")
-								mask = Image.new("L", im1.size, 50)
+								mask = Image.new("L", im1.size, 80)
 								im = Image.composite(im1, im2, mask)
 								im.save(target)
 		except:
@@ -1057,12 +1056,12 @@ class selBouquets(Screen):
 						n = config.plugins.xtraEvent.searchNUMBER.value
 						for i in range(int(n)):
 							title = events[i][4]
-							evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title).rstrip()
+							evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title).rstrip().lower()
 							
 							open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
 					except:
 						pass
-			self.close()		
+			self.close()
 		except:
 			pass
 

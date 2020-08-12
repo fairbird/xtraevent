@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020, 07.2020,
+# by digiteng...06.2020, 07.2020,08.2020
 
 from Components.AVSwitch import AVSwitch
 from enigma import eEPGCache
@@ -59,8 +59,7 @@ def currentChEpgs():
 
 			for i in range(int(n)):
 				title = events[i][4]
-				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
-				evntNm = evntNm.rstrip()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title).rstrip().lower()
 				open(pathLoc + "events", "a+").write("%s\n" %str(evntNm))
 
 			intCheck()
@@ -87,8 +86,7 @@ def selBouquets():
 				n = config.plugins.xtraEvent.searchNUMBER.value
 				for i in range(int(n)):
 					title = events[i][4]
-					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title)
-					evntNm = evntNm.rstrip()
+					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title).rstrip().lower()
 					open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
 			except:
 				pass		
@@ -177,9 +175,10 @@ def tmdb_Poster():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("tmdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+			#brokenImageRemove()
 		
-	except Exception as e:
-		open("/tmp/err","w").write(str(e))
+	except:
+		pass
 
 def tvdb_Poster():
 	url = ""
@@ -221,38 +220,9 @@ def tvdb_Poster():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("tvdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+			#brokenImageRemove()
 	except:
 		pass
-
-def maze_Poster():
-	# open("/tmp/maze","a+").write("{}".format(str("eeeee")))
-	if os.path.exists(pathLoc+"events"):
-		with open(pathLoc+"events", "r") as f:
-			titles = f.readlines()
-
-		titles = list(dict.fromkeys(titles))
-		n = len(titles)
-		downloaded = 0
-		for i in range(n):
-			title = titles[i]
-			title = title.strip()
-			
-			dwnldFile = pathLoc + "poster/{}.jpg".format(title)
-			url = "http://api.tvmaze.com/search/shows?q={}".format(quote(title))
-			try:
-				url = requests.get(url).json()
-				url = url[0]['show']['image']['medium']
-				if url:
-					w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
-					downloaded += 1
-					w.close()
-			except:
-				pass
-
-		now = datetime.now()
-		dt = now.strftime("%d/%m/%Y %H:%M:%S")
-		with open("/tmp/up_report", "a+") as f:
-			f.write("maze_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
 
 def fanart_Poster():
 	# pass
@@ -319,8 +289,40 @@ def fanart_Poster():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("fanart_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+			#brokenImageRemove()
 	except:
 		pass
+
+def maze_Poster():
+
+	if os.path.exists(pathLoc+"events"):
+		with open(pathLoc+"events", "r") as f:
+			titles = f.readlines()
+
+		titles = list(dict.fromkeys(titles))
+		n = len(titles)
+		downloaded = 0
+		for i in range(n):
+			title = titles[i]
+			title = title.strip()
+			dwnldFile = pathLoc + "poster/{}.jpg".format(title)
+			if not os.path.exists(dwnldFile):
+				url = "http://api.tvmaze.com/search/shows?q={}".format(quote(title))
+				try:
+					url = requests.get(url).json()
+					url = url[0]['show']['image']['medium']
+					if url:
+						w = open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
+						downloaded += 1
+						w.close()
+				except:
+					pass
+
+		now = datetime.now()
+		dt = now.strftime("%d/%m/%Y %H:%M:%S")
+		with open("/tmp/up_report", "a+") as f:
+			f.write("maze_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+		#brokenImageRemove()
 
 # DOWNLOAD BANNERS ######################################################################################################
 
@@ -420,6 +422,7 @@ def Banner():
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
 			f.write("banner end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+		#brokenImageRemove()
 # DOWNLOAD BACKDROP ######################################################################################################
 
 def tmdb_backdrop():
@@ -455,7 +458,8 @@ def tmdb_backdrop():
 			now = datetime.now()
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
-				f.write("tmdb_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))				
+				f.write("tmdb_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+			#brokenImageRemove()
 	except:
 		pass
 
@@ -499,6 +503,7 @@ def tvdb_backdrop():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("tvdb_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+			#brokenImageRemove()
 	except:
 		pass
 
@@ -564,6 +569,7 @@ def fanart_backdrop():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("fanart_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+			#brokenImageRemove()
 	except:
 		pass
 
@@ -585,6 +591,7 @@ def extra_backdrop():
 				try:
 					url = requests.get(url).json()['results'][0]['images'][0]['filepath']['android-image-320-180']
 				except:
+					# pass
 					try:
 						url="https://www.bing.com/search?q={}+poster+jpg".format(title.replace(" ", "+"))
 						headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
@@ -605,6 +612,7 @@ def extra_backdrop():
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
 			f.write("extra_backdrop(tvmovie+bing) end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+		#brokenImageRemove()
 		downloaded = 0
 		for i in range(n):
 			title = titles[i]
@@ -630,6 +638,7 @@ def extra_backdrop():
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
 			f.write("extra_backdrop(google) end : {} (downloaded : {})\n".format(dt, str(downloaded)))
+		#brokenImageRemove()
 
 # DOWNLOAD INFOS ######################################################################################################
 
@@ -667,3 +676,27 @@ def infos():
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
 			f.write("infos end : {} (downloaded : {})\n\n".format(dt, str(downloaded)))
+
+def brokenImageRemove():
+	b = os.listdir(pathLoc)
+	rmvd = 0
+	try:
+		for i in b:
+			bb = pathLoc + "{}/".format(i)
+			fc = os.path.isdir(bb)
+			if fc != False:	
+				for f in os.listdir(bb):
+					if f.endswith('.jpg'):
+						try:
+							img = Image.open(bb+f)
+							img.verify()
+						except:
+							try:
+								os.remove(bb+f)
+								rmvd += 1
+							except:
+								pass
+	except:
+		pass
+
+		

@@ -49,8 +49,8 @@ class xtraInfo(Converter, object):
 		event = self.source.event
 		if event:
 			if self.types:
-				evntt = event.getEventName()
-				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
+				evnt = event.getEventName()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip().lower()
 				rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
 				if fileExists(rating_json):
 					with open(rating_json) as f:
@@ -116,7 +116,7 @@ class xtraInfo(Converter, object):
 								elif type == self.imdbRating:
 									imdbRating = read_json["imdbRating"]
 									if imdbRating:
-										evnt.append("Imdb : {}".format(imdbRating))
+										evnt.append("imdb : {}".format(imdbRating))
 								elif type == self.imdbVotes:
 									imdbVotes = read_json["imdbVotes"]
 									if imdbVotes:

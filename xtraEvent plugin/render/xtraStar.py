@@ -32,17 +32,17 @@ class xtraStar(VariableValue, Renderer):
 			(self.range, self.value) = ((0, 1), 0)
 			return
 		try:
+			event = ""
+			evntNm = ""
+			evnt = ""
 			event = self.source.event
 			if event:
 				evnt = event.getEventName()
-				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
-
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip().lower()
 				rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
-
-				if fileExists(rating_json):
+				if rating_json:
 					with open(rating_json) as f:
 						rating = json.load(f)['imdbRating']
-
 					if rating:
 						rtng = int(10*(float(rating)))
 					else:
