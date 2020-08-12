@@ -66,9 +66,7 @@ class xtraBackdrop(Renderer):
 		except:
 			pass
 
-
 	def delay(self):
 		self.timer = eTimer()
 		self.timer.callback.append(self.showPicture)
 		self.timer.start(self.delayPicTime, True)
-		
