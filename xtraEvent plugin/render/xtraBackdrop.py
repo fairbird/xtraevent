@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # by digiteng...04.2020 - 08,2020
-# <widget source="session.Event_Now" render="xtraBackdrop" position="0,0" size="300,169" zPosition="1" />
+# <widget source="session.Event_Now" render="xtraBackdrop" delayPic="500" position="0,0" size="300,169" zPosition="1" />
 from Renderer import Renderer
 from enigma import ePixmap, ePicLoad, eTimer, eEPGCache
 from Components.AVSwitch import AVSwitch
@@ -18,6 +18,7 @@ except:
 class xtraBackdrop(Renderer):
 	def __init__(self):
 		Renderer.__init__(self)
+		self.delayPicTime = 100
 
 	def applySkin(self, desktop, parent):
 		attribs = self.skinAttributes[:]
@@ -66,7 +67,9 @@ class xtraBackdrop(Renderer):
 		except:
 			pass
 
+
 	def delay(self):
 		self.timer = eTimer()
 		self.timer.callback.append(self.showPicture)
 		self.timer.start(self.delayPicTime, True)
+		

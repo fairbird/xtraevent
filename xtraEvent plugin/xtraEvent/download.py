@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020, 07.2020,
+# by digiteng...06.2020, 07.2020,08.2020
 
 from Components.AVSwitch import AVSwitch
 from enigma import eEPGCache
@@ -175,7 +175,7 @@ def tmdb_Poster():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("tmdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-			#brokenImageRemove()
+			brokenImageRemove()
 		
 	except:
 		pass
@@ -220,7 +220,7 @@ def tvdb_Poster():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("tvdb_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-			#brokenImageRemove()
+			brokenImageRemove()
 	except:
 		pass
 
@@ -289,7 +289,7 @@ def fanart_Poster():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("fanart_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-			#brokenImageRemove()
+			brokenImageRemove()
 	except:
 		pass
 
@@ -322,7 +322,7 @@ def maze_Poster():
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
 			f.write("maze_poster end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-		#brokenImageRemove()
+		brokenImageRemove()
 
 # DOWNLOAD BANNERS ######################################################################################################
 
@@ -422,7 +422,7 @@ def Banner():
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
 			f.write("banner end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-		#brokenImageRemove()
+		brokenImageRemove()
 # DOWNLOAD BACKDROP ######################################################################################################
 
 def tmdb_backdrop():
@@ -459,7 +459,7 @@ def tmdb_backdrop():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("tmdb_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-			#brokenImageRemove()
+			brokenImageRemove()
 	except:
 		pass
 
@@ -503,7 +503,7 @@ def tvdb_backdrop():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("tvdb_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-			#brokenImageRemove()
+			brokenImageRemove()
 	except:
 		pass
 
@@ -569,7 +569,7 @@ def fanart_backdrop():
 			dt = now.strftime("%d/%m/%Y %H:%M:%S")
 			with open("/tmp/up_report", "a+") as f:
 				f.write("fanart_backdrop end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-			#brokenImageRemove()
+			brokenImageRemove()
 	except:
 		pass
 
@@ -612,7 +612,7 @@ def extra_backdrop():
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
 			f.write("extra_backdrop(tvmovie+bing) end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-		#brokenImageRemove()
+		brokenImageRemove()
 		downloaded = 0
 		for i in range(n):
 			title = titles[i]
@@ -638,7 +638,7 @@ def extra_backdrop():
 		dt = now.strftime("%d/%m/%Y %H:%M:%S")
 		with open("/tmp/up_report", "a+") as f:
 			f.write("extra_backdrop(google) end : {} (downloaded : {})\n".format(dt, str(downloaded)))
-		#brokenImageRemove()
+		brokenImageRemove()
 
 # DOWNLOAD INFOS ######################################################################################################
 

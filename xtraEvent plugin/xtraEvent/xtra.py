@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# by digiteng...06.2020, 07.2020,
+# by digiteng...06.2020, 07.2020, 08.2020
 from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
 from Components.Label import Label
@@ -190,8 +190,8 @@ class xtra(Screen, ConfigListScreen):
 			"blue": self.ms,
 			"cancel": self.exit,
 			"ok": self.keyOK,
-			"info": self.strg
-			# "menu": self.okMn
+			"info": self.strg,
+			"menu": self.brokenImageRemove,
 
 			# "info": self.about,
 		},-1)
@@ -408,13 +408,36 @@ class xtra(Screen, ConfigListScreen):
 				try:
 					if os.path.isfile(filepath+"/"+j):
 						im = Image.open(filepath+"/"+j)
-						im.save(filepath+"/"+j, "JPEG", quality=75)
+						im.save(filepath+"/"+j, optimize=True, quality=75)
 				except:
 					pass
 
 			folder_size = sum([sum(map(lambda fname: os.path.getsize(os.path.join(filepath, fname)), files)) for filepath, folders, files in os.walk(filepath)])
 			new_size = "%0.1f" % (folder_size/(1024))
 			self['info'].setText(_("{} images optimization end...\nGain : {}KB to {}KB".format(len(lstdr), old_size, new_size)))
+
+	def brokenImageRemove(self):
+		b = os.listdir(pathLoc)
+		rmvd = 0
+		try:
+			for i in b:
+				bb = pathLoc + "{}/".format(i)
+				fc = os.path.isdir(bb)
+				if fc != False:	
+					for f in os.listdir(bb):
+						if f.endswith('.jpg'):
+							try:
+								img = Image.open(bb+f)
+								img.verify()
+							except:
+								try:
+									os.remove(bb+f)
+									rmvd += 1
+								except:
+									pass
+		except:
+			pass
+		self['info'].setText(_("Removed Broken Images : {}".format(str(rmvd))))
 
 	def ms(self):
 		self.session.open(manuelSearch)
