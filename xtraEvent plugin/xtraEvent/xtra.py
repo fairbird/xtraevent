@@ -2,6 +2,7 @@
 # by digiteng...06.2020, 07.2020, 08.2020
 from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
+from Components.Pixmap import Pixmap
 from Components.Label import Label
 from Components.ActionMap import ActionMap
 from Screens.MessageBox import MessageBox
@@ -10,11 +11,11 @@ import os, re, random
 from Components.SelectionList import SelectionList, SelectionEntryComponent
 from Components.config import config, configfile, ConfigYesNo, ConfigSubsection, getConfigListEntry, ConfigSelection, ConfigText, ConfigInteger, ConfigSelectionNumber, ConfigDirectory
 from Components.ConfigList import ConfigListScreen
-from enigma import eTimer, eLabel, eServiceCenter, eServiceReference, ePixmap, eSize, ePoint, loadJPG, iServiceInformation, eEPGCache, getBestPlayableServiceReference, getDesktop
+from enigma import eTimer, eLabel, eServiceCenter, eServiceReference, ePixmap, ePicLoad, eSize, ePoint, loadJPG, iServiceInformation, eEPGCache, getBestPlayableServiceReference, getDesktop
 from Components.Sources.List import List
 from Components.Sources.StaticText import StaticText
 from Screens.VirtualKeyBoard import VirtualKeyBoard
-from Components.Pixmap import Pixmap
+
 from PIL import Image, ImageDraw, ImageFilter
 from Screens.LocationBox import LocationBox
 import requests

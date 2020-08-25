@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # by digiteng...06.2020, 07.2020,08.2020
 
+from Screens.Screen import Screen
+from Components.Pixmap import Pixmap
 from Components.AVSwitch import AVSwitch
 from enigma import eEPGCache
 from Components.config import config
