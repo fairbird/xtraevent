@@ -331,3 +331,46 @@ class xtra(Screen, ConfigListScreen):
 
 
 
+class pathLocation():
+	def __init__(self):
+		self.location()
+
+	def location(self):
+		pathLoc = ""
+		if not os.path.isdir(config.plugins.xtraEvent.loc.value):
+			pathLoc = "/tmp/xtraEvent/"
+			try:
+				if not os.path.isdir(pathLoc):
+					os.makedirs(pathLoc + "poster")
+					os.makedirs(pathLoc + "banner")
+					os.makedirs(pathLoc + "backdrop")
+					os.makedirs(pathLoc + "infos")
+					os.makedirs(pathLoc + "mSearch")
+					os.makedirs(pathLoc + "EMC")
+			except:
+				pass
+		else:	
+			pathLoc = config.plugins.xtraEvent.loc.value + "xtraEvent/"
+			try:
+				if not os.path.isdir(pathLoc):
+					os.makedirs(pathLoc + "poster")
+					os.makedirs(pathLoc + "banner")
+					os.makedirs(pathLoc + "backdrop")
+					os.makedirs(pathLoc + "infos")
+					os.makedirs(pathLoc + "mSearch")
+					os.makedirs(pathLoc + "EMC")
+			except:
+				pass
+
+		return pathLoc
+pathLoc = pathLocation().location()
+
+if config.plugins.xtraEvent.tmdbAPI.value != "":
+	tmdb_api = config.plugins.xtraEvent.tmdbAPI.value
+else:
+	tmdb_api = "3c3efcf47c3577558812bb9d64019d65"
+
+if config.plugins.xtraEvent.fanartAPI.value != "":
+	fanart_api = config.plugins.xtraEvent.fanartAPI.value
+else:
+	fanart_api = "6d231536dea4318a88cb2520ce89473b"
