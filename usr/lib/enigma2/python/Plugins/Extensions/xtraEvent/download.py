@@ -134,7 +134,8 @@ def download():
 			if config.plugins.xtraEvent.info.value == True:
 				infos()
 		else:
-			Tools.Notifications.AddNotification(MessageBox, _("NO INTERNET CONNECTION !.."), MessageBox.TYPE_INFO, timeout = 10)
+			if config.plugins.xtraEvent.ShowNetCheckNot.value == "show":
+				Tools.Notifications.AddNotification(MessageBox, _("NO INTERNET CONNECTION !.."), MessageBox.TYPE_INFO, timeout = 10)
 			return
 	except:
 		return

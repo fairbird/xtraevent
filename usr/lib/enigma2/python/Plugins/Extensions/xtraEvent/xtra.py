@@ -121,6 +121,10 @@ config.plugins.xtraEvent.FanartSearchType = ConfigSelection(default="tv", choice
 	('tv', 'TV'),
 	('movies', 'MOVIE')])
 
+config.plugins.xtraEvent.ShowNetCheckNot = ConfigSelection(default="show", choices = [
+	('show', 'Show'),
+	('hide', 'Hide')])
+
 class xtra(Screen, ConfigListScreen):
 	if desktop_size <= 1280:
 		skin = """
@@ -266,6 +270,7 @@ class xtra(Screen, ConfigListScreen):
 		list.append(getConfigListEntry("—"*100))
 # path location_________________________________________________________________________________________________________________
 		list.append(getConfigListEntry("CONFIG MENU", config.plugins.xtraEvent.cnfg, _("general setup...")))
+		list.append(getConfigListEntry("Check Internet Conection", config.plugins.xtraEvent.ShowNetCheckNot, _(" Message of Infobar Notification...")))
 		list.append(getConfigListEntry("—"*100))
 		if config.plugins.xtraEvent.cnfg.value:
 			list.append(getConfigListEntry("    LOCATION", config.plugins.xtraEvent.loc, _("'OK' select location downloads...")))
