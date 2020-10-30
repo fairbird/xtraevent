@@ -86,7 +86,7 @@ def selBouquets():
 				for i in range(int(n)):
 					title = events[i][4]
 					evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", title).rstrip().lower()
-					open(pathLoc+"events","a+").write("%s\n"% str(evntNm))
+					open(pathLoc+"events", "a+").write("%s\n"% str(evntNm))
 			except:
 				pass		
 		intCheck()
@@ -666,7 +666,7 @@ def infos():
 						url_omdb = 'https://www.omdbapi.com/?apikey={}&i={}'.format(str(omdb_api), str(imdb_id))
 						info_json = requests.get(url_omdb).json()
 
-						w = open(info_files,"wb").write(json.dumps(info_json))
+						w = open(info_files, "wb").write(json.dumps(info_json))
 						downloaded += 1
 						w.close()
 
