@@ -8,6 +8,7 @@ from Components.Pixmap import Pixmap
 from Components.config import config
 import re, os, gettext
 from Tools.Directories import fileExists
+from Components.Console import Console
 
 REDC =  '\033[31m'
 ENDC = '\033[m'
@@ -28,16 +29,16 @@ try:
 	CMD = "rm -f %s/*" % PosterPath
 	if foldersize == "50MB":
 		if posters_sz >= "50":  # folder remove size(50MB)...
-			os.system(CMD)
+			Console().ePopen(CMD)
 	elif foldersize == "100MB":
 		if posters_sz >= "100": # folder remove size(100MB)...
-			os.system(CMD)
+			Console().ePopen(CMD)
 	elif foldersize == "200MB":
 		if posters_sz >= "200": # folder remove size(200MB)...
-			os.system(CMD)
+			Console().ePopen(CMD)
 	elif foldersize == "500MB":
 		if posters_sz >= "500": # folder remove size(500MB)...
-			os.system(CMD)
+			Console().ePopen(CMD)
 	else:
 		cprint('No order to remove poster icons')
 except:
