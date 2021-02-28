@@ -6,12 +6,40 @@ from enigma import ePixmap, eTimer, ePicLoad
 from Components.AVSwitch import AVSwitch
 from Components.Pixmap import Pixmap
 from Components.config import config
-import re
+import re, os, gettext
 from Tools.Directories import fileExists
+
+REDC =  '\033[31m'
+ENDC = '\033[m'
+
+def cprint(text):
+    print(REDC+"[xtraEvent] "+text+ENDC)
 
 try:
 	from Plugins.Extensions.xtraEvent.xtra import xtra
 	pathLoc = config.plugins.xtraEvent.loc.value
+	PosterPath = "{}xtraEvent/poster".format(pathLoc)
+	cprint("PosterPath = %s" % PosterPath)
+	foldersize = config.plugins.xtraEvent.rmposter.value
+	cprint("foldersize = %s" % foldersize)
+	folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(PosterPath, fname)), files)) for PosterPath, folders, files in os.walk(PosterPath)])
+	posters_sz = "%0.f" % (folder_size/(1024*1024.0))
+	cprint("posters_sz = %s" % posters_sz)
+	CMD = "rm -f %s/*" % PosterPath
+	if foldersize == "50MB":
+		if posters_sz >= "50":  # folder remove size(50MB)...
+			os.system(CMD)
+	elif foldersize == "100MB":
+		if posters_sz >= "100": # folder remove size(100MB)...
+			os.system(CMD)
+	elif foldersize == "200MB":
+		if posters_sz >= "200": # folder remove size(200MB)...
+			os.system(CMD)
+	elif foldersize == "500MB":
+		if posters_sz >= "500": # folder remove size(500MB)...
+			os.system(CMD)
+	else:
+		cprint('No order to remove poster icons')
 except:
 	pass
 
