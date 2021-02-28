@@ -125,6 +125,13 @@ config.plugins.xtraEvent.ShowNetCheckNot = ConfigSelection(default="show", choic
 	('show', 'Show'),
 	('hide', 'Hide')])
 
+config.plugins.xtraEvent.rmposter = ConfigSelection(default="No", choices = [
+	('No', 'No'), 
+	('50MB', '50MB'), 
+	('100MB', '100MB'), 
+	('200MB', '200MB'), 
+	('500MB', '500MB')])
+
 class xtra(Screen, ConfigListScreen):
 	if desktop_size <= 1280:
 		skin = """
@@ -274,6 +281,7 @@ class xtra(Screen, ConfigListScreen):
 		list.append(getConfigListEntry("—"*100))
 		if config.plugins.xtraEvent.cnfg.value:
 			list.append(getConfigListEntry("    LOCATION", config.plugins.xtraEvent.loc, _("'OK' select location downloads...")))
+			list.append(getConfigListEntry("    Delete Poster After", config.plugins.xtraEvent.rmposter, _("'OK' select Delete Poster After...")))
 			
 			list.append(getConfigListEntry("    OPTIMIZE IMAGES", config.plugins.xtraEvent.opt_Images, _("optimize images...")))
 			if config.plugins.xtraEvent.opt_Images.value:
