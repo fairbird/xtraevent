@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# <widget source="session.Event_Now" render="xtraBackdrop" delayPic="500" position="0,0" size="300,169" zPosition="1" />
 from Renderer import Renderer
 from enigma import ePixmap, ePicLoad, eTimer
 from Components.AVSwitch import AVSwitch
@@ -10,10 +9,10 @@ from Tools.Directories import fileExists
 import re
 
 try:
-	from Plugins.Extensions.xtraEvent.xtra import xtra
 	pathLoc = config.plugins.xtraEvent.loc.value
 except:
 	pass
+
 
 class xtraBackdrop(Renderer):
 	def __init__(self):
@@ -25,11 +24,12 @@ class xtraBackdrop(Renderer):
 		for attrib, value in self.skinAttributes:
 			if attrib == 'delayPic':          # delay time(ms) for backdrop showing...
 				self.delayPicTime = int(value)
-			
+
 		self.skinAttributes = attribs
 		return Renderer.applySkin(self, desktop, parent)
 
 	GUI_WIDGET = ePixmap
+
 	def changed(self, what):
 		if not self.instance:
 			return
@@ -45,14 +45,14 @@ class xtraBackdrop(Renderer):
 			event = self.source.event
 			if event:
 				evnt = event.getEventName()
-				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip().lower()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
 				pstrNm = "{}xtraEvent/backdrop/{}.jpg".format(pathLoc, evntNm)
 				if fileExists(pstrNm):
 					size = self.instance.size()
 					self.picload = ePicLoad()
 					sc = AVSwitch().getFramebufferScale()
 					if self.picload:
-						self.picload.setPara((size.width(), size.height(),  sc[0], sc[1], False, 1, '#00000000'))
+						self.picload.setPara((size.width(), size.height(), sc[0], sc[1], False, 1, '#00000000'))
 					result = self.picload.startDecode(pstrNm, 0, 0, False)
 					if result == 0:
 						ptr = self.picload.getData()
@@ -66,7 +66,6 @@ class xtraBackdrop(Renderer):
 				self.instance.hide()
 		except:
 			pass
-
 
 	def delay(self):
 		self.timer = eTimer()

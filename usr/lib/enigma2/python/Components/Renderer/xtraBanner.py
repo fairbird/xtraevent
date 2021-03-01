@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# <widget source="session.Event_Now" render="xtraBanner" delayPic="500" position="0,0" size="762,141" zPosition="1" />
 from Renderer import Renderer
 from enigma import ePixmap, ePicLoad, eTimer
 from Components.AVSwitch import AVSwitch
@@ -10,16 +9,18 @@ from Tools.Directories import fileExists
 import re
 
 try:
-	from Plugins.Extensions.xtraEvent.xtra import xtra
 	pathLoc = config.plugins.xtraEvent.loc.value
 except:
 	pass
+
 
 class xtraBanner(Renderer):
 
 	def __init__(self):
 		Renderer.__init__(self)
 		self.delayPicTime = 100
+		self.timer = eTimer()
+		self.timer.callback.append(self.showPicture)
 
 	def applySkin(self, desktop, parent):
 		attribs = self.skinAttributes[:]
@@ -30,12 +31,13 @@ class xtraBanner(Renderer):
 		return Renderer.applySkin(self, desktop, parent)
 
 	GUI_WIDGET = ePixmap
+
 	def changed(self, what):
 		if not self.instance:
 			return
 		else:
 			if what[0] != self.CHANGED_CLEAR:
-				self.delay()
+				self.timer.start(self.delayPicTime, True)
 
 	def showPicture(self):
 		evnt = ''
@@ -45,14 +47,14 @@ class xtraBanner(Renderer):
 			event = self.source.event
 			if event:
 				evnt = event.getEventName()
-				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip().lower()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
 				pstrNm = "{}xtraEvent/banner/{}.jpg".format(pathLoc, evntNm)
 				if fileExists(pstrNm):
 					size = self.instance.size()
 					self.picload = ePicLoad()
 					sc = AVSwitch().getFramebufferScale()
 					if self.picload:
-						self.picload.setPara((size.width(), size.height(),  sc[0], sc[1], False, 1, '#00000000'))
+						self.picload.setPara((size.width(), size.height(), sc[0], sc[1], False, 1, '#00000000'))
 					result = self.picload.startDecode(pstrNm, 0, 0, False)
 					if result == 0:
 						ptr = self.picload.getData()
@@ -66,8 +68,3 @@ class xtraBanner(Renderer):
 				self.instance.hide()
 		except:
 			pass
-
-	def delay(self):
-		self.timer = eTimer()
-		self.timer.callback.append(self.showPicture)
-		self.timer.start(self.delayPicTime, True)

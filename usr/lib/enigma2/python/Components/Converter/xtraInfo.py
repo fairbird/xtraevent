@@ -1,8 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# <widget source="session.Event_Now" render="Label" position="50,545" size="930,400" font="Regular; 32" halign="left" transparent="1" zPosition="2" backgroundColor="back_color" valign="center">
-  	# <convert type="xtraInfo">Title,Year,Description</convert>
-# </widget>
 from Components.Converter.Converter import Converter
 from Components.Element import cached
 from Components.config import config
@@ -11,7 +8,6 @@ import re
 import json
 
 try:
-	from Plugins.Extensions.xtraEvent.xtra import xtra
 	pathLoc = config.plugins.xtraEvent.loc.value
 except:
 	pass
@@ -37,7 +33,6 @@ class xtraInfo(Converter, object):
 	Type = "Type"
 	totalSeasons = "totalSeasons"
 
-
 	def __init__(self, type):
 		Converter.__init__(self, type)
 		self.types = str(type).split(",")
@@ -48,7 +43,7 @@ class xtraInfo(Converter, object):
 		if event:
 			if self.types:
 				evnt = event.getEventName()
-				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip().lower()
+				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
 				rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
 				if fileExists(rating_json):
 					with open(rating_json) as f:
@@ -58,7 +53,7 @@ class xtraInfo(Converter, object):
 						for type in self.types:
 							type.strip()
 							if read_json["Response"] == "True":
-								
+
 								if type == self.Title:
 									title = read_json['Title']
 									if title:
@@ -127,8 +122,10 @@ class xtraInfo(Converter, object):
 									totalSeasons = read_json["totalSeasons"]
 									if totalSeasons:
 										evnt.append("totalSeasons : {}".format(totalSeasons))
+
 								else:
 									return ""
+
 						return "\n".join(evnt)
 					except:
 						return ""

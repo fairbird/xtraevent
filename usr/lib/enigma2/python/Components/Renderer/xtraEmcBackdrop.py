@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# <widget source="Service" render="xtraEmcBackdrop" delayPic="500" position="0,0" size="1280,720" zPosition="0"
 from Renderer import Renderer
 from enigma import ePixmap, loadJPG, eTimer
 from Components.Sources.CurrentService import CurrentService
@@ -9,10 +8,10 @@ from Tools.Directories import fileExists
 import re
 
 try:
-	from Plugins.Extensions.xtraEvent.xtra import xtra
 	pathLoc = config.plugins.xtraEvent.loc.value
 except:
 	pass
+
 
 class xtraEmcBackdrop(Renderer):
 
@@ -20,6 +19,8 @@ class xtraEmcBackdrop(Renderer):
 		Renderer.__init__(self)
 		self.piconsize = (0, 0)
 		self.delayPicTime = 100
+		self.timer = eTimer()
+		self.timer.callback.append(self.showPicture)
 
 	def applySkin(self, desktop, parent):
 		attribs = self.skinAttributes[:]
@@ -32,12 +33,13 @@ class xtraEmcBackdrop(Renderer):
 		return Renderer.applySkin(self, desktop, parent)
 
 	GUI_WIDGET = ePixmap
+
 	def changed(self, what):
 		if not self.instance:
 			return
 		else:
 			if what[0] != self.CHANGED_CLEAR:
-				self.delay()
+				self.timer.start(self.delayPicTime, True)
 
 	def showPicture(self):
 		movieNm = ""
@@ -45,7 +47,7 @@ class xtraEmcBackdrop(Renderer):
 			service = self.source.getCurrentService()
 			if service:
 				evnt = service.getPath()
-				movieNm = evnt.split('-')[-1].split(".")[0].strip().lower()
+				movieNm = evnt.split('-')[-1].split(".")[0].strip()
 				movieNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", movieNm)
 				pstrNm = "{}xtraEvent/EMC/{}-backdrop.jpg".format(pathLoc, movieNm.strip())
 				if fileExists(pstrNm):
@@ -60,8 +62,3 @@ class xtraEmcBackdrop(Renderer):
 				self.instance.hide()
 		except:
 			pass
-
-	def delay(self):
-		self.timer = eTimer()
-		self.timer.callback.append(self.showPicture)
-		self.timer.start(self.delayPicTime, True)
