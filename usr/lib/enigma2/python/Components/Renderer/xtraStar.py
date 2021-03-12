@@ -1,18 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# by digiteng
-
-# <ePixmap pixmap="xtra/star_b.png" position="560,367" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
-# <widget render="xtraStar" source="session.Event_Now" pixmap="xtra/star.png" position="560,367" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
-
 from Components.VariableValue import VariableValue
 from Renderer import Renderer
 from enigma import eSlider
 from Components.config import config
 import re
 import json
+import os
 
 try:
+	from Plugins.Extensions.xtraEvent.xtra import xtra
 	pathLoc = config.plugins.xtraEvent.loc.value
 except:
 	pass
@@ -41,11 +38,11 @@ class xtraStar(VariableValue, Renderer):
 				evnt = event.getEventName()
 				evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!", "", evnt).rstrip()
 				rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
-				if rating_json:
+				if os.path.exists(rating_json):
 					with open(rating_json) as f:
 						rating = json.load(f)['imdbRating']
 					if rating:
-						rtng = int(10 * (float(rating)))
+						rtng = int(10*(float(rating)))
 					else:
 						rtng = 0
 				else:
