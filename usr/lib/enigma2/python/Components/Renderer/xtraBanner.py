@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# by digiteng...06.2020 - 08.2020,
+
+# <widget source="session.Event_Now" render="xtraBanner" delayPic="500" position="0,0" size="762,141" zPosition="1" />
+
 from Renderer import Renderer
 from enigma import ePixmap, ePicLoad, eTimer
 from Components.AVSwitch import AVSwitch

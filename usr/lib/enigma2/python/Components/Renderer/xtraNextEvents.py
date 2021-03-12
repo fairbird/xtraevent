@@ -1,5 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# by digiteng...05.2020 - 08.2020
+# for channellist,
+# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="1" usedImage="backdrop" delayPic="200" position="840,420" size="100,60" zPosition="5" />
+# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="2" usedImage="backdrop" delayPic="200" position="940,420" size="100,60" zPosition="5" />
+# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="3" usedImage="backdrop" delayPic="200" position="1040,420" size="100,60" zPosition="5" />
+# <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="4" usedImage="backdrop" delayPic="200" position="1140,420" size="100,60" zPosition="5" />
+# ...
+# usedImage="backdrop", usedImage="poster", usedImage="banner"
+
 from Renderer import Renderer
 from enigma import ePixmap, ePicLoad, eTimer, eEPGCache
 from Components.AVSwitch import AVSwitch

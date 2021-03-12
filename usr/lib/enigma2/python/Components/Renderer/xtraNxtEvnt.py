@@ -1,5 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# by digiteng...05.2020, 07.2020,
+
+# for channellist,
+# <widget source="ServiceEvent" render="xtraNxtEvnt" nxtEvents="4" snglEvent="" font="Regular; 18" position="840,500" size="400,110" zPosition="5" backgroundColor="background" transparent="1" />
+# nxtEvents or snglEvent must be empty...
+
 from Renderer import Renderer
 from enigma import eLabel, eEPGCache
 from Components.VariableText import VariableText

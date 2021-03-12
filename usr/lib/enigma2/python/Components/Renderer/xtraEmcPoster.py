@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# by digiteng...07.2020 - 08.2020
+
+# <widget source="Service" render="xtraEmcPoster" delayPic="500" position="0,0" size="185,278" zPosition="0"
+
 from Renderer import Renderer
 from enigma import ePixmap, loadJPG, eTimer
 from Tools.Directories import fileExists

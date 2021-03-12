@@ -1,5 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# by digiteng...11.2020
+
+# <widget source="session.Event_Now" render="Label" position="50,545" size="930,400" font="Regular; 32" halign="left" transparent="1" zPosition="2" backgroundColor="back_color" valign="center">
+  	# <convert type="xtraInfo2">id,Network,Description</convert>
+# </widget>
+
 from Components.Converter.Converter import Converter
 from Components.Element import cached
 from Components.config import config

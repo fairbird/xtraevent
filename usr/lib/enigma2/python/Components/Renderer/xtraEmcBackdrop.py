@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# by digiteng...07.2020 - 08.2020
+
+# <widget source="Service" render="xtraEmcBackdrop" delayPic="500" position="0,0" size="1280,720" zPosition="0"
+
 from Renderer import Renderer
 from enigma import ePixmap, loadJPG, eTimer
 from Components.Sources.CurrentService import CurrentService
