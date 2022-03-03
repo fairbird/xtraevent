@@ -3,10 +3,19 @@
 # <widget source="ServiceEvent" render="xtraBackdrop" position="785,75" size="300,170" zPosition="2" />
 from __future__ import absolute_import
 from Components.Renderer.Renderer import Renderer
-from enigma import ePixmap, loadJPG
+from enigma import ePixmap, loadJPG, eServiceCenter
 from Components.config import config
 import re
 import os
+
+piconPath = ""
+paths = ('/media/hdd/picon/', '/media/usb/picon/', '/media/mmc/picon/', 
+'/usr/share/enigma2/picon/', '/picon/', '/media/sda1/picon/', 
+'/media/sda2/picon/', '/media/sda3/picon/')
+for path in paths:
+	if os.path.isdir(path):
+		piconPath = path
+		break
 
 try:
 	import sys
@@ -17,7 +26,6 @@ except:
 
 try:
 	pathLoc = config.plugins.xtraEvent.loc.value
-	
 except:
 	pathLoc = ""
 	
@@ -27,7 +35,7 @@ REGEX = re.compile(
 		r'(: odc.\d+)|'
 		r'(\d+: odc.\d+)|'
 		r'(\d+ odc.\d+)|(:)|'
-		r'( -(.*?).*)|(,)|'
+		
 		r'!|'
 		r'/.*|'
 		r'\|\s[0-9]+\+|'
@@ -85,38 +93,35 @@ class xtraBackdrop(Renderer):
 		info = None
 		ChNm=""
 		try:
-			service = self.source.service
-			ref = service.toString()
-			info = self.source.info
-			ChNm = info.getName(service)
-			if ChNm is None:
-				ChNm = info.getName()
+			import NavigationInstance
+			ref = NavigationInstance.instance.getCurrentlyPlayingServiceReference()
+			ChNm = eServiceCenter.getInstance().info(ref).getName(ref)
 			ChNm = ChNm.replace('\xc2\x86', '').replace('\xc2\x87', '')
 			ChNm = ChNm.lower().replace('&', 'and').replace('+', 'plus').replace('*', 'star').replace(' ', '').replace('.', '')
-			paths = ('/media/hdd/picon/', '/media/usb/picon/', '/media/mmc/picon/', 
-			'/usr/share/enigma2/picon/', '/picon/', '/media/sda1/picon/', 
-			'/media/sda2/picon/', '/media/sda3/picon/')
-			for path in paths:
-				picName = "{}{}.png".format(path, ChNm)
-				picName = picName.strip()
+
+			picName = "{}{}.png".format(piconPath, ChNm)
+			picName = picName.strip()
+			if os.path.exists(picName):
+				self.instance.setScale(2)
+				self.instance.setPixmapFromFile(picName)
+				self.instance.setAlphatest(2)
+				self.instance.show()
+			
+			elif not os.path.exists(picName):
+				picName = "{}{}.png".format(piconPath, str(ref).replace(':', '_'))
+				picName = picName.replace('_.png', '.png')
 				if os.path.exists(picName):
 					self.instance.setScale(2)
 					self.instance.setPixmapFromFile(picName)
+					self.instance.setAlphatest(2)
 					self.instance.show()
-					break
-				elif not os.path.exists(picName):
-					picName = "{}{}.png".format(path, str(ref).replace(':', '_'))
-					picName = picName.replace('_.png', '.png')
-					if os.path.exists(picName):
-						self.instance.setScale(2)
-						self.instance.setPixmapFromFile(picName)
-						self.instance.show()
-						break
-					else:
-						picName = "/usr/share/enigma2/skin_default/picon_default.png"
-						self.instance.setScale(2)
-						self.instance.setPixmapFromFile(picName)
-						self.instance.show()
+		
+				else:
+					picName = "/usr/share/enigma2/skin_default/picon_default.png"
+					self.instance.setScale(2)
+					self.instance.setPixmapFromFile(picName)
+					self.instance.setAlphatest(2)
+					self.instance.show()
 		except Exception as err:
 			with open("/tmp/xtra_error.log", "a+") as f:
 				f.write("xtraBackdrop(Renderer) /picon, %s\n\n"%err)
