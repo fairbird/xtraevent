@@ -31,7 +31,7 @@ from .xtraSelectionList import xtraSelectionList, xtraSelectionEntryComponent
 from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 from threading import Timer
 from datetime import datetime
-version = "v4.9"
+version = "v5.2"
 
 pathLoc = ""
 try:
@@ -489,7 +489,7 @@ class xtra(Screen, ConfigListScreen):
 			if version != new_version:
 				msg = url.json()["body"]
 				up_msg = "Current version : {}\n\\c00bb?fbbNew version : {} \n\n\\c00bb?fee{}\n\n\\c00??????Do you want UPDATE PLUGIN ?..".format(version, new_version, msg)
-				self.session.openWithCallback(self.instalUpdate(url), MessageBox, _(up_msg), MessageBox.TYPE_YESNO)
+				self.session.openWithCallback(self.instalUpdate, MessageBox, _(up_msg), MessageBox.TYPE_YESNO)
 			else:
 				self['info'].setText(lng.get(lang, '71'))
 		except Exception as err:
@@ -497,26 +497,28 @@ class xtra(Screen, ConfigListScreen):
 			with open("/tmp/xtraEvent.log", "a+") as f:
 				f.write("update %s\n\n"%err)
 				
-	def instalUpdate(self, url):
+	def instalUpdate(self, answer):
 		try:
-			update_url = url.json()["assets"][1]["browser_download_url"]
-			up_name	 = url.json()["assets"][1]["name"]
-			up_tmp = "/tmp/{}".format(up_name)
-			if not os.path.exists(up_tmp):
-				open(up_tmp, 'wb').write(requests.get(update_url, stream=True, allow_redirects=True).content)
-			if os.path.exists(up_tmp):
-				from enigma import eConsoleAppContainer
-				cmd = ("rm -rf /usr/lib/enigma2/python/Components/Converter/xtra* \
-				| rm -rf /usr/lib/enigma2/python/Components/Renderer/xtra* \
-				| rm -rf /usr/lib/enigma2/python/Plugins/Extensions/xtraEvent \
-				| rm -rf /usr/share/enigma2/xtra \
-				")
-				os.system(cmd)
-				# os.popen(cmd)
-				container = eConsoleAppContainer()
-				container.execute("tar xf /tmp/xtraEvent.tar.gz -C /")
-				self.updateFinish()
-
+			if answer is True:
+				url = requests.get("https://api.github.com/repos/digiteng/xtra/releases/latest")
+				update_url = url.json()["assets"][1]["browser_download_url"]
+				up_name	 = url.json()["assets"][1]["name"]
+				up_tmp = "/tmp/{}".format(up_name)
+				if not os.path.exists(up_tmp):
+					open(up_tmp, 'wb').write(requests.get(update_url, stream=True, allow_redirects=True).content)
+				if os.path.exists(up_tmp):
+					from enigma import eConsoleAppContainer
+					cmd = ("rm -rf /usr/lib/enigma2/python/Components/Converter/xtra* \
+					| rm -rf /usr/lib/enigma2/python/Components/Renderer/xtra* \
+					| rm -rf /usr/lib/enigma2/python/Plugins/Extensions/xtraEvent \
+					| rm -rf /usr/share/enigma2/xtra \
+					")
+					os.system(cmd)
+					container = eConsoleAppContainer()
+					container.execute("tar xf /tmp/xtraEvent.tar.gz -C /")
+					self.updateFinish()
+			else:
+				self.close()
 		except Exception as err:
 			self['info'].setText(str(err))
 			with open("/tmp/xtraEvent.log", "a+") as f:
@@ -534,13 +536,22 @@ class xtra(Screen, ConfigListScreen):
 			self.session.open(TryQuitMainloop, 3)
 
 	def removeImagesAll(self):
-		self.session.openWithCallback(self.removeImagesAllYes, MessageBox, _(lng.get(lang, '70')), MessageBox.TYPE_YESNO)
+		self.session.openWithCallback(self.removeImagesAllYes, MessageBox, _(lng.get(lang, '73')), MessageBox.TYPE_YESNO)
 		
 	def removeImagesAllYes(self, answer):
 		if answer:
 			import shutil
-			shutil.rmtree(pathLoc)
-			self['info'].setText(lng.get(lang, '74'))
+			pathLoc = "{}xtraEvent/".format(config.plugins.xtraEvent.loc.value)
+			if os.path.isdir(pathLoc):
+				shutil.rmtree(pathLoc)
+			if not os.path.isdir(pathLoc):
+				os.makedirs("{}poster".format(pathLoc))
+				os.makedirs("{}banner".format(pathLoc))
+				os.makedirs("{}backdrop".format(pathLoc))
+				os.makedirs("{}infos".format(pathLoc))
+				os.makedirs("{}mSearch".format(pathLoc))
+				os.makedirs("{}EMC".format(pathLoc))
+			self.updateFinish()
 
 	def compressImg(self):
 		try:

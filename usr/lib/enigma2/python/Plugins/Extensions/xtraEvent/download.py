@@ -92,7 +92,7 @@ REGEX = re.compile(
 		r'(: odc.\d+)|'
 		r'(\d+: odc.\d+)|'
 		r'(\d+ odc.\d+)|(:)|'
-		r'( -(.*?).*)|(,)|'
+		
 		r'!|'
 		r'/.*|'
 		r'\|\s[0-9]+\+|'
@@ -465,6 +465,7 @@ class downloads(Screen):
 									url_tmdb += "&language={}".format(self.searchLanguage())
 								poster = ""
 								poster = requests.get(url_tmdb).json()['results'][0]['poster_path']
+								original_title = requests.get(url_tmdb).json()['results'][0]['poster_path']
 								p_size = config.plugins.xtraEvent.TMDBpostersize.value
 								url = "https://image.tmdb.org/t/p/{}{}".format(p_size, poster)
 								if poster != "":
@@ -977,6 +978,8 @@ class downloads(Screen):
 					glist=[]
 					data = {}
 
+
+
 					info_files = "{}infos/{}.json".format(pathLoc, title)
 					if config.plugins.xtraEvent.omdbAPI.value:
 						omdb_apis = config.plugins.xtraEvent.omdbAPI.value
@@ -984,6 +987,12 @@ class downloads(Screen):
 						omdb_apis = ["6a4c9432", "a8834925", "550a7c40", "8ec53e6b"]
 					if not os.path.exists(info_files):
 						try:
+							try:
+								srch = config.plugins.xtraEvent.searchType.value
+								url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote(title))
+								title = requests.get(url_tmdb).json()['results'][0]['original_title']
+							except:
+								pass
 							for omdb_api in omdb_apis:
 								try:
 									url = "http://www.omdbapi.com/?apikey={}&t={}".format(omdb_api, title)
