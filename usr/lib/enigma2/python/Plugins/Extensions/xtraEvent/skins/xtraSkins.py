@@ -242,7 +242,7 @@ xtra_1080 = """
 	<widget source="Title" render="Label" position="30,30" size="1165,60" font="xtraRegular; 34" halign="center" valign="center" foregroundColor="#ffffff" backgroundColor="{0}" transparent="0" />
 	<!-- <ePixmap position="620,30" size="330,70" zPosition="3" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/xtra_title.png" transparent="1" alphatest="blend" /> -->
 	
-	<widget name="config" position="30,140" size="1165,800" itemHeight="45" font="xtraRegular;34" foregroundColor="#ffffff" 
+	<widget name="config" position="30,140" size="1165,800" itemHeight="45" font="xtraRegular;34" valueFont="xtraRegular;34" foregroundColor="#ffffff" 
 	scrollbarMode="showOnDemand" scrollbarSliderBorderWidth="0" scrollbarSliderBorderColor="#ef2f2f" 
 	scrollbarWidth="5" scrollbarSliderForegroundColor="{0}"  transparent="1" 
 	backgroundColor="#30000000" backgroundColorSelected="{0}" foregroundColorSelected="#ffffff" />
@@ -320,7 +320,7 @@ manuel_1080 = """
 	<widget source="session.CurrentService" render="Label" position="60,145" size="1100,60" zPosition="2" font="xtraRegular; 45" transparent="1" backgroundColor="#30000000" valign="center">
 		<convert type="ServiceName">Name</convert>
 	</widget>
-	<widget name="config" position="60,225" size="1100,588" itemHeight="45" font="xtraRegular;36" foregroundColor="#ffffff" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#30000000" backgroundColorSelected="{0}" foregroundColorSelected="#ffffff" />
+	<widget name="config" position="60,225" size="1100,588" itemHeight="45" font="xtraRegular;36" valueFont="xtraRegular;36" foregroundColor="#ffffff" scrollbarMode="showOnDemand" transparent="1" backgroundColor="#30000000" backgroundColorSelected="{0}" foregroundColorSelected="#ffffff" />
 	<widget name="status" position="60,885" size="1100,40" transparent="1" font="xtraRegular;36" foregroundColor="#92f1fc" backgroundColor="#30000000" />
 	<widget name="info" position="1260,980" size="600,45" transparent="1" font="xtraRegular;30" halign="center" foregroundColor="#ffffff" backgroundColor="#30000000" />
 	<widget name="Picture" position="1260,480" size="278,417" zPosition="5" transparent="1" />
@@ -383,7 +383,7 @@ xtra_1080_2 = """
 	<ePixmap position="0,0" size="1920,1080" zPosition="-1" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/xtra_fhd3.png" transparent="1" />
 	<widget source="Title" render="Label" position="60,53" size="1118,60" font="xtraRegular; 45" foregroundColor="#c5c5c5" backgroundColor="#23262e" transparent="1" />
 	
-	<widget name="config" position="60,143" size="1118,765" itemHeight="45" font="xtraRegular;34" 
+	<widget name="config" position="60,143" size="1118,765" itemHeight="45" font="xtraRegular;34" valueFont="xtraRegular;34"
 	foregroundColor="#c5c5c5" foregroundColorSelected="#ffffff" 
 	backgroundColor="#23262e" backgroundColorSelected="#0d71aa" 
 	selectionPixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/sel_xtra_fhd3.png" 
@@ -431,7 +431,7 @@ manuel_1080_2 = """
 		<convert type="ServiceName">Name</convert>
 	</widget>
 	
-	<widget name="config" position="60,225" size="1118,588" itemHeight="45" font="xtraRegular;34"
+	<widget name="config" position="60,225" size="1118,588" itemHeight="45" font="xtraRegular;34" valueFont="xtraRegular;34"
 	foregroundColor="#c5c5c5" foregroundColorSelected="#ffffff" 
 	backgroundColor="#23262e" backgroundColorSelected="#0d71aa" 
 	selectionPixmap="/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/sel_xtra_fhd3.png" 
@@ -469,6 +469,5 @@ selbuq_1080_2 = """
 	<widget source="key_blue" render="Label" font="xtraRegular;30" foregroundColor="#c5c5c5" backgroundColor="#23262e" position="925,960" size="255,45" halign="left" transparent="1" zPosition="1" />
 
 </screen>"""
-
 
 
