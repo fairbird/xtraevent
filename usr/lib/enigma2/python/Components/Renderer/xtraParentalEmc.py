@@ -21,7 +21,7 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraParental.log"
+myfile="/tmp/xtraParentalEmc.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -99,7 +99,7 @@ REGEX = re.compile(
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
         r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
 
-class xtraParental(Renderer):
+class xtraParentalEmc(Renderer):
 
     def __init__(self):
         logout(data="init")
@@ -144,7 +144,7 @@ class xtraParental(Renderer):
                     evntNm = REGEX.sub('', evnt).strip()
                     logout(data="evntNm")
                     logout(data=str(evntNm))
-                    rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
+                    rating_json = "{}xtraEvent/EMC/{}-info.json".format(pathLoc, evntNm)
                     logout(data="rating json")
                     logout(data=str(rating_json))
                     if os.path.exists(rating_json):

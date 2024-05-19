@@ -24,7 +24,7 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraStar.log"
+myfile="/tmp/xtraStarEmc.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -65,6 +65,8 @@ logout(data="start")
 
 try:
     pathLoc = config.plugins.xtraEvent.loc.value
+    logout(data="start pathloc")
+    logout(data=str(pathLoc))
 except:
     pathLoc = ""
 
@@ -92,7 +94,7 @@ REGEX = re.compile(
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
         r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
 
-class xtraStar(VariableValue, Renderer):
+class xtraStarEmc(VariableValue, Renderer):
     def __init__(self):
         logout(data="init")
         Renderer.__init__(self)
@@ -120,7 +122,7 @@ class xtraStar(VariableValue, Renderer):
                 logout(data=str(evntNm))
                 logout(data="start pathloc")
                 logout(data=str(pathLoc))
-                rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
+                rating_json = "{}xtraEvent/EMC/{}-info.json".format(pathLoc, evntNm)
                 logout(data="path json")
                 logout(data=str(rating_json))
                 if os.path.exists(rating_json):
