@@ -1,0 +1,104 @@
+
+# Infobar    SecoundInfobar
+
+
+<!--  Sterne event -->
+  <ePixmap pixmap="iconsepg/star_b.png" position="932,454" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget render="xtraStar" source="session.Event_Now" pixmap="iconsepg/star.png" position="932,455" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+<!--  Sterne next event -->
+ <ePixmap pixmap="iconsepg/star_b.png" position="932,454" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget render="xtraStar2" source="session.Event_Now" pixmap="iconsepg/star.png" position="932,455" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+
+  <!--  poster -->
+  <widget source="session.Event_Now" render="xtraPoster" position="263,426" size="185,278" zPosition="1" borderWidth="3" borderColor="1-Sender" />
+  <widget source="session.Event_Next" render="xtraPoster" position="50,427" size="185,278" zPosition="1" borderWidth="3" borderColor="1-SelectKanallist" />
+
+  <!-- backdrops -->
+  <widget source="session.Event_Now" render="xtraBackdrop" position="464,438" size="450,255" alphatest="blend" zPosition="2" borderWidth="3" borderColor="grey" />
+
+  <!-- parental rating -->
+  <widget source="session.Event_Now" render="xtraParental" position="1011,549" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+
+# xtraInfo
+<widget source="session.Event_Now" render="Label" position="673,148" size="700,350" font="Regular; 25" halign="left" transparent="0" zPosition="12" backgroundColor="black" valign="top" foregroundColor="bluelight2">
+  <convert type="xtraInfo">Title</convert>
+</widget>
+
+-----------------------------------------------------
+Title = "Title"
+    Year = "Year"
+    Rated = "Rated"
+    Released = "Released"
+    Runtime = "Runtime"
+    Genre = "Genre"
+    Director = "Director"
+    Writer = "Writer"
+    Actors = "Actors"
+    Plot = "Description"
+    Language = "Language"
+    Country = "Country"
+    Awards = "Awards"
+    imdbRating = "imdbRating"
+    imdbRatingValue = "imdbRatingValue"
+    imdbRatingSimple = "imdbRatingSimple"
+    imdbVotes = "imdbVotes"
+    Type = "Type"
+    totalSeasons = "totalSeasons"
+    SE = "SE"
+    Duration = "Duration"
+    Compact = "Compact"
+--------------------------------------------------------------
+
+# Kanalliste
+
+
+
+
+ <!-- xtraEvent plugin -->
+  <widget source="ServiceEvent" render="xtraPoster" position="64,532" size="185,278" zPosition="1" />
+
+  <!-- backdrops -->
+  <widget source="ServiceEvent" render="xtraBackdrop" position="283,534" size="450,255" alphatest="blend" zPosition="2" borderWidth="3" borderColor="grey" />
+
+  <!-- parental rating -->
+  <widget source="ServiceEvent" render="xtraParental" position="765,631" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+
+ <ePixmap pixmap="iconsepg/star_b.png" position="874,631" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget render="xtraStar" source="ServiceEvent" pixmap="iconsepg/star.png" position="877,633" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+
+
+
+# EPG
+<screen name="PANEL_Xtra_Epg">
+  <!-- Poster -->
+  <widget source="Event" render="xtraPoster" position="540,630" size="133,200" zPosition="1" />
+  <!-- backdrops -->
+  <widget source="Event" render="xtraBackdrop" position="100,630" size="400,200" alphatest="blend" zPosition="2" />
+  <!-- parental rating -->
+  <widget source="Event" render="xtraParental" position="777,750" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+  <!-- strene -->
+  <ePixmap pixmap="xtra/star/star_b.png" position="700,645" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="Event" render="xtraStar" pixmap="xtra/star/star.png" position="700,645" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+</screen>
+
+
+
+
+
+
+
+# EMC
+<screen name="PANEL_Xtra_EMC">
+  <!-- parental rating -->
+  <widget source="Service" render="xtraParentalEmc" position="1839,573" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+  <!-- Poster -->
+  <widget source="Service" render="xtraEmcPoster" delayPic="200" position="1403,643" size="133,200" zPosition="5" transparent="1" />
+  <!-- backdrops -->
+  <widget source="Service" render="xtraEmcBackdrop" delayPic="200" position="1545,644" size="355,200" zPosition="5" transparent="1" />
+  <!-- sterne -->
+  <ePixmap pixmap="xtra/star/star_b.png" position="1633,595" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="Service" render="xtraStarEmc" pixmap="xtra/star/star.png" position="1633,595" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+</screen>
+
+
+
