@@ -1,0 +1,219 @@
+<!-- #########<screen name="ChannelSelection">########### -->
+ <skin>
+
+  <!-- xtraEvent plugin 1-->
+  <!-- backdrops -->
+  <widget source="ServiceEvent" render="xtraBackdrop" position="1178,111" size="450,255" alphatest="blend" zPosition="2" borderWidth="3" borderColor="grey" />
+   <!-- ... -->
+  <widget source="ServiceEvent" render="xtraBackdropList" mode="trio" position="990,750" size="900,225" backgroundColor="background" zPosition="99" transparent="1" />
+  <!-- parental rating -->
+  <widget source="ServiceEvent" render="xtraParental" position="1672,187" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+  <!-- event info -->
+  <widget source="ServiceEvent" render="Label" position="990,383" size="900,45" font="Regular; 33" halign="center" transparent="1" zPosition="2" backgroundColor="background" valign="center">
+    <convert type="xtraInfo">Compact</convert>
+  </widget>
+  <widget source="ServiceEvent" render="Label" position="965,285" size="195,45" font="Regular; 33" halign="center" transparent="1" zPosition="2" backgroundColor="background" valign="center">
+    <convert type="xtraInfo">imdbRatingSimple</convert>
+  </widget>
+  <widget source="ServiceEvent" render="RunningText" options="movetype=running,startdelay=5000,steptime=60,direction=top,startpoint=0,wrap=1,always=0,repeat=2,oneshot=1" size="900,300" position="990,434" font="Regular; 30" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Director,Writer,Actors,Description</convert>
+  </widget>
+  <!-- ... -->
+    <!-- xtraEvent plugin 2-->
+  <!-- full -->
+  <widget source="ServiceEvent" render="xtraBackdropList2" position="980,105" size="920,863" backgroundColor="background" zPosition="99" transparent="1" />
+  <!-- ... -->
+    <widget source="ServiceEvent" render="xtraBackdropList" mode="single" usedImage="backdrop" position="990,750" size="900,225" backgroundColor="background" zPosition="99" />
+ <!-- ... -->
+   <!-- xtraEvent plugin 3-->
+  <!-- backdrops -->
+  <widget source="ServiceEvent" render="xtraBackdrop" position="1178,113" size="450,255" alphatest="blend" zPosition="2" borderWidth="3" borderColor="grey" />
+  <!-- parental rating -->
+  <widget source="ServiceEvent" render="xtraParental" position="1728,189" size="90,90" alphatest="blend" zPosition="9" transparent="1" />
+  <!-- event info -->
+  <widget source="ServiceEvent" render="Label" position="990,383" size="900,45" font="Regular; 33" halign="center" transparent="1" zPosition="2" backgroundColor="background" valign="center">
+    <convert type="xtraInfo">Compact</convert>
+  </widget>
+  <widget source="ServiceEvent" render="Label" position="965,285" size="195,45" font="Regular; 30" halign="center" transparent="1" zPosition="2" backgroundColor="background" valign="center">
+    <convert type="xtraInfo">imdbRatingSimple</convert>
+  </widget>
+  <widget source="ServiceEvent" render="RunningText" options="movetype=running,startdelay=5000,steptime=60,direction=top,startpoint=0,wrap=1,always=0,repeat=2,oneshot=1" size="900,300" position="990,434" font="Regular; 30" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Director,Writer,Actors,Description</convert>
+  </widget>
+    <!-- xtraEvent plugin 4-->
+  <!-- xtraEvent plugin -->
+  <!-- backdrops -->
+  <widget source="ServiceEvent" render="xtraBackdrop" position="990,113" size="270,150" alphatest="blend" zPosition="2" borderWidth="3" borderColor="grey" />
+  <widget source="ServiceEvent" render="xtraBackdropList" mode="single" position="990,780" size="900,195" backgroundColor="background" zPosition="99" />
+  <!-- parental rating -->
+  <widget source="ServiceEvent" render="xtraParental" position="1215,218" size="45,45" alphatest="blend" zPosition="9" transparent="1" />
+  <!-- imdb rating star progress -->
+  <ePixmap pixmap="xtra/star_b.png" position="990,278" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="ServiceEvent" render="Progress" pixmap="xtra/star.png" position="990,278" size="200,20" alphatest="blend" transparent="1" zPosition="2" backgroundColor="background">
+    <convert type="xtraInfo">imdbRatingValue</convert>
+  </widget>
+  <!-- event info -->
+  <widget source="ServiceEvent" render="Label" position="1283,113" size="600,240" font="Regular; 26" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Title,Year,Rated,Genre,Type,Country,Duration,SE</convert>
+  </widget>
+  <widget source="ServiceEvent" render="Label" position="990,308" size="270,45" font="Regular; 30" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="center">
+    <convert type="xtraInfo">imdbRating</convert>
+  </widget>
+  <widget source="ServiceEvent" render="RunningText" options="movetype=running,startdelay=5000,steptime=60,direction=top,startpoint=0,wrap=1,always=0,repeat=2,oneshot=1" size="900,400" position="990,374" font="Regular; 30" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Director,Writer,Actors,Description</convert>
+  </widget>
+  <!-- xtraEvent plugin end-->
+    <!-- xtraEvent plugin 5-->
+  <!-- backdrops -->
+  <widget source="ServiceEvent" render="xtraBackdrop" position="1178,113" size="450,255" alphatest="blend" zPosition="2" borderWidth="3" borderColor="grey" />
+<!-- parental rating -->
+<!-- <widget source="ServiceEvent" render="xtraParental" position="1728,189" size="60,60" alphatest="blend" zPosition="9" transparent="1" /> -->
+<!-- event info -->
+<widget source="ServiceEvent" render="Label" position="990,383" size="900,45" font="Regular; 33" halign="center" transparent="1" zPosition="2" backgroundColor="background" valign="center">
+<convert type="xtraInfo">Compact</convert>
+</widget>
+<widget source="ServiceEvent" render="RunningText" options="movetype=running,startdelay=5000,steptime=60,direction=top,startpoint=0,wrap=1,always=0,repeat=2,oneshot=1" size="900,535" position="990,440" font="Regular; 30" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+<convert type="xtraInfo">Director,Writer,Actors,Description</convert>
+</widget>
+<!-- ... -->
+  <!-- xtraEvent plugin 6-->
+  <!-- backdrops -->
+  <!-- <widget source="ServiceEvent" render="xtraBackdrop" delayPic="100" position="750,105" size="185,278" zPosition="2" alphatest="blend" borderWidth="2" borderColor="key_color" /> -->
+  <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="0" usedImage="poster" delayPic="200" position="750,103" size="185,278" zPosition="0" borderWidth="2" borderColor="key_color" />
+  <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="1" usedImage="poster" delayPic="500" position="750,645" size="185,278" zPosition="2" borderWidth="2" borderColor="key_color" />
+  <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="2" usedImage="poster" delayPic="1000" position="1170,645" size="185,278" zPosition="2" borderWidth="2" borderColor="key_color" />
+  <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="3" usedImage="poster" delayPic="1500" position="1590,645" size="185,278" zPosition="2" borderWidth="2" borderColor="key_color" />
+  <!-- next events names -->
+  <widget source="ServiceEvent" render="xtraNxtEvnt" nxtEvents="" snglEvent="1" font="Regular; 22" position="750,935" size="300,60" zPosition="5" backgroundColor="background" transparent="1" />
+  <widget source="ServiceEvent" render="xtraNxtEvnt" nxtEvents="" snglEvent="2" font="Regular; 22" position="1172,935" size="300,65" zPosition="5" backgroundColor="background" transparent="1" />
+  <widget source="ServiceEvent" render="xtraNxtEvnt" nxtEvents="" snglEvent="3" font="Regular; 22" position="1587,935" size="300,65" zPosition="5" backgroundColor="background" transparent="1" />
+  <!-- parental rating -->
+  <widget source="ServiceEvent" render="xtraParental" position="875,322" size="60,60" alphatest="blend" zPosition="2" transparent="1" />
+  <!-- imdb rating star progress -->
+  <ePixmap pixmap="xtra/star_b.png" position="750,390" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="ServiceEvent" render="xtraStar" pixmap="xtra/star.png" position="750,390" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+  <!-- event info -->
+  <widget source="ServiceEvent" render="Label" position="970,101" size="914,274" font="Regular; 30" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Title,Year,Rated,Genre,Type,Duration,SE</convert>
+  </widget>
+  <widget source="ServiceEvent" render="Label" position="750,420" size="200,40" font="Regular; 30" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="center">
+    <convert type="xtraInfo">imdbRating</convert>
+  </widget>
+  <widget source="ServiceEvent" render="RunningText" options="movetype=running,startdelay=5000,steptime=60,direction=top,startpoint=0,wrap=1,always=0,repeat=2,oneshot=1" size="1140,170" position="750,465" font="Regular; 25" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Director,Writer,Actors,Description</convert>
+  </widget>
+  <!-- ... -->
+
+  <!-- xtraEvent plugin 7-->
+  <!-- backdrops -->
+  <widget source="ServiceEvent" render="xtraBackdrop" position="990,113" size="270,150" alphatest="blend" zPosition="2" borderWidth="3" borderColor="grey" />
+  <widget source="ServiceEvent" render="xtraBackdropList" mode="single" position="990,780" size="900,195" backgroundColor="background" zPosition="99" />
+  <!-- parental rating -->
+  <widget source="ServiceEvent" render="xtraParental" position="1215,218" size="45,45" alphatest="blend" zPosition="9" transparent="1" />
+  <!-- imdb rating star progress -->
+  <widget source="ServiceEvent" render="xtraStar" position="990,275" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+  <!-- event info -->
+  <widget source="ServiceEvent" render="Label" position="1283,113" size="600,240" font="Regular; 26" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Title,Year,Rated,Genre,Type,Country,Duration,SE</convert>
+  </widget>
+  <widget source="ServiceEvent" render="Label" position="990,308" size="270,45" font="Regular; 30" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="center">
+    <convert type="xtraInfo">imdbRating</convert>
+  </widget>
+  <widget source="ServiceEvent" render="RunningText" options="movetype=running,startdelay=5000,steptime=60,direction=top,startpoint=0,wrap=1,always=0,repeat=2,oneshot=1" size="900,400" position="990,374" font="Regular; 30" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Director,Writer,Actors,Description</convert>
+  </widget>
+  <!-- xtraEvent plugin end-->
+
+<!-- #########<screen name="Infobar">########### -->
+ 
+  <!-- xtraEvent plugin -->
+    <!-- Poster -->
+		<widget source="session.Event_Now" render="xtraPoster" position="0,460" size="185,278" zPosition="-50" />
+		<widget source="session.Event_Next" render="xtraPoster" position="1735,460" size="185,278" zPosition="-50" />
+	<!-- ... -->
+	<!-- #########<screen name="SecondInfoBar">########### -->
+	<widget source="session.Event_Now" render="xtraPoster" position="40,75" size="185,278" zPosition="5" />
+  <widget source="session.Event_Now" render="Label" position="250,75" size="689,324" font="Regular; 25" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Title,Year,imdbRating,Rated,Genre,Awards</convert>
+  </widget>
+  <widget source="session.Event_Now" render="Label" position="40,415" size="900,300" font="Regular; 25" halign="left" transparent="1" zPosition="1" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Director,Writer,Actors,Description</convert>
+  </widget>
+  <widget source="session.Event_Now" render="xtraParental" position="163,293" size="60,60" alphatest="blend" zPosition="5" transparent="1" />
+  <ePixmap pixmap="xtra/star_b.png" position="40,375" size="185,20" alphatest="blend" zPosition="2" transparent="1" />
+  <!-- <widget source="session.Event_Now" render="xtraStar" pixmap="xtra/star.png" position="40,375" size="185,20" alphatest="blend" transparent="1" zPosition="3" /> -->
+  <!-- imdb rating star progress -->
+  <widget source="session.Event_Now" render="Progress" pixmap="xtra/star.png" position="40,375" size="185,20" alphatest="blend" transparent="1" zPosition="2" backgroundColor="background">
+    <convert type="xtraInfo">imdbRatingValue</convert>
+  </widget>
+  <!-- next -->
+  <widget source="session.Event_Next" render="xtraPoster" delayPic="200" position="960,75" size="185,278" zPosition="1" />
+  <!-- <widget source="session.Event_Next" render="xtraNxtEvnt" snglEvent="1" font="Regular; 22" position="860,75" size="400,40" zPosition="5" backgroundColor="background" transparent="1" /> -->
+  <widget source="session.Event_Next" render="xtraParental" position="1085,292" size="60,60" alphatest="blend" zPosition="2" transparent="1" />
+  <ePixmap pixmap="xtra/star_b.png" position="960,375" size="185,20" alphatest="blend" zPosition="1" transparent="1" />
+  <!-- <widget source="session.Event_Next" render="xtraStar" pixmap="xtra/star.png" position="960,375" size="185,20" alphatest="blend" transparent="1" zPosition="3" /> -->
+  <!-- imdb rating star progress -->
+  <!-- <ePixmap pixmap="/usr/share/enigma2/xtraHD/star_b.png" position="990,278" size="270,27" alphatest="blend" zPosition="2" transparent="1" /> -->
+  <widget source="session.Event_Next" render="Progress" pixmap="xtra/star.png" position="960,375" size="185,20" alphatest="blend" transparent="1" zPosition="2" backgroundColor="background">
+    <convert type="xtraInfo">imdbRatingValue</convert>
+  </widget>
+  <widget source="session.Event_Next" render="Label" position="1170,75" size="689,324" font="Regular; 25" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Title,Year,imdbRating,Rated,Genre,Awards</convert>
+  </widget>
+  <widget source="session.Event_Next" render="Label" position="960,415" size="900,300" font="Regular; 25" halign="left" transparent="1" zPosition="1" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Director,Writer,Actors,Description</convert>
+  </widget>
+  	<!-- ... -->
+	<!-- #########<screen name="EMCSelection">########### -->
+<!-- xtraEvent plugin -->
+    <widget source="Service" render="xtraEmcBackdrop" delayPic="500" position="0,0" size="1920,1080" zPosition="-24" alphatest="off" />
+    <widget source="Service" render="xtraEmcPoster" delayPic="200" position="1671,105" size="185,278" zPosition="1" borderWidth="1" borderColor="key_color" />
+    <widget source="Service" render="xtraParental" position="1605,322" size="60,60" alphatest="blend" zPosition="2" transparent="1" />
+	
+    <ePixmap pixmap="xtra/star_b.png" position="1246,322" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+	<widget source="Service" render="Progress" pixmap="xtra/star.png" position="1246,322" size="200,20" alphatest="blend" transparent="1" zPosition="2" backgroundColor="background">
+		<convert type="xtraInfo">imdbRatingValue</convert>
+	</widget>
+
+    <widget source="Service" render="Label" position="1246,342" size="200,40" font="Regular; 30" halign="center" transparent="1" zPosition="2" backgroundColor="background" valign="center">
+      <convert type="xtraInfo">imdbRating</convert>
+    </widget>
+	<!-- ... -->
+	<!-- #########<screen name="MovieSelection">########### -->
+	  <!-- xtraEvent plugin -->
+    <widget source="Service" render="xtraEmcBackdrop" delayPic="500" position="0,0" size="1920,1080" zPosition="-24" alphatest="off" />
+    <widget source="Service" render="xtraEmcPoster" delayPic="200" position="680,650" size="185,278" zPosition="1" borderWidth="1" borderColor="key_color" />
+    <widget source="Service" render="xtraParental" position="804,867" size="60,60" alphatest="blend" zPosition="2" transparent="1" />
+    <ePixmap pixmap="xtra/star_b.png" position="675,940" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+	<widget source="Service" render="Progress" pixmap="xtra/star.png" position="675,940" size="200,20" alphatest="blend" transparent="1" zPosition="2" backgroundColor="background">
+		<convert type="xtraInfo">imdbRatingValue</convert>
+	</widget>
+
+    <widget source="Service" render="Label" position="675,965" size="200,40" font="Regular; 30" halign="center" transparent="1" zPosition="2" backgroundColor="background" valign="center">
+      <convert type="xtraInfo">imdbRating</convert>
+    </widget>
+	<!-- ... -->
+
+	<!-- #########<screen name="EPGSelection" "EventView">########### -->
+	 <!-- xtraEvent plugin -->
+  <widget source="Event" render="xtraPoster" position="1185,255" size="185,278" zPosition="1" />
+  <widget source="Event" render="xtraBanner" position="1185,103" size="700,130" zPosition="2" />
+  <!-- parental rating -->
+  <widget source="Event" render="xtraParental" position="1185,15" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+  <!-- imdb rating star progress -->
+  <widget source="Event" render="Label" position="1635,21" size="100,45" font="Regular; 30" halign="left" transparent="1" zPosition="3" backgroundColor="background" valign="center">
+    <convert type="xtraInfo">imdbRatingSimple</convert>
+  </widget>
+  <ePixmap pixmap="xtra/star_b.png" position="1415,36" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="Event" render=""xtraStar" pixmap="xtra/star.png" position="1415,36" size="200,20" alphatest="blend" transparent="1" zPosition="3" backgroundColor="background">
+    <convert type="xtraInfo">imdbRatingValue</convert>
+  </widget>
+  <!-- event info -->
+  <widget source="Event" render="Label" position="1393,255" size="500,278" font="Regular; 26" halign="left" transparent="1" zPosition="2" backgroundColor="background" valign="top">
+    <convert type="xtraInfo">Title,Year,Rated,Genre,Type,Country,Duration,SE</convert>
+  </widget>
+  <!-- ... -->
+ 
+
+</skin>
+	
