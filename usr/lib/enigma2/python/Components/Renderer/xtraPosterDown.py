@@ -185,7 +185,7 @@ class xtraPoster(Renderer):
                 self.instance.hide()
                 return
 # -------------------------------- download -----------------------------------------
-def
+
 if config.plugins.xtraEvent.poster.value == True:
     dwnldFile = "{}poster/{}.jpg".format(pathLoc, title)
 
