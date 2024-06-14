@@ -25,7 +25,7 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraNextEvents.log"
+myfile="/tmp/xtraNextEventsBackdrop.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -95,7 +95,7 @@ REGEX = re.compile(
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
         r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
 
-class xtraNextEvents(Renderer):
+class xtraNextEventsBackdrop(Renderer):
 
     def __init__(self):
         Renderer.__init__(self)
@@ -151,8 +151,8 @@ class xtraNextEvents(Renderer):
                     logout(data=str(evnt))
                     evntNm = REGEX.sub('', evnt).strip()
                     logout(data=str(evntNm))
-                    #pstrNm = "{}xtraEvent/poster/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
-                    pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
+                    pstrNm = "{}xtraEvent/backdrop/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
+                    #pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
                     logout(data=str(pstrNm))
                     if os.path.exists(pstrNm):
                         self.instance.setPixmap(loadJPG(pstrNm))

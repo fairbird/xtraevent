@@ -13,6 +13,7 @@ from enigma import ePixmap, loadJPG, eTimer, eEPGCache
 from Components.config import config
 import os
 import re
+import inspect
 
 # --------------------------- Logfile -------------------------------
 
@@ -25,7 +26,7 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraNextEvents.log"
+myfile="/tmp/xtraNextEventsPoster.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -95,7 +96,7 @@ REGEX = re.compile(
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
         r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
 
-class xtraNextEvents(Renderer):
+class xtraNextEventsPoster(Renderer):
 
     def __init__(self):
         Renderer.__init__(self)
@@ -108,6 +109,12 @@ class xtraNextEvents(Renderer):
         self.timer.callback.append(self.showPicture)
 
     def applySkin(self, desktop, parent):
+        logout(data="applySkin")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         attribs = self.skinAttributes[:]
         for attrib, value in self.skinAttributes:
             if attrib == "size":
@@ -127,6 +134,11 @@ class xtraNextEvents(Renderer):
     GUI_WIDGET = ePixmap
     def changed(self, what):
         logout(data="changed")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         if not self.instance:
             return
         else:
@@ -137,6 +149,13 @@ class xtraNextEvents(Renderer):
                 self.instance.hide()
 
     def showPicture(self):
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
         evnt = ''
         pstrNm = ''
         evntNm = ''
@@ -151,8 +170,8 @@ class xtraNextEvents(Renderer):
                     logout(data=str(evnt))
                     evntNm = REGEX.sub('', evnt).strip()
                     logout(data=str(evntNm))
-                    #pstrNm = "{}xtraEvent/poster/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
-                    pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
+                    pstrNm = "{}xtraEvent/poster/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
+                    #pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
                     logout(data=str(pstrNm))
                     if os.path.exists(pstrNm):
                         self.instance.setPixmap(loadJPG(pstrNm))
