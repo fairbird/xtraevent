@@ -9,7 +9,7 @@
 # usedImage="backdrop", usedImage="poster", usedImage="banner"
 from __future__ import absolute_import
 from Components.Renderer.Renderer import Renderer
-from enigma import ePixmap, loadJPG, eTimer, eEPGCache
+from enigma import ePixmap, loadJPG, eTimer, eEPGCache, loadPNG
 from Components.config import config
 import os
 import re
@@ -25,7 +25,7 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraNextEvents.log"
+myfile="/tmp/xtraNextEventsLogo.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -95,7 +95,7 @@ REGEX = re.compile(
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
         r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
 
-class xtraNextEvents(Renderer):
+class xtraNextEventsLogo(Renderer):
 
     def __init__(self):
         Renderer.__init__(self)
@@ -108,6 +108,7 @@ class xtraNextEvents(Renderer):
         self.timer.callback.append(self.showPicture)
 
     def applySkin(self, desktop, parent):
+        logout(data="applySkin")
         attribs = self.skinAttributes[:]
         for attrib, value in self.skinAttributes:
             if attrib == "size":
@@ -151,11 +152,11 @@ class xtraNextEvents(Renderer):
                     logout(data=str(evnt))
                     evntNm = REGEX.sub('', evnt).strip()
                     logout(data=str(evntNm))
-                    #pstrNm = "{}xtraEvent/poster/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
-                    pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
+                    pstrNm = "{}xtraEvent/logo/{}/{}.png".format(pathLoc, self.nxEvntUsed, evntNm)
+                    #pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
                     logout(data=str(pstrNm))
                     if os.path.exists(pstrNm):
-                        self.instance.setPixmap(loadJPG(pstrNm))
+                        self.instance.setPixmap(loadPNG(pstrNm))
                         self.instance.setScale(1)
                         self.instance.show()
                     else:

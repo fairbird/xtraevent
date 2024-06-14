@@ -6,7 +6,7 @@ from Screens.Screen import Screen
 from Components.Pixmap import Pixmap
 from Components.Label import Label
 from Components.ActionMap import ActionMap
-from enigma import eEPGCache, eTimer, getDesktop, ePixmap, ePoint, eSize, loadJPG
+from enigma import eEPGCache, eTimer, getDesktop, ePixmap, ePoint, eSize, loadJPG, loadPNG
 from Components.config import config
 from ServiceReference import ServiceReference
 from Screens.MessageBox import MessageBox
@@ -27,6 +27,8 @@ import io
 from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 
 from .xtra import version
+
+import inspect
 # --------------------------- Logfile -------------------------------
 
 
@@ -75,7 +77,7 @@ def logout(data):
 
 
 # ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
-logout(data="start")
+logout(data="start-6.75")
 
 #                                    bei 1570 google abfrage einbauen
 
@@ -109,13 +111,22 @@ except:
 
 try:
     from Components.Language import language
+    logout(data="language try")
     lang = language.getLanguage()
     lang = lang[:2]
+    logout(data=str(lang))
 except:
     try:
         lang = config.osd.language.value[:-3]
+        logout(data="config.osd")
+        logout(data=str(lang))
     except:
+        logout(data="default")
         lang = "en"
+        logout(data=str(lang))
+
+logout(data="---------------------- language is -------------------------------------------")
+logout(data=str(lang))
 
 lang_path = r"/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/languages"
 try:
@@ -138,6 +149,8 @@ except:
 
 epgcache = eEPGCache.getInstance()
 pathLoc =  "{}xtraEvent/".format(config.plugins.xtraEvent.loc.value)
+logout(data="pathLoc")
+logout(data=str(pathLoc))
 desktop_size = getDesktop(0).size().width()
 headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
 REGEX = re.compile(
@@ -459,7 +472,7 @@ class downloads(Screen):
     def selBouquets(self):
         logout(data="selBouquets")
         if os.path.exists("{}bqts".format(pathLoc)):
-            logout(data="selBouquets file exits")
+            logout(data="-----------------------------------------------    selBouquets file exits")
             with open("{}bqts".format(pathLoc), "r") as f:
                 logout(data="selBouquets open file")
                 refs = f.readlines()
@@ -478,7 +491,8 @@ class downloads(Screen):
                     pass
             self.titles = list(dict.fromkeys(eventlist))
             start_new_thread(self.downloadEvents, ())
-
+        else:
+            logout(data="-----------------------------------------------    selBouquets file not exits")
 
 ####################################################
     def downloadEvents(self):
@@ -524,9 +538,9 @@ class downloads(Screen):
         self.delete_oldfilesnoinfos()
         logout(data="zurueck von delete files")
         #---------------------------------
-        logout(data="onoff abfrage")
+        logout(data="Extra 3 on-off abfrage")
         if config.plugins.xtraEvent.onoff.value:
-            logout(data="onoff")
+            logout(data="--------------------------------------------------- Extra 3 ist an ")
 # elcinema(en) #################################################################
             if config.plugins.xtraEvent.extra3.value == True:
                 logout(data="extra3 true")
@@ -552,18 +566,22 @@ class downloads(Screen):
                         logout(data=str(url))
                         urlo = requests.get(url)
                         urlo = urlo.text.replace('&#39;', "'").replace('&quot;', '"').replace('&amp;', 'and').replace('(', '').replace(')', '')
+                        #logout(data=str(urlo))             # info jede menge
                         with io.open("/tmp/urlo.html", "w", encoding="utf-8") as f:
                             f.write(urlo)
                             logout(data="extra3 true1a URL fertig")
                     if os.path.exists("/tmp/urlo.html"):
-                        logout(data="extra3 true1b")
+                        logout(data="extra3 true 1b")
                         with io.open("/tmp/urlo.html", "r", encoding="utf-8") as f:
                             urlor = f.read()
+                            logout(data="extra3 urlor")
+                            #logout(data=str(urlor))
                         titles = re.findall('<li><a title="(.*?)" href="/en/work', urlor)
-                    logout(data="extra3 true1c")
+                        #logout(data="extra3 true 1c")
+                        logout(data="extra3 true 1c, Anzahl der Titel: " + str(len(titles)))
                     n = len(titles)
                 except Exception as err:
-                    logout(data="extra3 true2")
+                    logout(data="extra3 true 2")
                     with open("/tmp/xtraEvent.log", "a+") as f:
                         f.write("elcinema urlo, %s, %s\n"%(title, err))
                 for title in titles:
@@ -571,18 +589,19 @@ class downloads(Screen):
                     try:
                         logout(data="download try")
                         title = REGEX.sub('', title).strip()
-                        logout(data="download try title")
+                        logout(data="download try title ")
                         logout(data=str(title))
                         dwnldFile = "{}poster/{}.jpg".format(pathLoc, title)
-                        logout(data="download try dwnldFile")
+                        logout(data="download try dwnldFile save poster jpg")
                         logout(data=str(dwnldFile))
                         info_files = "{}infos/{}.json".format(pathLoc, title)
-                        logout(data="download try info files")
+                        logout(data="download try info files save json ")
                         logout(data=str(info_files))
                         tid = re.findall('title="%s" href="/en/work/(.*?)/"'%title, urlor)[0]
-                        logout(data="download try tid")
+                        logout(data="download try tid ist wohl die id aber nur fuers poster kein logo")
                         logout(data=str(tid))
                         self.setTitle(_("{}".format(title)))
+
                         if not os.path.exists(dwnldFile):
                             logout(data="download poster 370")
                             turl =	"https://elcinema.com/en/work/{}/".format(tid)
@@ -726,7 +745,8 @@ class downloads(Screen):
                         except Exception as err:
                             with open("/tmp/xtraEvent.log", "a+") as f:
                                 f.write("elcinema ej, %s, %s\n"%(title, err))
-                    time.sleep(5)
+                    logout(data=" hier timeout von 1 sec ")
+                    time.sleep(1)  # war 5 sec mal neuer versuch
             logout(data=" liste der titel zum downloaden 541")
             n = len(self.titles)
             self.anzahldownloads = n
@@ -737,19 +757,24 @@ class downloads(Screen):
                 self.setTitle(_("{}".format(title)))
 
     # tmdb_Poster() #################################################################
-                logout(data=" Poster abfrage vom tmdb holen 548")
+                # download
+
+
+
+                logout(data=" Poster abfrage vom tmdb holen 744")
+
                 if config.plugins.xtraEvent.poster.value == True:           # abfrage poster ja/nein
                     logout(data=str(config.plugins.xtraEvent.poster.value))
                     dwnldFile = "{}poster/{}.jpg".format(pathLoc, title)
-                    logout(data=" Poster download auf JA 552")
+                    logout(data=" Poster download auf JA 744")
                     logout(data=str(dwnldFile))
 
 
 
                     if config.plugins.xtraEvent.tmdb.value == True:         # abfrage soll von tmdb geholt werden
-                        logout(data=" Poster von Tmdb holen auf JA 555")
+                        logout(data=" Poster von Tmdb holen auf JA 750")
                         if not os.path.exists(dwnldFile):                   # ist das poster schon vorhanden
-                            logout(data=" Poster file ist nicht vorhanden 557")
+                            logout(data=" Poster file ist nicht vorhanden 752")
 
 
 
@@ -758,9 +783,9 @@ class downloads(Screen):
                                 srch = "multi"                              # wie gesucht wird , es gibt auch tv und movie
                                 #srch = config.plugins.xtraEvent.searchType.value
                                 logout(data=str(srch))
-                                logout(data=" URL 561")                     # erste anfrage
+                                logout(data=" URL ")                     # erste anfrage
                                 url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote(title))
-                                logout(data=" URL 561")
+                                logout(data=" URL ")
                                 logout(data=str(url_tmdb))
 
                                 # abfrage ist total result 0 keine json vorhanden dann nochmal anfragen ohne titel
@@ -768,14 +793,12 @@ class downloads(Screen):
                                 data = response.json()
                                 total_results = data.get("total_results", 0)
                                 if total_results == 0:
-                                    logout(data=" json 742  total results ist 0 keine daten im tv json")
+                                    logout(data=" json  total results ist 0 keine daten im tv json")
                                     url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(srch, tmdb_api, quote)
                                     logout(data=" URL 748")
                                     logout(data=str(url_tmdb))
 
                                 # hier
-
-
                                 #  languag anfrage geht nicht immer wenn dann vorher abfrage ist result >0 bei hier
 
                                 #if config.plugins.xtraEvent.searchLang.value == True:
@@ -790,10 +813,10 @@ class downloads(Screen):
                                 data = response.json()
 
                                 total_results = data.get("total_results", 0)
-                                logout(data=" json 577  total results vom json")
+                                logout(data=" json total results vom json")
                                 logout(data=str(total_results))
                                 if total_results == 0:
-                                    logout(data=" json 580  total results ist 0 keine daten im json")
+                                    logout(data=" json total results ist 0 keine daten im json")
 
 # ------------------------------------------------- wenn mit multi nichts gefunden dann nochmal mit tv suchen -----------------------------------------------
                                     if srch == "multi":
@@ -828,45 +851,44 @@ class downloads(Screen):
                                             # Weiterer Code für den Fall, dass es Ergebnisse im multi-JSON gibt
                                         #    pass
 
-
-
-
 # -------------------------------------------------------------------------------------------------------------------------------------------
 
                                 else:
                                     # -----------------------   als json datei speichern
                                     response = requests.get(url_tmdb)
                                     if response.status_code == 200:
-                                        logout(data=" json 586 json info OK titel und path")
+                                        logout(data=" json json info OK titel und path")
                                         # Dateipfad im temporären Verzeichnis erstellen
                                         #file_path = os.path.join('/tmp', 'poster.json')
                                         logout(data=str(title))
                                         logout(data=str(pathLoc))
                                         file_path = "{}infos/{}.json".format(pathLoc, title)
-                                        logout(data=" json path kpl zum schreiben 592")
+                                        logout(data=" json path kpl zum schreiben ")
                                         logout(data=str(file_path))
 
                                         # JSON-Daten speichern
                                         with open(file_path, 'w') as file:
                                             json.dump(response.json(), file)
-                                            logout(data=" json geschrieben 600")
+                                            logout(data=" json geschrieben ")
                                     # --------------------------  file geschrieben wenn auch keine info drin ist -------------------------------
                                     # -------------------------- jetzt poster url suchen  wird aus dem results 0 geholt --------------------------------------------------------
                                     poster = ""
+                                    id_nummer = ""
                                     poster = requests.get(url_tmdb).json()['results'][0]['poster_path']
+                                    id_nummer = requests.get(url_tmdb).json()['results'][0]['id']
                                     logout(data=" poster url aus json holen ")
                                     logout(data=str(poster))
                                     original_title = requests.get(url_tmdb).json()['results'][0]['poster_path']
                                     logout(data=str(original_title))
                                     p_size = config.plugins.xtraEvent.TMDBpostersize.value
                                     logout(data=str(p_size))
-                                    logout(data=" URL start download 611")
+                                    logout(data=" URL start download ")
                                     url = "https://image.tmdb.org/t/p/{}{}".format(p_size, poster)
-                                    logout(data=" URL ende download von dieser url  613")
+                                    logout(data=" URL ende download von dieser url  ")
                                     logout(data=str(url))
 
                                     if poster != "":
-                                        logout(data=" poster vorhanden 617")
+                                        logout(data=" poster vorhanden ")
                                         open(dwnldFile, 'wb').write(requests.get(url, stream=True, allow_redirects=True).content)
                                     if os.path.exists(dwnldFile):
                                         logout(data=" if os.path exist")
@@ -874,18 +896,79 @@ class downloads(Screen):
                                         tmdb_poster_downloaded += 1
                                         downloaded = tmdb_poster_downloaded
                                         self.prgrs(downloaded, n)
+
+# ------------------------------------------ versuch logo ----------------------------------------------------------------
+                                    if id_nummer is not None:
+                                        logout(data="")
+                                        logout(data="----------------------------------------------------------------------------------- Gefundene id nummer:")
+                                        logout(data=str(id_nummer))
+                                        lng = self.searchLanguage()
+                                        logout(data=str(lng))
+                                        url_tmdb = "https://api.themoviedb.org/3/movie/{}/images?api_key={}".format(id_nummer, tmdb_api)
+                                        logout(data=(url_tmdb))
+                                        # so url - http://api.themoviedb.org/3/movie/672/images?api_key=3c3efcf47c3577558812bb9d64019d65
+                                        # json laden in data
+                                        response = requests.get(url_tmdb)
+                                        data = response.json()
+                                        logout(data="check json daten")
+
+                                        if "id" in data and data["id"] == id_nummer:
+                                            logout(data="json hat eine id")
+                                            logout(data=str(lng))
+                                            if not data["logos"]:
+                                                logout(data="json hat keine logo daten")
+                                            else:
+                                                logout(data="json hat infos daten")
+                                                for file_path in data["logos"]:
+
+                                                    if file_path["iso_639_1"] == lng:
+                                                        url_logo = file_path["file_path"]
+                                                        logout(data="logo")
+                                                        logout(data=url_logo)
+                                                        break
+                                                else:
+                                                    # Wenn kein deutsches logo gefunden wurde, nach einem ohne Sprachcode suchen
+                                                    for file_path in data["logos"]:
+                                                        if file_path["iso_639_1"] == "en":
+                                                            url_logo = file_path["file_path"]
+                                                            # Weitere Verarbeitung des Datei-Pfads
+                                                            logout(data="url Logo ohne sprache gefunden")
+                                                            logout(data=url_logo)
+                                                            break
+                                                    else:
+                                                        url_logo = None
+                                                        logout(
+                                                            data="Kein deutsches oder sprachunabhaengiges logo gefunden.")
+                                                logosize = "300"
+                                                if not url_logo == None:
+                                                    pathLogo = "{}logo/".format(pathLoc)
+                                                    url_logo_down = "https://image.tmdb.org/t/p/w{}{}".format(logosize, url_logo)
+                                                    logout(data=str(url_logo_down))
+                                                    logout(data="logo - open file")
+                                                    dwn_logo = pathLogo + "{}.png".format(title)
+                                                    logout(data=str(dwn_logo))
+                                                    logout(data="----------------------------------------------------------- logo - zu save")
+                                                    self.savePoster(dwn_logo, url_logo_down)
+                                                    logout(data="----------------------------------------------------------- logo - von save zurueck ende logo_path")
+                                                    dwnldFile = dwn_logo
+                                                    self.showLogo(dwnldFile)
+                                                    logout(data="----------------------------------------------------------------------------------- logo ende")
+                                                    logout(data="")
+                                                else:
+                                                    logout(data="")
+# ----------------------------------------------------------------------------------------------------------------------
                                         self.showPoster(dwnldFile)
                                         #continue
                                     try:
-                                        logout(data=" poster try 628")
+                                        logout(data=" poster try ")
                                         img = Image.open(dwnldFile)
                                         img.verify()
                                     except Exception as err:
                                         with open("/tmp/xtraEvent.log", "a+") as f:
-                                            logout(data=" poster deleted xtraEvent file 633")
+                                            logout(data=" poster deleted xtraEvent file ")
                                             f.write("deleted tmdb poster: %s.jpg\n"%title)
                                         try:
-                                            logout(data=" poster remove 636")
+                                            logout(data=" poster remove ")
                                             os.remove(dwnldFile)
                                         except:
                                             pass
@@ -1675,7 +1758,6 @@ class downloads(Screen):
 
 
 
-
 # ---------------------------------------------------------------------------------------------------------------------------
     def delete_oldfilesposter(self):
         # --------  hier alte files loeschen poster -------------------------
@@ -1920,3 +2002,50 @@ class downloads(Screen):
         os.system("echo 1 > /proc/sys/vm/drop_caches")
         os.system("echo 2 > /proc/sys/vm/drop_caches")
         os.system("echo 3 > /proc/sys/vm/drop_caches")
+
+
+    def savePoster(self, dwn_path, url):
+        from urllib.request import urlopen
+        logout(data="")
+        logout(data="")
+        logout(data="------------------------------------------------------------------------------------------------------- def saveposter start")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=log_message)
+        logout(data="save poster - open file")
+        logout(data=str(dwn_path))
+        logout(data=str(url))
+
+        with open(dwn_path, 'wb') as f:
+            logout(data="with open")
+            f.write(urlopen(url).read())
+            logout(data="write ")
+            # Überprüfe, ob das Schreiben abgeschlossen ist
+            f.flush()
+            f.close()
+            # Überprüfe die Dateigröße
+            file_size = os.path.getsize(dwn_path)
+            if file_size == 0:
+                # Lösche die Datei, wenn sie 0 Byte groß ist
+                os.remove(dwn_path)
+                logout(data="wurde geloescht, da sie 0 Byte war.")
+            else:
+                logout(data="Datei wurde erfolgreich gespeichert ")
+        logout(data="-------------------------------------------------------------------------------------------------------  def saveposter ende")
+        logout(data="")
+        return
+
+    def showLogo(self, dwnldFile):
+        #if config.plugins.xtraEvent.onoff.value:
+        if not config.plugins.xtraEvent.timerMod.value:
+            self["Picture2"].hide()
+            self["Picture"].setPixmap(loadPNG(dwnldFile))
+            if desktop_size <= 1280:
+                self["Picture"].resize(eSize(300, 170))
+                self["Picture"].move(ePoint(895, 280))
+                self["Picture"].setScale(1)
+            else:
+                self["Picture"].setScale(1)
+                self["Picture"].resize(eSize(300, 170))
+                self["Picture"].move(ePoint(1400, 400))
