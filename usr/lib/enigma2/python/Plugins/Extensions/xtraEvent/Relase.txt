@@ -5,3 +5,6 @@ Versionsnummer im Skin
 6.72----------------17-05-2024
 xtraInfo überarbeitet
 -------------------------------------------------------------------
+6.73----------------02.06.2024
+logo mal mit dazu gebaut , werden einfach bei poster mit downgeloadet
+-------------------------------------------------------------------

@@ -63,7 +63,7 @@ def logout(data):
 
 
 # ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
-logout(data="start")
+logout(data="start 6.75")
 
 addFont("/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/fonts/arial.ttf", "xtraRegular", 100, 1)
 
@@ -99,13 +99,12 @@ def startTimer():
             download.downloads("").save()
             logout(data="ende download")
             startTimer()
-
+        err = ""
         t = threading.Timer(secs, startDownload)
         t.start()
 
-
-    with open("/tmp/xtraEvent.log", "a+") as f:
-        f.write("plugin timer clock, %s\n"%(err))
+        with open("/tmp/xtraEvent.log", "a+") as f:
+           f.write("plugin timer clock, %s\n"%(err))
 
 
 try:
@@ -146,8 +145,16 @@ try:
         t.start()
 
 except Exception as err:
-    with open("/tmp/xtraEvent.log", "a+") as f:
-        f.write("plugin timer clock, %s\n"%(err))
+    logout(data="---------------------------------------------------------------- timer write und err --------------")
+    logout(data=str(err))
+    #with open("/tmp/xtraEvent.log", "a+") as f:
+    #    f.write("plugin timer clock, %s\n"%(err))
+    try:
+        with open("/tmp/xtraEvent.log", "a+") as f:
+            f.write("plugin timer clock, %s\n" % (err))
+    except IOError as e:
+        logout(data="Fehler beim Schreiben in die Datei")
+        logout(data=str(e))
 
 def ddwn():
     logout(data="def ddwn")
@@ -191,4 +198,4 @@ def main(session, **kwargs):
         traceback.print_exc()
 
 def Plugins(**kwargs):
-    return [PluginDescriptor(name="xtraEvent {}".format(xtra.version), description="Poster, Baskdrop, Banner, Info...Etc, Support...", where = PluginDescriptor.WHERE_PLUGINMENU, icon="plugin.png", fnc=main)]
+    return [PluginDescriptor(name="xtraEvent {}".format(xtra.version), description="Poster, Backdrop, Banner, Info...Etc, Support...", where = PluginDescriptor.WHERE_PLUGINMENU, icon="plugin.png", fnc=main)]

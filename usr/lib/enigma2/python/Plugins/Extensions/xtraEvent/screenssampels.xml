@@ -13,6 +13,8 @@
   <widget source="session.Event_Now" render="xtraPoster" position="263,426" size="185,278" zPosition="1" borderWidth="3" borderColor="1-Sender" />
   <widget source="session.Event_Next" render="xtraPoster" position="50,427" size="185,278" zPosition="1" borderWidth="3" borderColor="1-SelectKanallist" />
 
+  <widget source="session.Event_Now" render="xtraLogo" position="263,426" size="185,278" zPosition="1" borderWidth="3" borderColor="1-Sender" />
+
   <!-- backdrops -->
   <widget source="session.Event_Now" render="xtraBackdrop" position="464,438" size="450,255" alphatest="blend" zPosition="2" borderWidth="3" borderColor="grey" />
 
@@ -66,7 +68,19 @@ Title = "Title"
  <ePixmap pixmap="iconsepg/star_b.png" position="874,631" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
   <widget render="xtraStar" source="ServiceEvent" pixmap="iconsepg/star.png" position="877,633" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
 
+  <widget source="ServiceEvent" render="xtraLogo" position="64,532" size="185,278" zPosition="1" />
 
+<widget source="ServiceEvent" render="xtraNextEventsPoster" nextEvent="1" position="711,640" size="120,180" zPosition="1" />
+
+  <widget source="ServiceEvent" render="xtraNextEventsPoster" nextEvent="2" position="845,639" size="120,180" zPosition="1" />
+
+ <widget source="ServiceEvent" render="xtraNextEventsPoster" nextEvent="3" position="980,640" size="120,180" zPosition="1" />
+
+ <widget source="ServiceEvent" render="xtraNextEventsPoster" nextEvent="4" position="1116,641" size="120,180" zPosition="1" />
+
+
+ <widget source="ServiceEvent" render="xtraNextEventsBackdrop" nextEvent="1" position="933,446" size="300,169" zPosition="1" />
+ <widget source="ServiceEvent" render="xtraNextEventsLogo" nextEvent="1" position="685,460" size="225,150" zPosition="1" />
 
 # EPG
 <screen name="PANEL_Xtra_Epg">
@@ -79,6 +93,7 @@ Title = "Title"
   <!-- strene -->
   <ePixmap pixmap="xtra/star/star_b.png" position="700,645" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
   <widget source="Event" render="xtraStar" pixmap="xtra/star/star.png" position="700,645" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+ <widget source="Event" render="xtraLogo" position="540,630" size="133,200" zPosition="1" />
 </screen>
 
 

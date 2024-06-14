@@ -80,7 +80,7 @@ def logout(data):
 
 
 # ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
-logout(data="start")
+logout(data="start 6.75")
 
 REGEX = re.compile(
     r'([\(\[]).*?([\)\]])|'
@@ -108,51 +108,9 @@ REGEX = re.compile(
 
 
 # =================================================================================================================
-version = "v6.72"
+version = "v6.75"
 # ==================================================================================================================
-pathLoc = ""
-try:
-    logout(data="xtra 1")
-    pathLoc = "{}xtraEvent/".format(config.plugins.xtraEvent.loc.value)
-    logout(data=str(config.plugins.xtraEvent.loc.value))
-    logout(data="xtra 1a")
-    logout(data=str(pathLoc))
-    # Überprüfen, ob die Verzeichnisse vorhanden sind, andernfalls anlegen
-    if not os.path.exists("{}poster".format(pathLoc)):
-        os.makedirs("{}poster".format(pathLoc))
 
-    if not os.path.exists("{}poster/dummy".format(pathLoc)):
-        os.makedirs("{}poster/dummy".format(pathLoc))
-
-    if not os.path.exists("{}banner".format(pathLoc)):
-        os.makedirs("{}banner".format(pathLoc))
-
-    if not os.path.exists("{}banner/dummy".format(pathLoc)):
-        os.makedirs("{}banner/dummy".format(pathLoc))
-
-    if not os.path.exists("{}backdrop".format(pathLoc)):
-        os.makedirs("{}backdrop".format(pathLoc))
-
-    if not os.path.exists("{}backdrop/dummy".format(pathLoc)):
-        os.makedirs("{}backdrop/dummy".format(pathLoc))
-
-    if not os.path.exists("{}infos".format(pathLoc)):
-        os.makedirs("{}infos".format(pathLoc))
-
-    if not os.path.exists("{}infosomdb".format(pathLoc)):
-        os.makedirs("{}infosomdb".format(pathLoc))
-
-    if not os.path.exists("{}noinfos".format(pathLoc)):
-        os.makedirs("{}noinfos".format(pathLoc))
-
-    if not os.path.exists("{}mSearch".format(pathLoc)):
-        os.makedirs("{}mSearch".format(pathLoc))
-
-    if not os.path.exists("{}EMC".format(pathLoc)):
-        os.makedirs("{}EMC".format(pathLoc))
-
-except:
-    pass
 
 try:
     logout(data="xtra 2")
@@ -357,7 +315,101 @@ config.plugins.xtraEvent.FANART_Banner_Size = ConfigSelection(default="1", choic
     ("8", "125x23")
     ])
 logout(data="xtra configs ende")
+# --------------------------------------------- check direktories -----------------------------------------------------
+pathLoc = ""
+logout(data="location")
+logout(data=str(config.plugins.xtraEvent.loc.value))
+pathLoc = "{}xtraEvent/".format(config.plugins.xtraEvent.loc.value)
+logout(data="path location")
+logout(data=str(pathLoc))
 
+
+
+
+
+if not os.path.exists("{}poster".format(pathLoc)):
+    os.makedirs("{}poster".format(pathLoc))
+
+if not os.path.exists("{}poster/dummy".format(pathLoc)):
+    os.makedirs("{}poster/dummy".format(pathLoc))
+
+if not os.path.exists("{}banner".format(pathLoc)):
+    os.makedirs("{}banner".format(pathLoc))
+
+if not os.path.exists("{}banner/dummy".format(pathLoc)):
+    os.makedirs("{}banner/dummy".format(pathLoc))
+
+if not os.path.exists("{}backdrop".format(pathLoc)):
+    os.makedirs("{}backdrop".format(pathLoc))
+
+if not os.path.exists("{}backdrop/dummy".format(pathLoc)):
+    os.makedirs("{}backdrop/dummy".format(pathLoc))
+
+if not os.path.exists("{}infos".format(pathLoc)):
+    os.makedirs("{}infos".format(pathLoc))
+
+if not os.path.exists("{}logo/dummy".format(pathLoc)):
+    os.makedirs("{}logo/dummy".format(pathLoc))
+
+if not os.path.exists("{}logo".format(pathLoc)):
+    os.makedirs("{}logo".format(pathLoc))
+
+if not os.path.exists("{}infosomdb".format(pathLoc)):
+    os.makedirs("{}infosomdb".format(pathLoc))
+
+if not os.path.exists("{}noinfos".format(pathLoc)):
+    os.makedirs("{}noinfos".format(pathLoc))
+
+if not os.path.exists("{}mSearch".format(pathLoc)):
+    os.makedirs("{}mSearch".format(pathLoc))
+
+if not os.path.exists("{}EMC".format(pathLoc)):
+    os.makedirs("{}EMC".format(pathLoc))
+
+# ------------------------------- check angelegt vorhanden -----------------------------------------------------------
+
+if os.path.exists("{}poster".format(pathLoc)):
+    logout(data="poster vorhanden")
+
+if os.path.exists("{}poster/dummy".format(pathLoc)):
+    logout(data="poster/dummy vorhanden")
+
+if os.path.exists("{}backdrop".format(pathLoc)):
+    logout(data="backdrop vorhanden")
+
+if os.path.exists("{}backdrop/dummy".format(pathLoc)):
+    logout(data="backdrop/dummy vorhanden")
+
+if os.path.exists("{}logo".format(pathLoc)):
+    logout(data="logo vorhanden")
+
+if os.path.exists("{}logo/dummy".format(pathLoc)):
+    logout(data="logo/dummy vorhanden")
+
+if os.path.exists("{}banner".format(pathLoc)):
+    logout(data="banner vorhanden")
+
+if os.path.exists("{}banner/dummy".format(pathLoc)):
+    logout(data="banner/dummy vorhanden")
+
+if os.path.exists("{}infos".format(pathLoc)):
+    logout(data="infos vorhanden")
+
+if os.path.exists("{}infosomdb".format(pathLoc)):
+    logout(data="infosomdb vorhanden")
+
+if os.path.exists("{}noinfos".format(pathLoc)):
+    logout(data="noinfos vorhanden")
+
+if os.path.exists("{}mSearch".format(pathLoc)):
+    logout(data="mSearch vorhanden")
+
+if os.path.exists("{}EMC".format(pathLoc)):
+    logout(data="EMC vorhanden")
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 logout(data="------------------ def check_movieList")
 pathMovie = config.plugins.xtraEvent.EMCloc.value
 pathXtra = os.path.join(config.plugins.xtraEvent.loc.value, "xtraEvent")
@@ -536,6 +588,10 @@ class xtra(Screen, ConfigListScreen):
             pathLoc = "{}xtraEvent/".format(config.plugins.xtraEvent.loc.value)
             logout(data="path selected pathLoc ")
             logout(data=str(pathLoc))
+            os.makedirs(pathLoc)
+            if not os.path.isdir(pathLoc):
+                pathLoc = "/tmp/"
+
             if not os.path.isdir(pathLoc):
                 os.makedirs("{}poster".format(pathLoc))
                 os.makedirs("{}poster/dummy".format(pathLoc))
@@ -544,6 +600,8 @@ class xtra(Screen, ConfigListScreen):
                 os.makedirs("{}backdrop".format(pathLoc))
                 os.makedirs("{}backdrop/dummy".format(pathLoc))
                 os.makedirs("{}infos".format(pathLoc))
+                os.makedirs("{}logo".format(pathLoc))
+                os.makedirs("{}logo/dummy".format(pathLoc))
                 os.makedirs("{}infosomdb".format(pathLoc))
                 os.makedirs("{}noinfos".format(pathLoc))
                 os.makedirs("{}mSearch".format(pathLoc))
@@ -563,6 +621,8 @@ class xtra(Screen, ConfigListScreen):
             os.makedirs("{}banner".format(pathLoc))
             os.makedirs("{}backdrop".format(pathLoc))
             os.makedirs("{}infos".format(pathLoc))
+            os.makedirs("{}logo".format(pathLoc))
+            os.makedirs("{}logo/dummy".format(pathLoc))
             os.makedirs("{}noinfos".format(pathLoc))
             os.makedirs("{}mSearch".format(pathLoc))
             os.makedirs("{}EMC".format(pathLoc))
@@ -1918,27 +1978,37 @@ class selBouquets(Screen):
         logout(data="bqtinchannels")
         try:
             if os.path.exists("{}bqts".format(pathLoc)):
+                logout(data="bqtinchannels1")
+                logout(data=str(pathLoc))
+                import stat
+                #os.chmod(pathLoc, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+                # achtung wenn die dateien rechte 777 haben geht das loeschen nicht
                 os.remove("{}bqts".format(pathLoc))
 
             bE = "{}bqts".format(pathLoc)
             blist = []
+            logout(data="bqtinchannels2")
             for idx,item in enumerate(self["list"].list):
+                logout(data="bqtinchannels3")
                 item = self["list"].list[idx][0]
                 if item[3]:
                     blist.append(item[0])
             for p in blist:
 
                 if config.plugins.xtraEvent.searchMOD.value == lng.get(lang, '13'):
+                    logout(data="bqtinchannels3")
                     refs = self.buqChList(p)
                     for ref in refs:
                         open(bE, "a+").write("{}\n".format(ref))
 
                 elif config.plugins.xtraEvent.searchMOD.value == lng.get(lang, '14a'):
+                    logout(data="bqtinchannels4")
                     refs = self.provChList(p)
                     for ref in refs:
                         open(bE, "a+").write("{}\n".format(ref))
 
             else:
+                logout(data="bqtinchannels ende")
                 list = [(_(lng.get(lang, '53')), self.withPluginDownload), (_(lng.get(lang, '54')), self.withTimerDownload), (_(lng.get(lang, '35')), self.cancel)]
                 self.session.openWithCallback(self.menuCallback, ChoiceBox, title=_('Download ?'), list=list)
         except Exception as err:
