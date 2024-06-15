@@ -170,7 +170,7 @@ class xtraNextEventsPoster(Renderer):
                     logout(data=str(evnt))
                     evntNm = REGEX.sub('', evnt).strip()
                     logout(data=str(evntNm))
-                    pstrNm = "{}xtraEvent/poster/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
+                    pstrNm = "{}xtraEvent/poster/{}{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
                     #pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
                     logout(data=str(pstrNm))
                     if os.path.exists(pstrNm):
