@@ -494,7 +494,6 @@ class xtra(Screen, ConfigListScreen):
 
         self['key_red'] = Label(_('Close'))
         self['key_green'] = Label(_(lng.get(lang, '40')))
-        self['key_yellow'] = Label(_(lng.get(lang, '75')))
         self['key_blue'] = Label(_(lng.get(lang, '18')))
         self["actions"] = ActionMap(["xtraEventAction"],
         {
@@ -504,7 +503,6 @@ class xtra(Screen, ConfigListScreen):
             "right": self.keyRight,
             "red": self.exit,
             "green": self.search,
-            "yellow": self.update,
             "blue": self.ms,
             "cancel": self.exit,
             "ok": self.keyOK,
@@ -778,8 +776,7 @@ class xtra(Screen, ConfigListScreen):
     def menuS(self):
         logout(data="------------------ def menuS")
         if config.plugins.xtraEvent.onoff.value:
-            list = [(_(lng.get(lang, '50')), self.brokenImageRemove), (_(lng.get(lang, '73')), self.removeImagesAll),\
-            (_(lng.get(lang, "75")), self.update), (_(lng.get(lang, '35')), self.exit)]
+            list = [(_(lng.get(lang, '50')), self.brokenImageRemove), (_(lng.get(lang, '73')), self.removeImagesAll)]
             self.session.openWithCallback(self.menuCallback, ChoiceBox, title=_('xtraEvent...'), list=list)
         else:
             self.exit()
