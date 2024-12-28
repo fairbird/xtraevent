@@ -78,9 +78,13 @@ def logout(data):
         return
     return
 
-
+# =================================================================================================================
+version = "v6.805"
+# ==================================================================================================================
 # ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
-logout(data="start 6.75")
+#logout(data="start 6.77")
+logout(data=str(version))
+#logout(data=str(config.plugins.xtraEvent.logFiles.value))
 
 REGEX = re.compile(
     r'([\(\[]).*?([\)\]])|'
@@ -104,12 +108,12 @@ REGEX = re.compile(
     r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
     r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
     r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-    r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
+    r'\d{1,3}(-я|-й|\sс-н).+|'
+    r'[\u0600-\u06FF]+'  # Arabische Schrift
+    , re.DOTALL)
 
+    #  r'[\u0600-\u06FF]+'  # Arabische Schrift
 
-# =================================================================================================================
-version = "v6.75"
-# ==================================================================================================================
 
 
 try:
@@ -217,7 +221,9 @@ logout(data="xtra 16")
 config.plugins.xtraEvent.timerHour = ConfigSelectionNumber(1, 168, 1, default=1)
 config.plugins.xtraEvent.timerClock = ConfigClock(default=0)
 config.plugins.xtraEvent.deletFiles = ConfigYesNo(default = True)
-
+config.plugins.xtraEvent.logFiles = ConfigYesNo(default = False)
+config.plugins.xtraEvent.logoFiles = ConfigYesNo(default = False)
+config.plugins.xtraEvent.castsFiles = ConfigYesNo(default = False)
 config.plugins.xtraEvent.searchMANUELnmbr = ConfigSelectionNumber(0, 999, 1, default=1)
 config.plugins.xtraEvent.searchMANUELyear = ConfigInteger(default = 0, limits=(0, 9999))
 config.plugins.xtraEvent.imgNmbr = ConfigSelectionNumber(0, 999, 1, default=1)
@@ -249,6 +255,7 @@ config.plugins.xtraEvent.extra3 = ConfigYesNo(default = False)
 config.plugins.xtraEvent.poster = ConfigYesNo(default = True)
 config.plugins.xtraEvent.banner = ConfigYesNo(default = False)
 config.plugins.xtraEvent.backdrop = ConfigYesNo(default = True)
+config.plugins.xtraEvent.logo = ConfigYesNo(default = False)
 config.plugins.xtraEvent.info = ConfigYesNo(default = True)
 config.plugins.xtraEvent.infoOmdb = ConfigYesNo(default = False)
 config.plugins.xtraEvent.infoImdb = ConfigYesNo(default = False)
@@ -314,7 +321,13 @@ config.plugins.xtraEvent.FANART_Banner_Size = ConfigSelection(default="1", choic
     ("4", "250x46"),
     ("8", "125x23")
     ])
-logout(data="xtra configs ende")
+logout(data="xtra configs ende und logfile aus oder an , false off , true on")
+logout(data=str(config.plugins.xtraEvent.logFiles.value))
+if config.plugins.xtraEvent.logFiles.value == True:
+    logstatus = "on"
+else:
+    logstatus = "off"
+
 # --------------------------------------------- check direktories -----------------------------------------------------
 pathLoc = ""
 logout(data="location")
@@ -354,8 +367,20 @@ if not os.path.exists("{}logo/dummy".format(pathLoc)):
 if not os.path.exists("{}logo".format(pathLoc)):
     os.makedirs("{}logo".format(pathLoc))
 
+if not os.path.exists("{}casts".format(pathLoc)):
+    os.makedirs("{}casts".format(pathLoc))
+
 if not os.path.exists("{}infosomdb".format(pathLoc)):
     os.makedirs("{}infosomdb".format(pathLoc))
+
+if not os.path.exists("{}infosomdbsterne".format(pathLoc)):
+    os.makedirs("{}infosomdbsterne".format(pathLoc))
+
+if not os.path.exists("{}infosomdbrated".format(pathLoc)):
+    os.makedirs("{}infosomdbrated".format(pathLoc))
+
+if not os.path.exists("{}infossterne".format(pathLoc)):
+    os.makedirs("{}infossterne".format(pathLoc))
 
 if not os.path.exists("{}noinfos".format(pathLoc)):
     os.makedirs("{}noinfos".format(pathLoc))
@@ -383,6 +408,9 @@ if os.path.exists("{}backdrop/dummy".format(pathLoc)):
 if os.path.exists("{}logo".format(pathLoc)):
     logout(data="logo vorhanden")
 
+if os.path.exists("{}casts".format(pathLoc)):
+    logout(data="casts vorhanden")
+
 if os.path.exists("{}logo/dummy".format(pathLoc)):
     logout(data="logo/dummy vorhanden")
 
@@ -397,6 +425,15 @@ if os.path.exists("{}infos".format(pathLoc)):
 
 if os.path.exists("{}infosomdb".format(pathLoc)):
     logout(data="infosomdb vorhanden")
+
+if os.path.exists("{}infosomdbsterne".format(pathLoc)):
+    logout(data="infosomdbsterne vorhanden")
+
+if os.path.exists("{}infosomdbrated".format(pathLoc)):
+    logout(data="infosomdbrated vorhanden")
+
+if os.path.exists("{}infossterne".format(pathLoc)):
+    logout(data="infossterne vorhanden")
 
 if os.path.exists("{}noinfos".format(pathLoc)):
     logout(data="noinfos vorhanden")
@@ -435,12 +472,17 @@ try:
                 movie_name = REGEX.sub('', movie_name).strip().rsplit(".", 1)[0].strip()
                 logout(data=str(movie_name))
 
-                poster_path = os.path.join(pathXtra, "EMC", f"{movie_name}-poster.jpg")
-                backdrop_path = os.path.join(pathXtra, "EMC", f"{movie_name}-backdrop.jpg")
-                info_path = os.path.join(pathXtra, "EMC", f"{movie_name}-info.json")
+                #poster_path = os.path.join(pathXtra, "EMC", f"{movie_name}-poster.jpg")
+                #backdrop_path = os.path.join(pathXtra, "EMC", f"{movie_name}-backdrop.jpg")
+                #info_path = os.path.join(pathXtra, "EMC", f"{movie_name}-info.json")
+
+                poster_path = os.path.join(pathXtra, "EMC", movie_name, "-poster.jpg")
+                backdrop_path = os.path.join(pathXtra, "EMC", movie_name, "-backdrop.jpg")
+                info_path = os.path.join(pathXtra, "EMC", movie_name, "-info.json")
                 logout(data=str(poster_path))
-                poster_filename = f"{movie_name}.jpg"
-                info_filename = f"{movie_name}.json"
+                poster_filename = movie_name, ".jpg"
+                info_filename = movie_name, ".json"
+                casts_filename = movie_name, ".json"
                 logout(data=str(poster_filename))
                 poster_src_path = os.path.join(pathXtra, "poster", poster_filename)
                 logout(data=str(poster_src_path))
@@ -448,6 +490,8 @@ try:
                 logout(data=str(backdrop_src_path))
                 info_src_path = os.path.join(pathXtra, "infos", info_filename)
                 logout(data=str(info_src_path))
+                casts_src_path = os.path.join(pathXtra, "casts", casts_filename)
+                logout(data=str(casts_src_path))
                 EMCposter_dest_path = poster_path
                 EMCbackdrop_dest_path = backdrop_path
                 EMCinfo_dest_path = info_path
@@ -542,6 +586,7 @@ class xtra(Screen, ConfigListScreen):
                 path_poster = "{}poster/".format(pathLoc)
                 path_banner = "{}banner/".format(pathLoc)
                 path_backdrop = "{}backdrop/".format(pathLoc)
+                path_casts = "{}infos/".format(pathLoc)
                 path_info = "{}infos/".format(pathLoc)
                 folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_poster, fname)), files)) for path_poster, folders, files in os.walk(path_poster)])
                 posters_sz = "%0.1f" % (folder_size//(1024*1024.0))
@@ -555,12 +600,16 @@ class xtra(Screen, ConfigListScreen):
                 folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_info, fname)), files)) for path_info, folders, files in os.walk(path_info)])
                 infos_sz = "%0.1f" % (folder_size//(1024*1024.0))
                 info_nmbr = len(os.listdir(path_info))
+                folder_size = sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_casts, fname)), files)) for path_casts, folders, files in os.walk(path_casts)])
+                castss_sz = "%0.1f" % (folder_size // (1024 * 1024.0))
+                casts_nmbr = len(os.listdir(path_casts))
                 self['status'].setText(_(lng.get(lang, '48')))
                 pstr = "Poster : {} poster {} MB".format(poster_nmbr, posters_sz)
                 bnnr = "Banner : {} banner {} MB".format(banner_nmbr, banners_sz)
                 bckdrp = "Backdrop : {} backdrop {} MB".format(backdrop_nmbr, backdrops_sz)
                 inf = "Info : {} info {} MB".format(info_nmbr, infos_sz)
-                pbbi = "\n".join([pstr, bnnr, bckdrp, inf])
+                cast = "Info : {} info {} MB".format(casts_nmbr, castss_sz)
+                pbbi = "\n".join([pstr, bnnr, bckdrp, inf, cast])
                 self['info'].setText(str(pbbi))
             except Exception as err:
                 with open("/tmp/xtraEvent.log", "a+") as f:
@@ -586,7 +635,9 @@ class xtra(Screen, ConfigListScreen):
             pathLoc = "{}xtraEvent/".format(config.plugins.xtraEvent.loc.value)
             logout(data="path selected pathLoc ")
             logout(data=str(pathLoc))
-            os.makedirs(pathLoc)
+            if not os.path.exists(pathLoc):
+                logout(data="directory anlegen")
+                os.makedirs(pathLoc)
             if not os.path.isdir(pathLoc):
                 pathLoc = "/tmp/"
 
@@ -599,8 +650,12 @@ class xtra(Screen, ConfigListScreen):
                 os.makedirs("{}backdrop/dummy".format(pathLoc))
                 os.makedirs("{}infos".format(pathLoc))
                 os.makedirs("{}logo".format(pathLoc))
+                os.makedirs("{}casts".format(pathLoc))
                 os.makedirs("{}logo/dummy".format(pathLoc))
                 os.makedirs("{}infosomdb".format(pathLoc))
+                os.makedirs("{}infosomdbsterne".format(pathLoc))
+                os.makedirs("{}infosomdbrated".format(pathLoc))
+                os.makedirs("{}infossterne".format(pathLoc))
                 os.makedirs("{}noinfos".format(pathLoc))
                 os.makedirs("{}mSearch".format(pathLoc))
                 os.makedirs("{}EMC".format(pathLoc))
@@ -619,7 +674,12 @@ class xtra(Screen, ConfigListScreen):
             os.makedirs("{}banner".format(pathLoc))
             os.makedirs("{}backdrop".format(pathLoc))
             os.makedirs("{}infos".format(pathLoc))
+            os.makedirs("{}infosomdb".format(pathLoc))
+            os.makedirs("{}infosomdbsterne".format(pathLoc))
+            os.makedirs("{}infosomdbrated".format(pathLoc))
+            os.makedirs("{}infossterne".format(pathLoc))
             os.makedirs("{}logo".format(pathLoc))
+            os.makedirs("{}casts".format(pathLoc))
             os.makedirs("{}logo/dummy".format(pathLoc))
             os.makedirs("{}noinfos".format(pathLoc))
             os.makedirs("{}mSearch".format(pathLoc))
@@ -651,6 +711,7 @@ class xtra(Screen, ConfigListScreen):
             list.append(getConfigListEntry("{}◙ \\c00?????? {}".format(on_color, lng.get(lang, '0')), config.plugins.xtraEvent.onoff, _(lng.get(lang, '0'))))
             list.append(getConfigListEntry("♥  {}".format(lng.get(lang, '1')), config.plugins.xtraEvent.cnfg, _(lng.get(lang, '2'))))
             list.append(getConfigListEntry("Delete Files 3 Day old on", config.plugins.xtraEvent.deletFiles, _(lng.get(lang, '4'))))
+            list.append(getConfigListEntry("Logfiles on/off", config.plugins.xtraEvent.logFiles, _(lng.get(lang, '4'))))
 
             list.append(getConfigListEntry("—"*100))
             if config.plugins.xtraEvent.cnfg.value:
@@ -689,28 +750,29 @@ class xtra(Screen, ConfigListScreen):
     # poster__________________________________________________________________________________________________________________
             list.append(getConfigListEntry("POSTER", config.plugins.xtraEvent.poster, _("...")))
             if config.plugins.xtraEvent.poster.value == True:
+
+                # logo und casts gehen nur mit TVDB
                 list.append(getConfigListEntry("\tTMDB", config.plugins.xtraEvent.tmdb, _(" "),))
                 if config.plugins.xtraEvent.tmdb.value :
                     list.append(getConfigListEntry("\t	Tmdb Poster {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TMDBpostersize, _(" ")))
                     list.append(getConfigListEntry("\t	  {}".format(lng.get(lang, '63')), config.plugins.xtraEvent.searchType, _(" ")))
+                    list.append(getConfigListEntry("Download Logo", config.plugins.xtraEvent.logoFiles, _(lng.get(lang, '4'))))
+                    list.append(getConfigListEntry("Download Casts", config.plugins.xtraEvent.castsFiles, _(lng.get(lang, '4'))))
+
                 list.append(getConfigListEntry("\tTVDB", config.plugins.xtraEvent.tvdb, _(lng.get(lang, '29'))))
                 if config.plugins.xtraEvent.tvdb.value :
                     list.append(getConfigListEntry("\t	Tvdb Poster {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TVDBpostersize, _(" ")))
+
+
                 list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart, _(lng.get(lang, '29'))))
                 if config.plugins.xtraEvent.fanart.value:
                     list.append(getConfigListEntry("\t	Fanart Poster {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.FANART_Poster_Resize, _(" ")))
+
                 list.append(getConfigListEntry("\tMAZE(TV SHOWS)", config.plugins.xtraEvent.maze, _(" ")))
+
                 list.append(getConfigListEntry("_"*100))
-    # banner__________________________________________________________________________________________________________________
-            list.append(getConfigListEntry("BANNER", config.plugins.xtraEvent.banner, _(" ")))
-            if config.plugins.xtraEvent.banner.value == True:
-                list.append(getConfigListEntry("\tTVDB", config.plugins.xtraEvent.tvdb_banner, _(" ")))
-                if config.plugins.xtraEvent.tvdb_banner.value :
-                    list.append(getConfigListEntry("\t	Tvdb Banner {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TVDB_Banner_Size, _(" ")))
-                list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart_banner, _(" ")))
-                if config.plugins.xtraEvent.fanart_banner.value :
-                    list.append(getConfigListEntry("\t	Fanart Banner {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.FANART_Banner_Size, _(" ")))
-                list.append(getConfigListEntry("_"*100))
+
+
     # backdrop_______________________________________________________________________________________________________________
             list.append(getConfigListEntry("BACKDROP", config.plugins.xtraEvent.backdrop, _(" ")))
             if config.plugins.xtraEvent.backdrop.value == True:
@@ -727,6 +789,17 @@ class xtra(Screen, ConfigListScreen):
                 list.append(getConfigListEntry("\tEXTRA", config.plugins.xtraEvent.extra, _(lng.get(lang, '30'))))
                 list.append(getConfigListEntry("\tEXTRA-2", config.plugins.xtraEvent.extra2, _(lng.get(lang, '31'))))
                 list.append(getConfigListEntry("_"*100))
+
+    # banner__________________________________________________________________________________________________________________
+            list.append(getConfigListEntry("BANNER", config.plugins.xtraEvent.banner, _(" ")))
+            if config.plugins.xtraEvent.banner.value == True:
+                list.append(getConfigListEntry("\tTVDB", config.plugins.xtraEvent.tvdb_banner, _(" ")))
+                if config.plugins.xtraEvent.tvdb_banner.value:
+                    list.append(getConfigListEntry("\t	Tvdb Banner {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TVDB_Banner_Size, _(" ")))
+                list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart_banner, _(" ")))
+                if config.plugins.xtraEvent.fanart_banner.value:
+                    list.append(getConfigListEntry("\t	Fanart Banner {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.FANART_Banner_Size, _(" ")))
+                list.append(getConfigListEntry("_" * 100))
     # info___________________________________________________________________________________________________________________
             list.append(getConfigListEntry("INFO", config.plugins.xtraEvent.info, _(lng.get(lang, '32'))))
             # if config.plugins.xtraEvent.info.value == True:
@@ -858,10 +931,14 @@ class xtra(Screen, ConfigListScreen):
                 os.makedirs("{}banner".format(pathLoc))
                 os.makedirs("{}backdrop".format(pathLoc))
                 os.makedirs("{}infos".format(pathLoc))
+                os.makedirs("{}infossterne".format(pathLoc))
+                os.makedirs("{}infosomdb".format(pathLoc))
+                os.makedirs("{}infosomdbsterne".format(pathLoc))
+                os.makedirs("{}infosomdbrated".format(pathLoc))
                 os.makedirs("{}mSearch".format(pathLoc))
                 os.makedirs("{}EMC".format(pathLoc))
-
-
+                os.makedirs("{}logo".format(pathLoc))
+                os.makedirs("{}casts".format(pathLoc))
             self.updateFinish()
 
     def compressImg(self):

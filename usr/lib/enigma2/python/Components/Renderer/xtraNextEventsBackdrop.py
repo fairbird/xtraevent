@@ -36,7 +36,14 @@ if isfile(myfile):
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
 
-logstatus = "on"
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
+
+
+
+if config.plugins.xtraEvent.logFiles.value == True:
+    logstatus = "on"
+else:
+    logstatus = "off"
 
 
 # ________________________________________________________________________________
@@ -93,7 +100,9 @@ REGEX = re.compile(
         r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-        r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
+        r'\d{1,3}(-я|-й|\sс-н).+|'
+        r'[\u0600-\u06FF]+'  # Arabische Schrift
+        , re.DOTALL)
 
 class xtraNextEventsBackdrop(Renderer):
 
@@ -151,6 +160,22 @@ class xtraNextEventsBackdrop(Renderer):
                     logout(data=str(evnt))
                     evntNm = REGEX.sub('', evnt).strip()
                     logout(data=str(evntNm))
+
+                    # hier live: entfernen
+                    Name = evnt.replace('\xc2\x86', '').replace('\xc2\x87', '').replace("live: ", "").replace("LIVE ", "")
+                    evnt = Name.replace("live: ", "").replace("LIVE ", "").replace("LIVE: ", "").replace("live ", "")
+                    logout(data="name live rausnehmen")
+                    logout(data=evnt)
+
+                    # hier versuch name nur vor dem :
+                    #name1 = evnt.split(": ", 1)
+                    #Name = name1[0]
+                    #logout(data="name   : abtrennen ")
+                    #logout(data=Name)
+
+                    evnt = Name
+                    # -------------------------------
+
                     pstrNm = "{}xtraEvent/backdrop/{}{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
                     #pstrNm = "{}xtraEvent/{}/{}.jpg".format(pathLoc, self.nxEvntUsed, evntNm)
                     logout(data=str(pstrNm))

@@ -31,8 +31,14 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 
-logstatus = "on"
+
+
+if config.plugins.xtraEvent.logFiles.value == True:
+    logstatus = "on"
+else:
+    logstatus = "off"
 
 
 # ________________________________________________________________________________
@@ -97,7 +103,11 @@ REGEX = re.compile(
         r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-        r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
+        r'\d{1,3}(-я|-й|\sс-н).+|'
+        r'[\u0600-\u06FF]+'  # Arabische Schrift
+        , re.DOTALL)
+
+# im TVDB gibt es keine INFO dazu nur TMDB json
 
 class xtraParental(Renderer):
 
@@ -144,7 +154,7 @@ class xtraParental(Renderer):
                     evntNm = REGEX.sub('', evnt).strip()
                     logout(data="evntNm")
                     logout(data=str(evntNm))
-                    rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
+                    rating_json = "{}xtraEvent/infosomdb/{}.json".format(pathLoc, evntNm)
                     logout(data="rating json")
                     logout(data=str(rating_json))
                     if os.path.exists(rating_json):

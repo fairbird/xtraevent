@@ -1,3 +1,112 @@
+<screen name="PANEL_Xtra_Epg">
+  <!-- Poster -->
+  <widget source="Event" render="xtraPoster" position="382,665" size="133,200" zPosition="1" />
+  <!-- backdrops -->
+  <widget source="Event" render="xtraBackdrop" position="63,665" size="300,170" alphatest="blend" zPosition="2" />
+  <!-- parental rating -->
+  <widget source="Event" render="xtraParental" position="384,804" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+  <!-- strene -->
+  <ePixmap pixmap="iconsinfo/xtra/star/star_b.png" position="123,837" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="Event" render="xtraStar" pixmap="iconsinfo/xtra/star/star.png" position="121,841" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+</screen>
+------------------------------------------------------------------------------------------------------------------
+<screen name="PANEL_Xtra_Infobar" position="-145,1">
+  <eLabel name="background" position="40,500" size="560,250" cornerRadius="20" backgroundGradient="0-backgroundskin_gradient_1,0-backgroundskin_gradient_2,0-backgroundskin_gradient_1,vertical" transparent="0" />
+  <eLabel name="background" position="1290,500" size="560,250" cornerRadius="20" backgroundGradient="0-backgroundskin_gradient_1,0-backgroundskin_gradient_2,0-backgroundskin_gradient_1,vertical" transparent="0" />
+  <!-- Poster -->
+  <widget source="session.Event_Now" render="xtraPoster" position="70,510" size="138,208" zPosition="5" />
+  <widget source="session.Event_Next" render="xtraPoster" position="1675,510" size="138,208" zPosition="5" />
+  <!-- backdrops -->
+  <widget source="session.Event_Now" render="xtraBackdrop" position="262,510" size="300,170" alphatest="blend" zPosition="2" />
+  <widget source="session.Event_Next" render="xtraBackdrop" position="1320,510" size="300,170" alphatest="blend" zPosition="2" />
+  <!-- parental rating -->
+  <widget source="session.Event_Now" render="xtraParental" position="271,685" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+  <widget source="session.Event_Next" render="xtraParental" position="1554,685" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+  <!-- sterne -->
+  <ePixmap pixmap="iconsinfo/xtra/star/star_b.png" position="360,700" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="session.Event_Now" render="xtraStar" pixmap="iconsinfo/xtra/star/star.png" position="360,700" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+  <ePixmap pixmap="iconsinfo/xtra/star/star_b.png" position="1320,700" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="session.Event_Next" render="xtraStar" pixmap="iconsinfo/xtra/star/star.png" position="1320,700" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+  <!-- logo
+<widget source="session.Event_Now" render="xtraLogo" position="780,479" size="225,150" zPosition="2" transparent="0" borderWidth="4" borderColor="4-lautstaerke" />
+  <widget source="session.Event_Next" render="xtraLogo" position="915,657" size="225,150" zPosition="2" transparent="0" borderWidth="4" borderColor="4-lautstaerke" />
+-->
+</screen>
+-------------------------------------------------------------------------------------------------------------
+<screen name="PANEL_Xtra_Second_Infobar">
+  <!-- Poster -->
+  <widget source="session.Event_Now" render="xtraPoster" position="900,110" size="125,185" zPosition="5" />
+  <widget source="session.Event_Next" render="xtraPoster" position="900,306" size="125,185" zPosition="5" />
+  <!-- backdrops -->
+  <widget source="session.Event_Now" render="xtraBackdrop" position="1043,110" size="240,130" alphatest="blend" zPosition="2" />
+  <widget source="session.Event_Next" render="xtraBackdrop" position="1043,307" size="240,130" alphatest="blend" zPosition="2" />
+  <!-- parental rating -->
+  <widget source="session.Event_Now" render="xtraParental" position="965,234" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+  <widget source="session.Event_Next" render="xtraParental" position="965,431" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+  <!-- sterne -->
+  <ePixmap pixmap="iconsinfo/xtra/star/star_b.png" position="1082,260" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="session.Event_Now" render="xtraStar" pixmap="iconsinfo/xtra/star/star.png" position="1082,260" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+  <ePixmap pixmap="iconsinfo/xtra/star/star_b.png" position="1080,460" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="session.Event_Next" render="xtraStar" pixmap="iconsinfo/xtra/star/star.png" position="1080,460" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+</screen>
+-------------------------------------------------------------------------------------------------------------
+<screen name="PANEL_Xtra_Kanalliste" position="0,0">
+  <!-- ***************************************** Backdrop -->
+  <widget source="ServiceEvent" render="xtraNxtEvnt" nxtEvents="" snglEvent="0" font="Regular; 22" halign="left" valign="top" position="1140,110" size="240,50" zPosition="5" transparent="1" noWrap="0" />
+  <widget source="ServiceEvent" render="xtraNxtEvnt" nxtEvents="" snglEvent="1" font="Regular; 22" halign="left" valign="top" position="1140,310" size="240,50" zPosition="5" transparent="1" noWrap="0" />
+  <widget source="ServiceEvent" render="xtraNxtEvnt" nxtEvents="" snglEvent="2" font="Regular; 22" halign="left" valign="top" position="1140,510" size="240,50" zPosition="5" transparent="1" noWrap="0" />
+  <widget source="ServiceEvent" render="xtraNxtEvnt" nxtEvents="" snglEvent="3" font="Regular; 22" halign="left" valign="top" position="1140,710" size="240,50" zPosition="5" transparent="1" noWrap="0" />
+  <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="0" usedImage="backdrop" delayPic="200" position="1140,170" size="240,130" zPosition="5" cornerRadius="14" />
+  <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="1" usedImage="backdrop" delayPic="200" position="1140,370" size="240,130" zPosition="6" cornerRadius="14" />
+  <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="2" usedImage="backdrop" delayPic="200" position="1140,570" size="240,130" zPosition="7" cornerRadius="14" />
+  <widget source="ServiceEvent" render="xtraNextEvents" nextEvent="3" usedImage="backdrop" delayPic="200" position="1140,770" size="240,130" zPosition="8" cornerRadius="14" />
+  <!-- Poster 
+    <widget source="ServiceEvent" render="xtraPoster" position="50,640" size="120,180" zPosition="1" />
+    <widget source="ServiceEvent" render="xtraNextEventsPoster" nextEvent="1" position="1200,640" size="120,180" zPosition="1" />
+-->
+  <!-- backdrops 
+    <widget source="ServiceEvent" render="xtraBackdrop" position="193,640" size="300,160" alphatest="blend" zPosition="2" />
+    <widget source="ServiceEvent" render="xtraNextEventsBackdrop" nextEvent="1" position="880,640" size="300,160" zPosition="1" />
+-->
+  <!-- parental rating 
+    <widget source="ServiceEvent" render="xtraParental" position="51,779" size="40,40" alphatest="blend" zPosition="9" transparent="1" />
+-->
+  <!-- sterne  
+    <ePixmap pixmap="xtra/star/star_b.png" position="240,800" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+    <widget source="ServiceEvent" render="xtraStar" pixmap="xtra/star/star.png" position="240,800" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+-->
+  <!-- logo 
+  <widget source="ServiceEvent" render="xtraLogo" position="462,666" size="225,150" zPosition="2" transparent="0" borderWidth="4" borderColor="4-lautstaerke" />
+-->
+  <!-- strene 
+  <ePixmap pixmap="xtra/star_b.png" position="698,702" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+ <widget source="ServiceEvent" render="Progress" pixmap="xtra/star.png" position="701,704" size="200,20" alphatest="blend" transparent="1" zPosition="2" backgroundColor="background">
+     <convert type="xtraInfo">imdbRatingValue</convert>
+ </widget>
+ <widget source="ServiceEvent" render="xtraNextEventsPoster" nextEvent="1" position="711,640" size="120,180" zPosition="1" />
+  <widget source="ServiceEvent" render="xtraNextEventsPoster" nextEvent="2" position="845,639" size="120,180" zPosition="1" />
+  <widget source="ServiceEvent" render="xtraNextEventsPoster" nextEvent="3" position="980,640" size="120,180" zPosition="1" />
+  <widget source="ServiceEvent" render="xtraNextEventsPoster" nextEvent="4" position="1116,641" size="120,180" zPosition="1" />
+  <widget source="ServiceEvent" render="xtraNextEventsBackdrop" nextEvent="1" position="933,446" size="300,169" zPosition="1" />
+  <widget source="ServiceEvent" render="xtraNextEventsLogo" nextEvent="1" position="685,460" size="225,150" zPosition="1" />
+-->
+</screen>
+-------------------------------------------------------------------------------------------------------------
+
+
+
+
+# Infobar    SecoundInfobar  casts darsteller
+
+
+<widget source="session.Event_Now" render="xtraCast" noWrap="1" castNum="0" castNameColor="#ffffff" castCaracterColor="#999999" castNameFont="Console; 24" castCaracterFont="Regular; 25" position="190,110" size="154,462" zPosition="3" backgroundColor="background" transparent="1" />
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+
+
 
 # Infobar    SecoundInfobar
 
@@ -116,4 +225,50 @@ Title = "Title"
 </screen>
 
 
+####################################################
 
+<screen name="PANEL_SecondInfobarXtra">
+  <eLabel name="background" position="20,10" size="1880,770" cornerRadius="20" transparent="0" backgroundGradient="0-backgroundskin_gradient_1,0-backgroundskin_gradient_2,0-backgroundskin_gradient_3,horizontal" zPosition="-1" />
+  <eLabel name="background" position="150,90" size="1600,470" zPosition="0" cornerRadius="20" backgroundColor="0-background-info" foregroundColor="0-background-fields" backgroundGradient="7-display_gradient_1,7-display_gradient_2,7-display_gradient_3,vertical" />
+  <eLabel name="background" position="40,575" size="1840,190" zPosition="0" cornerRadius="20" backgroundColor="0-background-info" foregroundColor="0-background-fields" backgroundGradient="7-display_gradient_1,7-display_gradient_2,7-display_gradient_3,vertical" />
+  <widget render="Kitte888RunningText" backgroundColor="background" foregroundColor="foreground" transparent="1" font="Regular; 30" options="movetype=running,startpoint=0,direction=top,steptime=100,startdelay=2000,wrap,always=0" position="250,590" size="1400,160" source="session.Event_Now" zPosition="10">
+    <convert type="EventName">ExtendedDescription</convert>
+  </widget>
+  <!-- Poster -->
+  <widget source="session.Event_Now" render="xtraPoster" position="64,580" size="125,185" zPosition="5" />
+  <!--
+  <widget source="session.Event_Next" render="xtraPoster" position="900,306" size="125,185" zPosition="5" />
+-->
+  <!-- backdrops -->
+  <widget source="session.Event_Now" render="xtraBackdrop" position="572,115" size="740,380" alphatest="blend" zPosition="2" />
+  <!--  
+<widget source="session.Event_Next" render="xtraBackdrop" position="1043,307" size="240,130" alphatest="blend" zPosition="2" />
+-->
+  <!-- parental rating -->
+  <widget source="session.Event_Now" render="xtraParental" position="1724,608" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+  <!--  
+<widget source="session.Event_Next" render="xtraParental" position="965,431" size="60,60" alphatest="blend" zPosition="9" transparent="1" />
+-->
+  <!-- sterne -->
+  <ePixmap pixmap="Kitte888Rack/iconsinfo/xtra/star/star_b.png" position="1670,712" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="session.Event_Now" render="xtraStar" pixmap="Kitte888Rack/iconsinfo/xtra/star/star.png" position="1668,712" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+  <!-- 
+ <ePixmap pixmap="iconsinfo/xtra/star/star_b.png" position="1080,460" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
+  <widget source="session.Event_Next" render="xtraStar" pixmap="iconsinfo/xtra/star/star.png" position="1080,460" size="200,20" alphatest="blend" transparent="1" zPosition="3" />
+-->
+  <widget source="session.Event_Now" render="Label" position="385,510" size="360,40" font="Regular;26" halign="right" transparent="1" zPosition="2" backgroundColor="black" foregroundColor="bg-colour2" valign="top">
+    <convert type="xtraInfo">Year</convert>
+  </widget>
+  <widget source="session.Event_Now" render="Label" position="753,510" size="330,40" font="Regular;26" halign="center" transparent="1" zPosition="2" backgroundColor="black" foregroundColor="bg-colour2" valign="top">
+    <convert type="xtraInfo">Genre</convert>
+  </widget>
+  <widget source="session.Event_Now" render="Label" position="1090,510" size="360,40" font="Regular;26" halign="left" transparent="1" zPosition="2" backgroundColor="black" foregroundColor="bg-colour2" valign="top">
+    <convert type="xtraInfo">Duration</convert>
+  </widget>
+  <!-- cast -->
+  <widget source="session.Event_Now" render="xtraCast" noWrap="1" castNum="0" castNameColor="#0099ccff" castCaracterColor="#001edb76" castNameFont="Console; 25" castCaracterFont="Regular; 25" position="174,100" size="185,457" zPosition="3" backgroundColor="background" transparent="1" />
+  <!--   -->
+  <widget source="session.Event_Now" render="xtraCast" noWrap="1" castNum="1" castNameColor="#0099ccff" castCaracterColor="#001edb76" castNameFont="Console; 24" castCaracterFont="Regular; 25" position="1350,100" size="185,457" zPosition="3" backgroundColor="background" transparent="1" />
+  <widget source="session.Event_Now" render="xtraCast" noWrap="1" castNum="2" castNameColor="#0099ccff" castCaracterColor="#001edb76" castNameFont="Console; 24" castCaracterFont="Regular; 25" position="1546,100" size="185,457" zPosition="3" backgroundColor="background" transparent="1" />
+  <widget source="session.Event_Now" render="xtraCast" noWrap="1" castNum="3" castNameColor="#0099ccff" castCaracterColor="#001edb76" castNameFont="Console; 24" castCaracterFont="Regular; 25" position="366,100" size="185,457" zPosition="3" backgroundColor="background" transparent="1" />
+</screen>

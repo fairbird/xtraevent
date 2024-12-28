@@ -22,9 +22,10 @@ from threading import Timer
 from shutil import copyfile
 from os import remove
 from os.path import isfile
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 
-
-
+from .xtra import version
+from .download import downloadrunning
 ########################### log file loeschen ##################################
 
 myfile="/tmp/xtraevent-Plugin.log"
@@ -37,8 +38,10 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
-
-logstatus = "on"
+if config.plugins.xtraEvent.logFiles.value == True:
+    logstatus = "on"
+else:
+    logstatus = "off"
 
 
 # ________________________________________________________________________________
@@ -63,8 +66,8 @@ def logout(data):
 
 
 # ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
-logout(data="start 6.75")
-
+#logout(data="start 6.77")
+logout(data=str(version))
 addFont("/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/fonts/arial.ttf", "xtraRegular", 100, 1)
 
 def startTimer():
@@ -130,15 +133,16 @@ try:
         logout(data=str(ds))
 # ------------------------------------------- nach plugin start wird nach ca 10 sec ein download gemacht
         #secs = ds.seconds + 1
-        secs = 10
+        secs = 10000
         logout(data="seconds")
         logout(data=str(secs))
-
+        logout(data="downloadrunning")
+        logout(data=str(downloadrunning))
         def startDownload():
-            logout(data="start download")
+            logout(data="----------------------------------------------------------------------------------------------- start download 10 sec")
             from . import download
             download.downloads("").save()
-            logout(data="ende download")
+            logout(data="----------------------------------------------------------------------------------------------- ende download 10 sec ")
             startTimer()
 
         t = threading.Timer(secs, startDownload)

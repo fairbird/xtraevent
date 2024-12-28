@@ -2,11 +2,62 @@
 
 from Components.config import config
 
-skinColor = "#3478c1"
+# --------------------------- Logfile -------------------------------
+
+from datetime import datetime
+from os import remove
+from os.path import isfile
+
+########################### log file loeschen #######################
+
+myfile="/tmp/xtra-skin.log"
+
+## If file exists, delete it ##
+if isfile(myfile):
+    remove(myfile)
+############################## File copieren ########################
+# fuer py2 die int und str anweisung raus genommen und das Grad zeichen
+
+###########################  log file anlegen ######################
+# kitte888 logfile anlegen die eingabe in logstatus
+
+logstatus = "on"
+
+# ________________________________________________________________________________
+
+def write_log(msg):
+    if logstatus == ('on'):
+        with open(myfile, "a") as log:
+            log.write(datetime.now().strftime("%Y/%d/%m, %H:%M:%S.%f") + ": " + msg + "\n")
+            return
+    return
+
+# ****************************  test ON/OFF Logfile ************************************************
+
+def logout(data):
+    if logstatus == ('on'):
+        write_log(data)
+        return
+    return
+
+#<color name="grau" value="#001c202b" />
+#<color name="grau1" value="#00282b2d" />
+#<color name="grau2" value="#00404040" />
+#from .xtra import *
+skinColor = "#00343c4f"
+logout(data="skinColor")
+logout(data=str(skinColor))
+#skinColor = config.plugins.xtraEvent.skinSelectColor.value
+#logout(data="skinColor config")
+#logout(data=str(skinColor))
+
 try:
-	skinColor = config.plugins.xtraEvent.skinSelectColor.value
+    skinColor = config.plugins.xtraEvent.skinSelectColor.value
+    logout(data="skinColor config")
+    logout(data=str(skinColor))
+
 except:
-	pass
+    pass
 
 xtra_720 = """
 <screen name="xtra" position="0,0" size="1280,720" title="xtraEvent..." flags="wfNoBorder" backgroundColor="transparent">
@@ -628,8 +679,4 @@ selbuq_1080_2 = """
   
     <eLabel name="" position="1800,1000" size="50,50" text="16" font="Regular; 35" halign="left" backgroundColor="#00000000" foregroundColor="#0000ff00" />
 
-
 </screen>"""
-
-
-

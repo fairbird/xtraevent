@@ -50,7 +50,9 @@ REGEX = re.compile(
 		r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
 		r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
 		r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-		r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
+		r'\d{1,3}(-я|-й|\sс-н).+|'
+        r'[\u0600-\u06FF]+'  # Arabische Schrift
+        , re.DOTALL)
 
 class xtraBackdropList2(Renderer):
 	def __init__(self):
