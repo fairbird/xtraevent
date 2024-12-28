@@ -13,7 +13,7 @@ from enigma import ePixmap, loadJPG, eTimer, eEPGCache
 from Components.config import config
 import os
 import re
-
+import inspect
 # --------------------------- Logfile -------------------------------
 
 from datetime import datetime
@@ -36,7 +36,14 @@ if isfile(myfile):
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
 
-logstatus = "on"
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
+
+
+
+if config.plugins.xtraEvent.logFiles.value == True:
+    logstatus = "on"
+else:
+    logstatus = "off"
 
 
 # ________________________________________________________________________________
@@ -93,11 +100,19 @@ REGEX = re.compile(
         r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-        r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
+        r'\d{1,3}(-я|-й|\sс-н).+|'
+        r'[\u0600-\u06FF]+'  # Arabische Schrift
+        , re.DOTALL)
 
 class xtraNextEvents(Renderer):
 
     def __init__(self):
+        logout(data="init")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         Renderer.__init__(self)
 
         self.nxEvnt = 0
@@ -108,8 +123,14 @@ class xtraNextEvents(Renderer):
         self.timer.callback.append(self.showPicture)
 
     def applySkin(self, desktop, parent):
+        logout(data="applySkin")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         attribs = self.skinAttributes[:]
-        for attrib, value in self.skinAttributes:
+        for attrib, value in self.skinAttributes:  # aus dem widget daten
             if attrib == "size":
                 self.piconsize = value
             elif attrib == 'nextEvent':          # 0(current), 1, 2, 3.........
@@ -127,6 +148,11 @@ class xtraNextEvents(Renderer):
     GUI_WIDGET = ePixmap
     def changed(self, what):
         logout(data="changed")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         if not self.instance:
             return
         else:
@@ -137,6 +163,12 @@ class xtraNextEvents(Renderer):
                 self.instance.hide()
 
     def showPicture(self):
+        logout(data="showPicture")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         evnt = ''
         pstrNm = ''
         evntNm = ''
@@ -145,8 +177,9 @@ class xtraNextEvents(Renderer):
             ref = self.source.service
             if ref:
                 events = self.epgcache.lookupEvent(['T', (ref.toString(), 0, -1, 1200)])
+                logout(data=str(events))
                 if events:
-                    logout(data="showPicture")
+                    logout(data="showPicture2")
                     evnt = events[self.nxEvnt][0]
                     logout(data=str(evnt))
                     evntNm = REGEX.sub('', evnt).strip()

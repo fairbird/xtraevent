@@ -205,7 +205,7 @@
     <convert type="xtraInfo">imdbRatingSimple</convert>
   </widget>
   <ePixmap pixmap="xtra/star_b.png" position="1415,36" size="200,20" alphatest="blend" zPosition="2" transparent="1" />
-  <widget source="Event" render=""xtraStar" pixmap="xtra/star.png" position="1415,36" size="200,20" alphatest="blend" transparent="1" zPosition="3" backgroundColor="background">
+  <widget source="Event" render="Progress" pixmap="xtra/star.png" position="1415,36" size="200,20" alphatest="blend" transparent="1" zPosition="3" backgroundColor="background">
     <convert type="xtraInfo">imdbRatingValue</convert>
   </widget>
   <!-- event info -->

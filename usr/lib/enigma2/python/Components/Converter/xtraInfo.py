@@ -21,13 +21,17 @@ import json
 import os
 
 import sys
-
+import requests
 
 api = 'b1538d0b'
 import inspect
+
+
+
 # --------------------------- Logfile -------------------------------
 
-from datetime import datetime
+
+from datetime import datetime, timedelta
 from shutil import copyfile
 from os import remove
 from os.path import isfile
@@ -36,7 +40,7 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraInfo.log"
+myfile="/tmp/xtraevent-info.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -46,6 +50,7 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
+
 
 logstatus = "on"
 
@@ -70,9 +75,9 @@ def logout(data):
         return
     return
 
+headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
 
-# ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
-logout(data="start")
+
 if sys.version_info[0] >= 3:
     import requests
 
@@ -109,7 +114,9 @@ REGEX = re.compile(
         r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-        r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
+        r'\d{1,3}(-я|-й|\sс-н).+|'
+        r'[\u0600-\u06FF]+'  # Arabische Schrift
+        ,re.DOTALL)
 
 class xtraInfo(Converter, object):
     logout(data="----------------------------- class xrtraInfo --------------------------------------------")
@@ -151,7 +158,8 @@ class xtraInfo(Converter, object):
         logout(data="---------------------------  start def getText ------------------------------------")
         caller_frame = inspect.currentframe().f_back
         caller_name = inspect.getframeinfo(caller_frame).function
-        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        #log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        log_message = "Die Funktion getText() wurde von {} aufgerufen.".format(caller_name)
         logout(data=log_message)
 
         event = self.source.event
@@ -189,10 +197,13 @@ class xtraInfo(Converter, object):
                     os.makedirs("{}infosomdb".format(xtrapath))
 
 # ------------------------------  ist json von omdb vorhanden --------------------------------------------------------
-                if os.path.exists(rating_jsonomdb):
+
+                if os.path.exists(rating_jsonomdb) or os.path.exists(rating_json):
                     logout(data="path jsonomdb datei ist vorhanden")
                 else:
                     logout(data="path jsonmdb datei ist nicht vorhanden")
+                    return 0
+
                     url = 'https://www.omdbapi.com/?apikey=%s&t=%s' % (api, evntNm.lower())
                     logout(data=str(url))
                     logout(data="url")
@@ -201,9 +212,13 @@ class xtraInfo(Converter, object):
 
                     if sys.version_info[0] >= 3:
                         logout(data="ist py3")
-                        response = requests.get(url)
-                        read_json = response.json()
-                        logout(data=str(read_json))
+                        # response = requests.get(url)
+                        try:
+                            response = requests.get(url, headers=headers)  # User-Agent hinzugefügt
+                            read_json = response.json()
+                            logout(data=str(read_json))
+                        except requests.exceptions.RequestException as e:
+                            logout(data=f"Fehler beim Abrufen der URL: {str(e)}")
                         logout(data="---------------------------------------------------------------------------")
                         # JSON-Daten speichern
                         logout(data="open file")
@@ -220,14 +235,11 @@ class xtraInfo(Converter, object):
                         logout(data="ist py2")
                         data = json.load(urllib2.urlopen(url))
 
-
-
-
-
+                logout(data="infos aus dem epg holen")
                 # hier infos von der box holen aus dem epg
                 fd = "{}\n{}\n{}".format(event.getEventName(), event.getShortDescription(), event.getExtendedDescription())
-                #logout(data="info in fd")
-                #logout(data=str(fd))
+                logout(data="info in fd")
+                logout(data=str(fd))
 
                 evnt = []
                 try:
@@ -277,27 +289,32 @@ class xtraInfo(Converter, object):
                                 evnt.append("Title - {}".format(event.getEventName()))
 #-----------------------------------------------------------------------------------------------------------------------
                         elif type == self.Year:
-                            logout(data="Year")
+                            logout(data="Year 290")
                             try:
-                                logout(data="Year 1")
+                                logout(data="Year 292")
                                 year = read_json["Year"]
+                                logout(data="Year 294")
                                 year = year.replace("-", "")
+                                logout(data="Year 296")
                                 logout(data=str(year))
                                 if year:
-                                    logout(data="Year 2")
+                                    logout(data="Year 299")
                                     evnt.append("Year : {}".format(year))
 
                             except:
-                                logout(data="Year 3")
+                                logout(data="Year execpt 303")
                                 year = ''
                                 fd = fd.replace(',', '').replace('(', '').replace(')', '')
                                 fdl = ['\d{4} [A-Z]+', '[A-Z]+ \d{4}', '[A-Z][a-z]+\s\d{4}', '\+\d+\s\d{4}']
+                                logout(data=str(fd))
                                 for i in fdl:
-                                    logout(data="Year 4")
+                                    logout(data="Year 309 ")
                                     year = re.findall(i, fd)
+                                    logout(data=str(year))
                                     if year:
-                                        logout(data="Year 5")
+                                        logout(data="Year ok 313")
                                         year = re.sub(r'\(.*?\)|\.|\+\d+', ' ', year[0]).strip()
+                                        logout(data=str(year))
                                         evnt.append("Year : {}".format(year))
                                         break
 #-----------------------------------------------------------------------------------------------------------------------
@@ -587,17 +604,22 @@ class xtraInfo(Converter, object):
                                 pass
 
                             try:
+                                logout(data="year 600")
                                 year = ''
                                 fd = fd.replace(',', '').replace('(', '').replace(')', '')
                                 fdl = ['\d{4} [A-Z]+', '[A-Z]+ \d{4}', '[A-Z][a-z]+\s\d{4}', '\+\d+\s\d{4}']
+                                logout(data=str(fdl))
                                 for i in fdl:
                                     year = re.findall(i, fd)
+                                    logout(data=str(year))
                                     if year:
                                         year = re.sub(r'\(.*?\)|\.|\+\d+', ' ', year[0]).strip()
                                         evnt.append("{}".format(year))
                                         break
                             except:
+                                logout(data="year abfragen json 613")
                                 year = read_json["Year"]
+                                logout(data=str(year))
                                 if year:
                                     evnt.append("{}".format(year))
 

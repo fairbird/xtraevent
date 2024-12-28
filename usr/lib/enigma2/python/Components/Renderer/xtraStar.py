@@ -20,7 +20,7 @@ from shutil import copyfile
 from os import remove
 from os.path import isfile
 
-
+import inspect
 
 ########################### log file loeschen ##################################
 
@@ -35,7 +35,14 @@ if isfile(myfile):
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
 
-logstatus = "on"
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
+
+
+
+if config.plugins.xtraEvent.logFiles.value == True:
+    logstatus = "on"
+else:
+    logstatus = "off"
 
 
 # ________________________________________________________________________________
@@ -90,11 +97,18 @@ REGEX = re.compile(
         r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-        r'\d{1,3}(-я|-й|\sс-н).+|', re.DOTALL)
+        r'\d{1,3}(-я|-й|\sс-н).+|'
+        r'[\u0600-\u06FF]+'  # Arabische Schrift
+        , re.DOTALL)
 
 class xtraStar(VariableValue, Renderer):
     def __init__(self):
         logout(data="init")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         Renderer.__init__(self)
         VariableValue.__init__(self)
         self.__start = 0
@@ -102,7 +116,12 @@ class xtraStar(VariableValue, Renderer):
 
     GUI_WIDGET = eSlider
     def changed(self, what):
-        logout(data="changed")
+        logout(data="changed start")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         rtng = 0
         if what[0] == self.CHANGED_CLEAR:
             (self.range, self.value) = ((0, 1), 0)
@@ -120,33 +139,80 @@ class xtraStar(VariableValue, Renderer):
                 logout(data=str(evntNm))
                 logout(data="start pathloc")
                 logout(data=str(pathLoc))
-                rating_json = "{}xtraEvent/infos/{}.json".format(pathLoc, evntNm)
+                rating_json = "{}xtraEvent/infossterne/{}.json".format(pathLoc, evntNm)
+                rating2_json = "{}xtraEvent/infosomdbsterne/{}.json".format(pathLoc, evntNm)
                 logout(data="path json")
                 logout(data=str(rating_json))
-                if os.path.exists(rating_json):
-                    logout(data="json vorhanden")
 
+                logout(data="path json tmdb abfrage")
+                if os.path.exists(rating_json):
+                    logout(data="json vorhanden tmdb")
                     with open(rating_json) as f:
-                        logout(data="json vorhanden open file")
-                        #rating = json.load(f)['imdbRating']
+                        logout(data="json vorhanden open file tmdb")
                         data = json.load(f)
-                        #logout(data=str(data))
-                        logout(data="json vorhanden open file 1")
-                        rating = data['results'][0]['vote_average']
-                        logout(data="json vorhanden open file 2")
+                        logout(data=str(data))
+                        logout(data="json vorhanden open file 1 tmdb")
+                        #rating = data['results'][0]['vote_average']
+                        rating = data['vote_average']
+                        logout(data="json vorhanden open file 2 tmdb")
                         logout(data=str(rating))
 
                     if rating:
                         logout(data="json wert vorhanden")
                         rtng = int(10*(float(rating)))
                         logout(data=str(rtng))
+
+
                     else:
                         logout(data="json wert nicht vorhanden")
                         rtng = 0
                 else:
-                    logout(data="json nicht vorhanden")
+                    logout(data="path json tmdb nicht vorhanden")
+                    logout(data="path json 2")
+                    logout(data=str(rating2_json))
+                    if os.path.exists(rating2_json):
+                        logout(data="json vorhanden omdb")
+                        with open(rating2_json) as f:
+                            logout(data="json vorhanden open file")
+                            data = json.load(f)
+                            logout(data=str(data))
+                            logout(data="json vorhanden open file 1")
+                            rating = data['vote_average']
+                            logout(data="json vorhanden open file 2")
+                            logout(data=str(rating))
 
-                    rtng = 0
+                        if rating:
+                            logout(data="json wert vorhanden")
+                            rtng = int(10 * (float(rating)))
+                            logout(data=str(rtng))
+                        else:
+                            logout(data="json wert nicht vorhanden")
+                            rtng = 0
+                    else:
+                        #default_json = "{}xtraEvent/default.json".format(pathLoc)
+                        default_json = "/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/default.json"
+                        if os.path.exists(default_json):
+                            logout(data="----------------------- json default")
+                            with open(default_json) as f:
+                                logout(data="json vorhanden open file tmdb")
+                                data = json.load(f)
+                                logout(data=str(data))
+                                logout(data="json vorhanden open file 1 tmdb")
+                                # rating = data['results'][0]['vote_average']
+                                rating = data['vote_average']
+                                logout(data="json vorhanden open file 2 tmdb")
+                                logout(data=str(rating))
+                            if rating:
+                                logout(data="json wert vorhanden")
+                                rtng = int(10 * (float(rating)))
+                                logout(data=str(rtng))
+                            else:
+                                logout(data="json wert nicht vorhanden")
+                                rtng = 0
+
+                        else:
+                            logout(data="json nicht vorhanden omdb")
+                            rtng = 0
             else:
                 rtng = 0
         except:
@@ -158,16 +224,31 @@ class xtraStar(VariableValue, Renderer):
 
     def postWidgetCreate(self, instance):
         logout(data="postWidgetCreate")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         instance.setRange(self.__start, self.__end)
 
     def setRange(self, range):
-        logout(data="setrange")
+        logout(data="setrange fertig")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         (self.__start, self.__end) = range
         if self.instance is not None:
             self.instance.setRange(self.__start, self.__end)
 
     def getRange(self):
         logout(data="getRange")
+        caller_frame = inspect.currentframe().f_back
+        caller_name = inspect.getframeinfo(caller_frame).function
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=str(log_message))
+
         return self.__start, self.__end
 
     range = property(getRange, setRange)
