@@ -37,14 +37,13 @@ if isfile(myfile):
 
 from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 
-
-
+logstatus = "off"
 if config.plugins.xtraEvent.logFiles.value == True:
     logstatus = "on"
 else:
     logstatus = "off"
 
-
+#logstatus = "on"
 # ________________________________________________________________________________
 
 def write_log(msg):
@@ -98,7 +97,10 @@ REGEX = re.compile(
         r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
         r'\d{1,3}(-я|-й|\sс-н).+|'
-        r'[\u0600-\u06FF]+'  # Arabische Schrift
+        r'\sح\s*\d+|'                # Entfernt Episodennummern in arabischen Serien
+        r'\sج\s*\d+|'                # Entfernt Staffelangaben in arabischen Serien
+        r'\sم\s*\d+|'                # Entfernt weitere Staffelangaben in arabischen Serien
+        r'\d+$'                     # Entfernt Zahlen am Ende
         , re.DOTALL)
 
 class xtraStar(VariableValue, Renderer):
@@ -117,6 +119,7 @@ class xtraStar(VariableValue, Renderer):
     GUI_WIDGET = eSlider
     def changed(self, what):
         logout(data="changed start")
+        logout(data=str(what))
         caller_frame = inspect.currentframe().f_back
         caller_name = inspect.getframeinfo(caller_frame).function
         log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
@@ -124,6 +127,8 @@ class xtraStar(VariableValue, Renderer):
 
         rtng = 0
         if what[0] == self.CHANGED_CLEAR:
+            logout(data=str(what))
+            logout(data="channed_clear")
             (self.range, self.value) = ((0, 1), 0)
             return
         try:
@@ -233,6 +238,7 @@ class xtraStar(VariableValue, Renderer):
 
     def setRange(self, range):
         logout(data="setrange fertig")
+        logout(data=str(range))
         caller_frame = inspect.currentframe().f_back
         caller_name = inspect.getframeinfo(caller_frame).function
         log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
@@ -252,3 +258,5 @@ class xtraStar(VariableValue, Renderer):
         return self.__start, self.__end
 
     range = property(getRange, setRange)
+    logout(data="fertig")
+    logout(data=str(range))

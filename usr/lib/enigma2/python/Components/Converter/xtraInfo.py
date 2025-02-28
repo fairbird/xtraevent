@@ -40,7 +40,7 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraevent-info.log"
+myfile="/tmp/xtraInfo.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -50,9 +50,15 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 
+logstatus = "off"
+if config.plugins.xtraEvent.logFiles.value == True:
+    logstatus = "on"
+else:
+    logstatus = "off"
 
-logstatus = "on"
+#logstatus = "on"
 
 
 # ________________________________________________________________________________
@@ -115,7 +121,10 @@ REGEX = re.compile(
         r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
         r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
         r'\d{1,3}(-я|-й|\sс-н).+|'
-        r'[\u0600-\u06FF]+'  # Arabische Schrift
+        r'\sح\s*\d+|'                # Entfernt Episodennummern in arabischen Serien
+        r'\sج\s*\d+|'                # Entfernt Staffelangaben in arabischen Serien
+        r'\sم\s*\d+|'                # Entfernt weitere Staffelangaben in arabischen Serien
+        r'\d+$'                     # Entfernt Zahlen am Ende
         ,re.DOTALL)
 
 class xtraInfo(Converter, object):

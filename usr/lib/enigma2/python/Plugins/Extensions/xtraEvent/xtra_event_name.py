@@ -21,7 +21,7 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtra_event_name.log"
+myfile="/tmp/xtraevent_name.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -31,8 +31,15 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 
-logstatus = "on"
+logstatus = "off"
+if config.plugins.xtraEvent.logFiles.value == True:
+    logstatus = "on"
+else:
+    logstatus = "off"
+
+#logstatus = "on"
 
 
 # ________________________________________________________________________________

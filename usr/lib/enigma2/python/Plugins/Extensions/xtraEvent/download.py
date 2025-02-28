@@ -56,7 +56,7 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
-
+logstatus = "off"
 if config.plugins.xtraEvent.logFiles.value == True:
     logstatus = "on"
 else:
@@ -169,31 +169,33 @@ logout(data=str(pathLoc))
 desktop_size = getDesktop(0).size().width()
 headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
 REGEX = re.compile(
-        r'([\(\[]).*?([\)\]])|'
-        r'(: odc.\d+)|'
-        r'(\d+: odc.\d+)|'
-        r'(\d+ odc.\d+)|(:)|'
-        
-        r'!|'
-        r'/.*|'
-        r'\|\s[0-9]+\+|'
-        r'[0-9]+\+|'
-        r'\s\d{4}\Z|'
-        r'([\(\[\|].*?[\)\]\|])|'
-        r'(\"|\"\.|\"\,|\.)\s.+|'
-        r'\"|:|'
-        r'\*|'
-        r'Премьера\.\s|'
-        r'(х|Х|м|М|т|Т|д|Д)/ф\s|'
-        r'(х|Х|м|М|т|Т|д|Д)/с\s|'
-        r'\s(с|С)(езон|ерия|-н|-я)\s.+|'
-        r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-        r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-        r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-        r'\d{1,3}(-я|-й|\sс-н).+|'
-        r'[\u0600-\u06FF]+'  # Arabische Schrift
-        , re.DOTALL)
-
+    r'([\(\[]).*?([\)\]])|'       # Entfernt Text in Klammern
+    r'(: odc.\d+)|'              # Entfernt : odc.x Muster
+    r'(\d+: odc.\d+)|'           # Entfernt x: odc.y Muster
+    r'(\d+ odc.\d+)|(:)|'        # Entfernt x odc.y oder nur ':'
+    r'!|'                        # Entfernt Ausrufezeichen
+    r'/.*|'                      # Entfernt alles nach '/'
+    r'\|\s[0-9]+\+|'             # Entfernt '| x+' Muster
+    r'[0-9]+\+|'                 # Entfernt 'x+' Muster
+    r'\s\d{4}\Z|'                # Entfernt Jahresangaben am Ende
+    r'([\(\[\|].*?[\)\]\|])|'    # Entfernt Text in verschiedenen Klammern
+    r'(\"|\"\.|\"\,|\.)\s.+|'    # Entfernt Text nach Anführungszeichen
+    r'\"|:|'                     # Entfernt einfache Anführungszeichen und Doppelpunkte
+    r'\*|'                       # Entfernt Sternchen
+    r'Премьера\.\s|'             # Entfernt 'Премьера. ' Muster
+    r'(х|Х|м|М|т|Т|д|Д)/ф\s|'   # Entfernt kyrillische Muster für Filme
+    r'(х|Х|м|М|т|Т|д|Д)/с\s|'   # Entfernt kyrillische Muster für Serien
+    r'\s(с|С)(езон|ерия|-н|-я)\s.+|'  # Entfernt Staffel- oder Episodenangaben
+    r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|' # Entfernt x ч Muster
+    r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|' # Entfernt '. x ч' Muster
+    r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|' # Entfernt 'ч x' Muster
+    r'\d{1,3}(-я|-й|\sс-н).+|'   # Entfernt weitere Staffelangaben
+    r'\sح\s*\d+|'                # Entfernt Episodennummern in arabischen Serien
+    r'\sج\s*\d+|'                # Entfernt Staffelangaben in arabischen Serien
+    r'\sم\s*\d+|'                # Entfernt weitere Staffelangaben in arabischen Serien
+    r'\d+$'                      # Entfernt Zahlen am Ende
+    , re.DOTALL
+)
 #  r'[\u0600-\u06FF]+'  # Arabische Schrift
 
 class downloads(Screen):
@@ -784,6 +786,7 @@ class downloads(Screen):
         self.delete_oldfilesinfosomdb()
         self.delete_oldfilesinfosomdbsterne()
         self.delete_oldfilesinfossterne()
+        self.delete_old_dirs_casts()
         logout(data="----------------------------------- 741 zurueck von delete old files ----------------------------")
         logout(data="")
 ########################################################################################################################
@@ -2186,6 +2189,7 @@ class downloads(Screen):
             # Alle Dateien im Verzeichnis durchlaufen
             for filename in os.listdir(directory):
                 filepath = os.path.join(directory, filename)
+                logout(data=str(filepath))
                 # Überprüfen, ob es sich um eine Datei handelt
                 if os.path.isfile(filepath):
                     # Das Änderungsdatum der Datei abrufen
@@ -2215,6 +2219,7 @@ class downloads(Screen):
             # Alle Dateien im Verzeichnis durchlaufen
             for filename in os.listdir(directory):
                 filepath = os.path.join(directory, filename)
+                logout(data=str(filepath))
                 # Überprüfen, ob es sich um eine Datei handelt
                 if os.path.isfile(filepath):
                     # Das Änderungsdatum der Datei abrufen
@@ -2243,6 +2248,7 @@ class downloads(Screen):
             # Alle Dateien im Verzeichnis durchlaufen
             for filename in os.listdir(directory):
                 filepath = os.path.join(directory, filename)
+                logout(data=str(filepath))
                 # Überprüfen, ob es sich um eine Datei handelt
                 if os.path.isfile(filepath):
                     # Das Änderungsdatum der Datei abrufen
@@ -2273,6 +2279,7 @@ class downloads(Screen):
             # Alle Dateien im Verzeichnis durchlaufen
             for filename in os.listdir(directory):
                 filepath = os.path.join(directory, filename)
+                logout(data=str(filepath))
                 # Überprüfen, ob es sich um eine Datei handelt
                 if os.path.isfile(filepath):
                     # Das Änderungsdatum der Datei abrufen
@@ -2303,6 +2310,7 @@ class downloads(Screen):
                 # Alle Dateien im Verzeichnis durchlaufen
                 for filename in os.listdir(directory):
                     filepath = os.path.join(directory, filename)
+                    logout(data=str(filepath))
                     # Überprüfen, ob es sich um eine Datei handelt
                     if os.path.isfile(filepath):
                         # Das Änderungsdatum der Datei abrufen
@@ -2333,6 +2341,7 @@ class downloads(Screen):
             # Alle Dateien im Verzeichnis durchlaufen
             for filename in os.listdir(directory):
                 filepath = os.path.join(directory, filename)
+                logout(data=str(filepath))
                 # Überprüfen, ob es sich um eine Datei handelt
                 if os.path.isfile(filepath):
                     # Das Änderungsdatum der Datei abrufen
@@ -2363,6 +2372,7 @@ class downloads(Screen):
             # Alle Dateien im Verzeichnis durchlaufen
             for filename in os.listdir(directory):
                 filepath = os.path.join(directory, filename)
+                logout(data=str(filepath))
                 # Überprüfen, ob es sich um eine Datei handelt
                 if os.path.isfile(filepath):
                     # Das Änderungsdatum der Datei abrufen
@@ -2393,6 +2403,7 @@ class downloads(Screen):
             # Alle Dateien im Verzeichnis durchlaufen
             for filename in os.listdir(directory):
                 filepath = os.path.join(directory, filename)
+                logout(data=str(filepath))
                 # Überprüfen, ob es sich um eine Datei handelt
                 if os.path.isfile(filepath):
                     # Das Änderungsdatum der Datei abrufen
@@ -2407,6 +2418,35 @@ class downloads(Screen):
 
         else:
             logout(data="delete old files off")
+
+    def delete_old_dirs_casts(self):
+        # --------  hier alte Directories loeschen backdrop -------------------------
+        logout(data="------------------------------------------------ delete old directories - cast")
+
+        if config.plugins.xtraEvent.deletFiles.value:
+            # Verzeichnispfad angeben
+            directory = "{}casts".format(pathLoc)
+            logout(data=str(directory))
+
+            # Aktuelles Datum erhalten
+            heute = datetime.today().date()
+            zwei_tage_ago = heute - timedelta(days=2)
+
+            # Alle Verzeichnisse im angegebenen Ordner durchlaufen
+            for dirname in os.listdir(directory):
+                dirpath = os.path.join(directory, dirname)
+                logout(data=str(dirpath))
+
+                if os.path.isdir(dirpath):  # Prüfen, ob es ein Verzeichnis ist
+                    mtime = os.path.getmtime(dirpath)
+                    modified_date = datetime.fromtimestamp(mtime).date()
+
+                    if modified_date < zwei_tage_ago:
+                        shutil.rmtree(dirpath)  # Verzeichnis und Inhalt löschen
+                        logout(data=f"Deleted old directory: {dirpath}")
+
+        else:
+            logout(data="delete old directories off")
 
 #########################################################################################################################################
     def prgrs(self, downloaded, n):
@@ -3394,6 +3434,27 @@ class downloads(Screen):
                 darsteller3 = None
                 darsteller3bild = None
                 filmdarsteller3 = None
+                darsteller4 = None
+                darsteller4bild = None
+                filmdarsteller4 = None
+                darsteller5 = None
+                darsteller5bild = None
+                filmdarsteller5 = None
+                darsteller6 = None
+                darsteller6bild = None
+                filmdarsteller6 = None
+                darsteller7 = None
+                darsteller7bild = None
+                filmdarsteller7 = None
+                darsteller8 = None
+                darsteller8bild = None
+                filmdarsteller8 = None
+                darsteller9 = None
+                darsteller9bild = None
+                filmdarsteller9 = None
+                darsteller10 = None
+                darsteller10bild = None
+                filmdarsteller10 = None
 
                 logout(data="none")
                 darsteller0_ok = False
@@ -3530,11 +3591,254 @@ class downloads(Screen):
 
                         logout(data="Fehler: Fehlende Felder für Darsteller 3")
 
+                # -------------------------------------------------------------------------------------------------------------
+
+                darsteller4_ok = False
+                if len(cast) > 4:
+                    logout(data="Darsteller 4 daten holen")
+                    darsteller4bild = cast[4].get("profile_path")
+                    if darsteller4bild is not None:
+                        logout(data="Darsteller 4 Bild: " + darsteller4bild)
+
+                        darsteller4 = cast[1].get("name")
+                        if darsteller4:  # Überprüfen, ob der Wert nicht None ist
+                            darsteller4 = darsteller4.split("/")[0].strip()
+                            logout(data="Darsteller 4: " + darsteller4)
+                        else:
+                            darsteller4 = ""
+                            logout(data="kein Darsteller 4:" + darsteller4)
+
+                        filmdarsteller4 = cast[4].get("character")
+                        if filmdarsteller4:  # Überprüfen, ob der Wert nicht None ist
+                            filmdarsteller4 = filmdarsteller4.split("/")[0].strip()
+                            logout(data="FilmDarsteller 4: " + filmdarsteller4)
+                        else:
+                            darsteller4 = ""
+                            logout(data="kein FilmDarsteller 4:" + filmdarsteller4)
+
+                        if darsteller4 and darsteller4bild:
+                            # if darsteller1 and darsteller1bild and filmdarsteller1:
+                            darsteller4_ok = True
+                            logout(data="Darsteller 4 True")
+                            logout(data="Darsteller 4:" + darsteller4)
+                            logout(data="FilmDarsteller 4:" + filmdarsteller4)
+                            logout(data="Darsteller 4 Bild:" + darsteller4bild)
+                    else:
+
+                        logout(data="Fehler: Fehlende Felder für Darsteller 4")
+
+                # -----------------------------------------------------------------------------------------
+
+                darsteller5_ok = False
+                if len(cast) > 5:
+                    logout(data="Darsteller 5 daten holen")
+                    darsteller5bild = cast[5].get("profile_path")
+                    if darsteller5bild is not None:
+                        logout(data="Darsteller 5 Bild: " + darsteller5bild)
+
+                        darsteller5 = cast[5].get("name")
+                        if darsteller5:  # Überprüfen, ob der Wert nicht None ist
+                            darsteller5 = darsteller5.split("/")[0].strip()
+                            logout(data="Darsteller 5: " + darsteller5)
+                        else:
+                            darsteller5 = ""
+                            logout(data="kein Darsteller 5:" + darsteller5)
+
+                        filmdarsteller5 = cast[5].get("character")
+                        if filmdarsteller5:  # Überprüfen, ob der Wert nicht None ist
+                            filmdarsteller5 = filmdarsteller5.split("/")[0].strip()
+                            logout(data="FilmDarsteller 5: " + filmdarsteller5)
+                        else:
+                            darsteller5 = ""
+                            logout(data="kein FilmDarsteller 5:" + filmdarsteller5)
+
+                        if darsteller5 and darsteller5bild:
+                            # if darsteller1 and darsteller1bild and filmdarsteller1:
+                            darsteller5_ok = True
+                            logout(data="Darsteller 5 True")
+                            logout(data="Darsteller 5:" + darsteller5)
+                            logout(data="FilmDarsteller 5:" + filmdarsteller5)
+                            logout(data="Darsteller 5 Bild:" + darsteller5bild)
+                    else:
+
+                        logout(data="Fehler: Fehlende Felder für Darsteller 5")
+
+                darsteller6_ok = False
+                if len(cast) > 6:
+                    darsteller6bild = cast[6].get("profile_path")
+                    if darsteller6bild is not None:
+                        logout(data="Darsteller 6 Bild: " + darsteller6bild)
+
+                        darsteller6 = cast[6].get("name")
+                        if darsteller6:  # Überprüfen, ob der Wert nicht None ist
+                            darsteller6 = darsteller6.split("/")[0].strip()
+                            logout(data="Darsteller 6: " + darsteller6)
+                        else:
+                            darsteller6 = ""
+                            logout(data="kein Darsteller 6:" + darsteller6)
+
+                        filmdarsteller6 = cast[6].get("character")
+                        if filmdarsteller6:  # Überprüfen, ob der Wert nicht None ist
+                            filmdarsteller6 = filmdarsteller6.split("/")[0].strip()
+                            logout(data="FilmDarsteller 6: " + filmdarsteller6)
+                        else:
+                            darsteller6 = ""
+                            logout(data="kein FilmDarsteller 6:" + filmdarsteller6)
+
+                        if darsteller6 and darsteller6bild:
+                            # if darsteller1 and darsteller1bild and filmdarsteller1:
+                            darsteller6_ok = True
+                            logout(data="Darsteller 6 True")
+                            logout(data="Darsteller 6:" + darsteller6)
+                            logout(data="FilmDarsteller 6:" + filmdarsteller6)
+                            logout(data="Darsteller 6 Bild:" + darsteller6bild)
+                    else:
+
+                        logout(data="Fehler: Fehlende Felder für Darsteller 6")
+
+                darsteller7_ok = False
+                if len(cast) > 7:
+                    darsteller7bild = cast[7].get("profile_path")
+                    if darsteller7bild is not None:
+                        logout(data="Darsteller 7 Bild: " + darsteller7bild)
+
+                        darsteller7 = cast[7].get("name")
+                        if darsteller7:  # Überprüfen, ob der Wert nicht None ist
+                            darsteller7 = darsteller7.split("/")[0].strip()
+                            logout(data="Darsteller 7: " + darsteller7)
+                        else:
+                            darsteller7 = ""
+                            logout(data="kein Darsteller 7:" + darsteller7)
+
+                        filmdarsteller7 = cast[7].get("character")
+                        if filmdarsteller7:  # Überprüfen, ob der Wert nicht None ist
+                            filmdarsteller7 = filmdarsteller7.split("/")[0].strip()
+                            logout(data="FilmDarsteller 7: " + filmdarsteller7)
+                        else:
+                            darsteller7 = ""
+                            logout(data="kein FilmDarsteller 7:" + filmdarsteller7)
+
+                        if darsteller7 and darsteller7bild:
+                            # if darsteller1 and darsteller1bild and filmdarsteller1:
+                            darsteller7_ok = True
+                            logout(data="Darsteller 7 True")
+                            logout(data="Darsteller 7:" + darsteller7)
+                            logout(data="FilmDarsteller 7:" + filmdarsteller7)
+                            logout(data="Darsteller 7 Bild:" + darsteller7bild)
+                    else:
+
+                        logout(data="Fehler: Fehlende Felder für Darsteller 7")
+
+                darsteller8_ok = False
+                if len(cast) > 8:
+                    darsteller8bild = cast[8].get("profile_path")
+                    if darsteller8bild is not None:
+                        logout(data="Darsteller 8 Bild: " + darsteller8bild)
+
+                        darsteller8 = cast[8].get("name")
+                        if darsteller8:  # Überprüfen, ob der Wert nicht None ist
+                            darsteller8 = darsteller8.split("/")[0].strip()
+                            logout(data="Darsteller 8: " + darsteller8)
+                        else:
+                            darsteller8 = ""
+                            logout(data="kein Darsteller 8:" + darsteller8)
+
+                        filmdarsteller8 = cast[8].get("character")
+                        if filmdarsteller8:  # Überprüfen, ob der Wert nicht None ist
+                            filmdarsteller8 = filmdarsteller8.split("/")[0].strip()
+                            logout(data="FilmDarsteller 8: " + filmdarsteller8)
+                        else:
+                            darsteller8 = ""
+                            logout(data="kein FilmDarsteller 8:" + filmdarsteller8)
+
+                        if darsteller8 and darsteller8bild:
+                            # if darsteller1 and darsteller1bild and filmdarsteller1:
+                            darsteller8_ok = True
+                            logout(data="Darsteller 8 True")
+                            logout(data="Darsteller 8:" + darsteller8)
+                            logout(data="FilmDarsteller 8:" + filmdarsteller8)
+                            logout(data="Darsteller 8 Bild:" + darsteller8bild)
+                    else:
+
+                        logout(data="Fehler: Fehlende Felder für Darsteller 8")
+
+                darsteller9_ok = False
+                if len(cast) > 9:
+                    darsteller9bild = cast[9].get("profile_path")
+                    if darsteller9bild is not None:
+                        logout(data="Darsteller 9 Bild: " + darsteller9bild)
+
+                        darsteller9 = cast[9].get("name")
+                        if darsteller9:  # Überprüfen, ob der Wert nicht None ist
+                            darsteller9 = darsteller9.split("/")[0].strip()
+                            logout(data="Darsteller 9: " + darsteller9)
+                        else:
+                            darsteller9 = ""
+                            logout(data="kein Darsteller 9:" + darsteller9)
+
+                        filmdarsteller9 = cast[9].get("character")
+                        if filmdarsteller9:  # Überprüfen, ob der Wert nicht None ist
+                            filmdarsteller9 = filmdarsteller9.split("/")[0].strip()
+                            logout(data="FilmDarsteller 9: " + filmdarsteller9)
+                        else:
+                            darsteller9 = ""
+                            logout(data="kein FilmDarsteller 9:" + filmdarsteller9)
+
+                        if darsteller9 and darsteller9bild:
+                            # if darsteller1 and darsteller1bild and filmdarsteller1:
+                            darsteller9_ok = True
+                            logout(data="Darsteller 9 True")
+                            logout(data="Darsteller 9:" + darsteller9)
+                            logout(data="FilmDarsteller 9:" + filmdarsteller9)
+                            logout(data="Darsteller 9 Bild:" + darsteller9bild)
+                    else:
+
+                        logout(data="Fehler: Fehlende Felder für Darsteller 9")
+                        
+                darsteller10_ok = False
+                if len(cast) > 10:
+                    darsteller10bild = cast[10].get("profile_path")
+                    if darsteller10bild is not None:
+                        logout(data="Darsteller 10 Bild: " + darsteller10bild)
+
+                        darsteller10 = cast[10].get("name")
+                        if darsteller10:  # Überprüfen, ob der Wert nicht None ist
+                            darsteller10 = darsteller10.split("/")[0].strip()
+                            logout(data="Darsteller 10: " + darsteller10)
+                        else:
+                            darsteller10 = ""
+                            logout(data="kein Darsteller 10:" + darsteller10)
+
+                        filmdarsteller10 = cast[10].get("character")
+                        if filmdarsteller10:  # Überprüfen, ob der Wert nicht None ist
+                            filmdarsteller10 = filmdarsteller10.split("/")[0].strip()
+                            logout(data="FilmDarsteller 10: " + filmdarsteller10)
+                        else:
+                            darsteller10 = ""
+                            logout(data="kein FilmDarsteller 10:" + filmdarsteller10)
+
+                        if darsteller10 and darsteller10bild:
+                            # if darsteller1 and darsteller1bild and filmdarsteller1:
+                            darsteller10_ok = True
+                            logout(data="Darsteller 10 True")
+                            logout(data="Darsteller 10:" + darsteller10)
+                            logout(data="FilmDarsteller 10:" + filmdarsteller10)
+                            logout(data="Darsteller 10 Bild:" + darsteller10bild)
+                    else:
+
+                        logout(data="Fehler: Fehlende Felder für Darsteller 10")
+
                 logout(data=str(darsteller0_ok))
                 logout(data=str(darsteller1_ok))
                 logout(data=str(darsteller2_ok))
                 logout(data=str(darsteller3_ok))
-
+                logout(data=str(darsteller4_ok))
+                logout(data=str(darsteller5_ok))
+                logout(data=str(darsteller6_ok))
+                logout(data=str(darsteller7_ok))
+                logout(data=str(darsteller8_ok))
+                logout(data=str(darsteller9_ok))
+                logout(data=str(darsteller10_ok))
 
 
 
@@ -3551,7 +3855,7 @@ class downloads(Screen):
             base_url = "https://image.tmdb.org/t/p/"
 
             # Gewünschte Bildgröße (z.B. w500 für mittlere Größe)
-            image_size = "w185"
+            image_size = "w342"
             if darsteller0_ok == True:
                 # ---------------------------  Darsteller 0 ----------------------------------------------------------------
 
@@ -3680,6 +3984,234 @@ class downloads(Screen):
                     logout(data="Kein gültiger Bildpfad für Darsteller 3.")
             else:
                 logout(data="Darsteller3 ist nicht vorhanden")
+
+            if darsteller4_ok == True:
+            # ---------------------------  Darsteller 4 ----------------------------------------------------------------
+
+                logout(data="Darsteller 4 ist True:")
+                if darsteller1bild:
+                    image_url = base_url + image_size + darsteller4bild
+                    logout(data=str(image_url))
+                    logout(data="Bild-URL: {}".format(image_url))  # `format()`-Methode statt f-Strings
+                    logout(data=str(filmdarsteller4))
+                    # Zielname und Ort des Bildes
+                    output_file = "{}/04_{}({}).jpg".format(name_dir, darsteller4, filmdarsteller4)
+                    logout(data="Speichern des Bildes 4: {}".format(output_file))
+
+                    # Bild herunterladen und speichern
+                    try:
+                        logout(data="timeout start")
+                        response = requests.get(image_url, timeout=20)
+                        logout(data="timeout ende")
+                        if response.status_code == 200:
+                            logout(data="response ok")
+                            with open(output_file, "wb") as file:
+                                logout(data="Starte Download für Bild4: {}".format(image_url))
+                                file.write(response.content)
+                            logout(data="Bild4 erfolgreich heruntergeladen und gespeichert: {}".format(output_file))
+                        else:
+                            logout(data="Fehler beim Herunterladen des Bildes: {}".format(response.status_code))
+                    except requests.exceptions.RequestException as e:
+                        logout(data="Netzwerkfehler beim Herunterladen des Bildes: {}".format(e))
+                else:
+                    logout(data="Kein gültiger Bildpfad für Darsteller 4.")
+            else:
+                logout(data="Darsteller4 ist nicht vorhanden")
+
+            if darsteller5_ok == True:
+        # ---------------------------  Darsteller 5 ----------------------------------------------------------------
+
+                logout(data="Darsteller 5:")
+                if darsteller5bild:
+                    image_url = base_url + image_size + darsteller5bild
+                    logout(data="Bild-URL: {}".format(image_url))  # `format()`-Methode statt f-Strings
+
+                    # Zielname und Ort des Bildes
+                    output_file = "{}/05_{}({}).jpg".format(name_dir, darsteller5, filmdarsteller5)
+                    logout(data="Speichern des Bildes5: {}".format(output_file))
+
+                    # Bild herunterladen und speichern
+                    try:
+                        logout(data="timeout start")
+                        response = requests.get(image_url, timeout=20)
+                        logout(data="timeout ende")
+                        if response.status_code == 200:
+                            logout(data="response ok")
+                            with open(output_file, "wb") as file:
+                                logout(data="Starte Download für Bild5: {}".format(image_url))
+                                file.write(response.content)
+                            logout(data="Bild5 erfolgreich heruntergeladen und gespeichert: {}".format(output_file))
+                        else:
+                            logout(data="Fehler beim Herunterladen des Bildes: {}".format(response.status_code))
+                    except requests.exceptions.RequestException as e:
+                        logout(data="Netzwerkfehler beim Herunterladen des Bildes: {}".format(e))
+                else:
+                    logout(data="Kein gültiger Bildpfad für Darsteller 5.")
+
+            else:
+                logout(data="Darsteller5 ist nicht vorhanden")
+
+            if darsteller6_ok == True:
+# ---------------------------  Darsteller 6 ----------------------------------------------------------------
+
+                logout(data="Darsteller 6:")
+                if darsteller6bild:
+                    image_url = base_url + image_size + darsteller6bild
+                    logout(data="Bild-URL: {}".format(image_url))  # `format()`-Methode statt f-Strings
+
+                    # Zielname und Ort des Bildes
+                    output_file = "{}/06_{}({}).jpg".format(name_dir, darsteller6, filmdarsteller6)
+                    logout(data="Speichern des Bildes: {}".format(output_file))
+
+                    # Bild herunterladen und speichern
+                    try:
+                        logout(data="timeout start")
+                        response = requests.get(image_url, timeout=20)
+                        logout(data="timeout ende")
+                        if response.status_code == 200:
+                            logout(data="response ok")
+                            with open(output_file, "wb") as file:
+                                logout(data="Starte Download für Bild6: {}".format(image_url))
+                                file.write(response.content)
+                            logout(data="Bild6 erfolgreich heruntergeladen und gespeichert: {}".format(output_file))
+                        else:
+                            logout(data="Fehler beim Herunterladen des Bildes: {}".format(response.status_code))
+                    except requests.exceptions.RequestException as e:
+                        logout(data="Netzwerkfehler beim Herunterladen des Bildes: {}".format(e))
+                else:
+                    logout(data="Kein gültiger Bildpfad für Darsteller 6.")
+            else:
+                logout(data="Darsteller6 ist nicht vorhanden")
+
+            if darsteller7_ok == True:
+# ---------------------------  Darsteller 7 ----------------------------------------------------------------
+
+                logout(data="Darsteller 7:")
+                if darsteller7bild:
+                    image_url = base_url + image_size + darsteller7bild
+                    logout(data="Bild-URL: {}".format(image_url))  # `format()`-Methode statt f-Strings
+
+                    # Zielname und Ort des Bildes
+                    output_file = "{}/07_{}({}).jpg".format(name_dir, darsteller7, filmdarsteller7)
+                    logout(data="Speichern des Bildes: {}".format(output_file))
+
+                    # Bild herunterladen und speichern
+                    try:
+                        logout(data="timeout start")
+                        response = requests.get(image_url, timeout=20)
+                        logout(data="timeout ende")
+                        if response.status_code == 200:
+                            logout(data="response ok")
+                            with open(output_file, "wb") as file:
+                                logout(data="Starte Download für Bild7: {}".format(image_url))
+                                file.write(response.content)
+                            logout(data="Bild7 erfolgreich heruntergeladen und gespeichert: {}".format(output_file))
+                        else:
+                            logout(data="Fehler beim Herunterladen des Bildes: {}".format(response.status_code))
+                    except requests.exceptions.RequestException as e:
+                        logout(data="Netzwerkfehler beim Herunterladen des Bildes: {}".format(e))
+                else:
+                    logout(data="Kein gültiger Bildpfad für Darsteller 7.")
+            else:
+                logout(data="Darsteller7 ist nicht vorhanden")
+
+            if darsteller8_ok == True:
+# ---------------------------  Darsteller 8 ----------------------------------------------------------------
+
+                logout(data="Darsteller 8:")
+                if darsteller8bild:
+                    image_url = base_url + image_size + darsteller8bild
+                    logout(data="Bild-URL: {}".format(image_url))  # `format()`-Methode statt f-Strings
+
+                    # Zielname und Ort des Bildes
+                    output_file = "{}/08_{}({}).jpg".format(name_dir, darsteller8, filmdarsteller8)
+                    logout(data="Speichern des Bildes: {}".format(output_file))
+
+                    # Bild herunterladen und speichern
+                    try:
+                        logout(data="timeout start")
+                        response = requests.get(image_url, timeout=20)
+                        logout(data="timeout ende")
+                        if response.status_code == 200:
+                            logout(data="response ok")
+                            with open(output_file, "wb") as file:
+                                logout(data="Starte Download für Bild8: {}".format(image_url))
+                                file.write(response.content)
+                            logout(data="Bild8 erfolgreich heruntergeladen und gespeichert: {}".format(output_file))
+                        else:
+                            logout(data="Fehler beim Herunterladen des Bildes: {}".format(response.status_code))
+                    except requests.exceptions.RequestException as e:
+                        logout(data="Netzwerkfehler beim Herunterladen des Bildes: {}".format(e))
+                else:
+                    logout(data="Kein gültiger Bildpfad für Darsteller 8.")
+            else:
+                logout(data="Darsteller8 ist nicht vorhanden")
+
+            if darsteller9_ok == True:
+            # ---------------------------  Darsteller 9 ----------------------------------------------------------------
+
+                logout(data="Darsteller 9:")
+                if darsteller9bild:
+                    image_url = base_url + image_size + darsteller9bild
+                    logout(data="Bild-URL: {}".format(image_url))  # `format()`-Methode statt f-Strings
+
+                    # Zielname und Ort des Bildes
+                    output_file = "{}/09_{}({}).jpg".format(name_dir, darsteller9, filmdarsteller9)
+                    logout(data="Speichern des Bildes: {}".format(output_file))
+
+                    # Bild herunterladen und speichern
+                    try:
+                        logout(data="timeout start")
+                        response = requests.get(image_url, timeout=20)
+                        logout(data="timeout ende")
+                        if response.status_code == 200:
+                            logout(data="response ok")
+                            with open(output_file, "wb") as file:
+                                logout(data="Starte Download für Bild9: {}".format(image_url))
+                                file.write(response.content)
+                            logout(data="Bild9 erfolgreich heruntergeladen und gespeichert: {}".format(output_file))
+                        else:
+                            logout(data="Fehler beim Herunterladen des Bildes: {}".format(response.status_code))
+                    except requests.exceptions.RequestException as e:
+                        logout(data="Netzwerkfehler beim Herunterladen des Bildes: {}".format(e))
+                else:
+                    logout(data="Kein gültiger Bildpfad für Darsteller 9.")
+            else:
+                logout(data="Darsteller9 ist nicht vorhanden")
+
+            if darsteller10_ok == True:
+            
+                # ---------------------------  Darsteller 10 ----------------------------------------------------------------
+
+                logout(data="Darsteller 10 :")
+                if darsteller10bild:
+                    image_url = base_url + image_size + darsteller10bild
+                    logout(data="Bild-URL: {}".format(image_url))  # `format()`-Methode statt f-Strings
+
+                    # Zielname und Ort des Bildes
+                    output_file = "{}/10_{}({}).jpg".format(name_dir, darsteller10, filmdarsteller10)
+                    logout(data="Speichern des Bildes: {}".format(output_file))
+
+                    # Bild herunterladen und speichern
+                    try:
+                        logout(data="timeout start")
+                        response = requests.get(image_url, timeout=20)
+                        logout(data="timeout ende")
+                        if response.status_code == 200:
+                            logout(data="response ok")
+                            with open(output_file, "wb") as file:
+                                logout(data="Starte Download für Bild10: {}".format(image_url))
+                                file.write(response.content)
+                            logout(data="Bild10 erfolgreich heruntergeladen und gespeichert: {}".format(output_file))
+                        else:
+                            logout(data="Fehler beim Herunterladen des Bildes: {}".format(response.status_code))
+                    except requests.exceptions.RequestException as e:
+                        logout(data="Netzwerkfehler beim Herunterladen des Bildes: {}".format(e))
+                else:
+                    logout(data="Kein gültiger Bildpfad für Darsteller 10.")
+            else:
+                logout(data="Darsteller10 ist nicht vorhanden")
+
 
             logout(data="****************************** Casts Download Ende **************************************************")
             return

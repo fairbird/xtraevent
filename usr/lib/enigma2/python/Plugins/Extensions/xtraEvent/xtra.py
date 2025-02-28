@@ -56,7 +56,7 @@ if isfile(myfile):
 # kitte888 logfile anlegen die eingabe in logstatus
 
 logstatus = "on"
-
+# auf on lassen das er dann aber nur die parameter logt und dann da ausschaltet das loggin zeile 327
 
 # ________________________________________________________________________________
 
@@ -79,7 +79,7 @@ def logout(data):
     return
 
 # =================================================================================================================
-version = "v6.805"
+version = "v6.809"
 # ==================================================================================================================
 # ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
 #logout(data="start 6.77")
@@ -109,7 +109,10 @@ REGEX = re.compile(
     r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
     r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
     r'\d{1,3}(-я|-й|\sс-н).+|'
-    r'[\u0600-\u06FF]+'  # Arabische Schrift
+    r'\sح\s*\d+|'                # Entfernt Episodennummern in arabischen Serien
+    r'\sج\s*\d+|'                # Entfernt Staffelangaben in arabischen Serien
+    r'\sم\s*\d+|'                # Entfernt weitere Staffelangaben in arabischen Serien
+    r'\d+$'                     # Entfernt Zahlen am Ende
     , re.DOTALL)
 
     #  r'[\u0600-\u06FF]+'  # Arabische Schrift
@@ -538,6 +541,7 @@ class xtra(Screen, ConfigListScreen):
 
         self['key_red'] = Label(_('Close'))
         self['key_green'] = Label(_(lng.get(lang, '40')))
+        #self['key_yellow'] = Label(_(lng.get(lang, '75')))
         self['key_blue'] = Label(_(lng.get(lang, '18')))
         self["actions"] = ActionMap(["xtraEventAction"],
         {
@@ -547,6 +551,7 @@ class xtra(Screen, ConfigListScreen):
             "right": self.keyRight,
             "red": self.exit,
             "green": self.search,
+            #"yellow": self.update,
             "blue": self.ms,
             "cancel": self.exit,
             "ok": self.keyOK,
@@ -849,7 +854,8 @@ class xtra(Screen, ConfigListScreen):
     def menuS(self):
         logout(data="------------------ def menuS")
         if config.plugins.xtraEvent.onoff.value:
-            list = [(_(lng.get(lang, '50')), self.brokenImageRemove), (_(lng.get(lang, '73')), self.removeImagesAll)]
+            list = [(_(lng.get(lang, '50')), self.brokenImageRemove), (_(lng.get(lang, '73')), self.removeImagesAll),\
+            (_(lng.get(lang, "75")), self.update), (_(lng.get(lang, '35')), self.exit)]
             self.session.openWithCallback(self.menuCallback, ChoiceBox, title=_('xtraEvent...'), list=list)
         else:
             self.exit()

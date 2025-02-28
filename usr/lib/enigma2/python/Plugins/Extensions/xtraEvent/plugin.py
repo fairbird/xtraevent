@@ -38,6 +38,7 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
+logstatus = "off"
 if config.plugins.xtraEvent.logFiles.value == True:
     logstatus = "on"
 else:

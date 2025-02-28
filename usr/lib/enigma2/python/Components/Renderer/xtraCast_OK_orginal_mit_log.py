@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# by digiteng...05.2024, 10.2024  , danke , habe es etwas umgearbeitet
+# by digiteng...05.2024, 10.2024
 # <widget source="session.CurrentService" render="xtraCast" noWrap="1" 
 # castNum="0" castNameColor="#ffffff" castCaracterColor="#999999" castNameFont="Console; 14" castCaracterFont="Regular; 12" 
 # position="80,455" size="154,462" zPosition="1" backgroundColor="background" transparent="1" />
@@ -11,7 +11,6 @@ from skin import parseColor
 from Components.config import config
 from Tools.xtraTool import REGEX, pathLoc
 from Plugins.Extensions.xtraEvent.download import REGEX, pathLoc
-
 import re
 import os
 # --------------------------- Logfile -------------------------------
@@ -26,7 +25,7 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraCast.log"
+myfile="/tmp/xtraevent-cast.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -36,15 +35,9 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
-from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 
-logstatus = "off"
-if config.plugins.xtraEvent.logFiles.value == True:
-    logstatus = "on"
-else:
-    logstatus = "off"
 
-#logstatus = "on"
+logstatus = "on"
 
 
 # ________________________________________________________________________________
@@ -68,73 +61,25 @@ def logout(data):
     return
 
 
-REGEX = re.compile(
-    r'([\(\[]).*?([\)\]])|'
-    r'(: odc.\d+)|'
-    r'(\d+: odc.\d+)|'
-    r'(\d+ odc.\d+)|(:)|'
-
-    r'!|'
-    r'/.*|'
-    r'\|\s[0-9]+\+|'
-    r'[0-9]+\+|'
-    r'\s\d{4}\Z|'
-    r'([\(\[\|].*?[\)\]\|])|'
-    r'(\"|\"\.|\"\,|\.)\s.+|'
-    r'\"|:|'
-    r'\*|'
-    r'Премьера\.\s|'
-    r'(х|Х|м|М|т|Т|д|Д)/ф\s|'
-    r'(х|Х|м|М|т|Т|д|Д)/с\s|'
-    r'\s(с|С)(езон|ерия|-н|-я)\s.+|'
-    r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-    r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-    r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-    r'\d{1,3}(-я|-й|\sс-н).+|'
-    r'\sح\s*\d+|'                # Entfernt Episodennummern in arabischen Serien
-    r'\sج\s*\d+|'                # Entfernt Staffelangaben in arabischen Serien
-    r'\sم\s*\d+|'                # Entfernt weitere Staffelangaben in arabischen Serien
-    r'\d+$'                     # Entfernt Zahlen am Ende
-    , re.DOTALL)
-
 class xtraCast(Renderer):
     def __init__(self):
         logout(data="init")
         Renderer.__init__(self)
         # self.epgcache = eEPGCache.getInstance()
         self.castNamefontType = "Regular"
-        self.castNamefontSize = 25
+        self.castNamefontSize = 12
         self.castCaracterfontType = "Regular"
-        self.castCaracterfontSize = 25
-        self.csx, self.csy = 205,470
+        self.castCaracterfontSize = 10
+        self.csx, self.csy = 200,30
         self.cpx, self.cpy = 0,0
         self.foregroundColor = "#ffffff"
         self.backgroundColor = "#000000"
-        self.castNameColor = "#0099ccff"
-        self.castCaracterColor = "#001edb76"
+        self.castNameColor = "#ffffff"
+        self.castCaracterColor = "#cccccc"
         self.castNamenumber = 0
-        space=20
-        self.namesize = 80
-        self.pigsize = 277
-        self.charactersize = 80
-        self.chacterpos = 0
-        self.pigpos = self.chacterpos + self.namesize
-        self.namepos = self.chacterpos + self.namesize + self.pigsize + space
-        # jpg ist 185x277  , size 185 , 80 + 277 + 20 + 80 = 457
-        logout(data="positionen")
-        logout(data=str(self.chacterpos))
-        logout(data=str(self.pigpos))
-        logout(data=str(self.namepos))
-
-        # Übergabe einer Variable
-        from Plugins.Extensions.xtraEvent.xtra_event_name import eventname
-        Name = "Max Mustermann"
-        result = eventname(Name)
-        logout(data="name aus eventname import")
-        logout(data=str(result))
 
     def applySkin(self, desktop, screen):
-        logout(data="applySkin     hier vom skin die daten holen")
+        logout(data="applySkin")
         attribs = self.skinAttributes[:]
         for attrib, value in self.skinAttributes:
             if attrib == 'backgroundColor':
@@ -172,8 +117,7 @@ class xtraCast(Renderer):
 
     GUI_WIDGET = eWidget
     def changed(self, what):
-        logout(data="changed start mit Nummer")
-
+        logout(data="changed")
         if not self.instance:
             return
         if what[0] == self.CHANGED_CLEAR:
@@ -185,52 +129,22 @@ class xtraCast(Renderer):
         evnt=""
         events=None
         event = self.source.event
-        logout(data="nummer anfrage")
-
-        # <widget source="session.Event_Now" render="xtraCast" noWrap="1"
-        # castNum="0"
-        # castNameColor="#ffffff"
-        # castCaracterColor="#999999"
-        # castNameFont="Console; 24"
-        # castCaracterFont="Regular; 25"
-        # position="190,110"
-        # size="154,462"
-        # zPosition="3" backgroundColor="background" transparent="1" />
         if event:
             try:
                 logout(data="#############################################")
                 logout(data="Sendungs name")
                 evnt = event.getEventName()
                 logout(data=str(evnt))
-                # so vorher aber da passen die namen nicht zum download
-                #evntNm = REGEX.sub('', evnt).strip()
-                #logout(data="nach Regex Tools name")
-                #logout(data=str(evntNm))
-
-                #logout(data="nach Regex meiner name")
-                #title = REGEX.sub('', evnt).strip()
-                #logout(data=str(title))
-                #evntNm=title
-                #logout(data="#################### muss in evnNm stehen #########################")
-
-                # hier live: entfernen
-                Name = evnt.replace('\xc2\x86', '').replace('\xc2\x87', '').replace("live: ", "").replace("LIVE ", "")
-                evnt = Name.replace("live: ", "").replace("LIVE ", "").replace("LIVE: ", "").replace("live ", "")
-                logout(data="name live rausnehmen")
-                logout(data=evnt)
-
-                # hier versuch name nur vor dem :
-                #name1 = evnt.split(": ", 1)
-                #Name = name1[0]
-                #logout(data="name   : abtrennen ")
-                #logout(data=Name)
-
-                evnt = Name
-                # -------------------------------
 
                 evntNm = REGEX.sub('', evnt).strip()
+                logout(data="nach Regex Tools name")
                 logout(data=str(evntNm))
-                # ------------------------------ name setht in evntNm drin ---------------------------------------------
+
+                logout(data="nach Regex meiner name")
+                title = REGEX.sub('', evnt).strip()
+                logout(data=str(title))
+                evntNm=title
+                logout(data="#############################################")
                 cf=""
                 cNm=""
                 logout(data="name")
@@ -243,11 +157,9 @@ class xtraCast(Renderer):
                 logout(data=str(pathLoc))
                 logout(data="castsFolder")
                 logout(data=str(castsFolder))
-
                 if os.path.isdir(castsFolder):
                     logout(data="file vorhanden")
-                    #castFiles = sorted(os.listdir(castsFolder))
-                    castFiles = sorted([f for f in os.listdir(castsFolder) if f.lower().endswith('.jpg')])
+                    castFiles = sorted(os.listdir(castsFolder))
                     logout(data="list files")
                     logout(data=str(castFiles))
                     if castFiles:
@@ -257,25 +169,15 @@ class xtraCast(Renderer):
                             logout(data=str(cf))
                         except:
                             return
-
-
-                        logout(data="------------------------------ Orginal csx: {}, csy: {}".format(self.csx, self.csy))
-
-                        # --------------------------------- hier Pig ---------------------------------------------------
-                        # Das Bild wird mit setPixmapFromFile geladen
                         self.castNamePic.setPixmapFromFile("{}/{}".format(castsFolder, cf))
                         logout(data="namePic")
                         logout(data=str(self.castNamePic.setPixmapFromFile))
-
-                        # Die Größe wird durch resize festgelegt
-                        # self.csx: Breite des Bildes.
-                        # self.csy // 2: Höhe des Bildes (hälfte der gesamten Bildschirmhöhe).
-                        #self.castNamePic.resize(eSize(self.csx, self.pigsize))
                         self.castNamePic.resize(eSize(self.csx, self.csy // 2))
-                        # Das Bild wird oben positioniert
-                        logout(data="----------------------------- csx: {}, pigsize: {}".format(self.csx, self.pigsize))
-                        self.castNamePic.move(ePoint(0, self.pigpos))
-                        logout(data="----------------------------- pigpos Y: {}".format(self.pigpos))
+
+                        self.castNamePic.move(ePoint(0,0))
+                        logout(data="csy")
+                        logout(data=str(self.castNamePic))
+
 
                         self.castNamePic.setTransparent(1)
                         self.castNamePic.setZPosition(3)
@@ -283,28 +185,18 @@ class xtraCast(Renderer):
                         self.castNamePic.setAlphatest(2)
                         self.castNamePic.show()
 
-                        # ---------------------------- hier der Name --------------------------------------------------
-                        # so ist der Filename , 00_Archie Madekwe(Jann Mardenborough).jpg
-                        # Der Name und CaracterName wird aus dem Dateinamen extrahiert
-                        # Entfernt die Dateiendung .jpg mit [:-4].
-                        # Schneidet die ersten 3 Zeichen ab mit [3:].
-                        # Trennt den Hauptnamen vor dem ersten (.
-                        # Trennt den Text in der Klammer () und entfernt die Klammern.
+                        cName = cf[:-4][3:].split("(")[0]
                         cCrctr = cf[:-4][3:].split("(")[1].replace(")", "")
-                        logout(data="charcter")
-                        logout(data=str(cCrctr))
-                        cName = " ".join(cf[:-4][3:].split("(")[0].split())
-                        logout(data="name")
-                        logout(data=str(cName))
+
                         self.castName.setText(cName)
-                        # ------------------------------- name aufsetzen -----------------------------------------------
                         self.castName.setBackgroundColor(parseColor(self.backgroundColor))
                         self.castName.setForegroundColor(parseColor(self.castNameColor))
-                        logout(data="----------------------------- csx: {}, namesize: {}".format(self.csx, self.namesize))
-                        self.castName.resize(eSize(self.csx, self.namesize))
-                        logout(data="----------------------------- name position Y: {}".format(self.namepos))
-                        # Position unter dem Bild: Höhe: self.csy // 2 (hälfte der Bildschirmhöhe).
-                        self.castName.move(ePoint(0, self.namepos))
+                        self.castName.resize(eSize(self.csx, int(self.castNamefontSize) + 4))
+
+                        self.castName.move(ePoint(0, (self.csy // 2) + 5))
+                        logout(data="csy1")
+                        logout(data=str(self.castName.move))
+
 
                         self.castName.setFont(gFont(self.castNamefontType, int(self.castNamefontSize)))
                         self.castName.setHAlign(eLabel.alignLeft)
@@ -312,38 +204,35 @@ class xtraCast(Renderer):
                         self.castName.setZPosition(99)
                         self.castName.show()
 
-                        # ------------------------------------ hier charter --------------------------------------------
-
                         self.castCaracter.setText(cCrctr)
                         self.castCaracter.setBackgroundColor(parseColor(self.backgroundColor))
                         self.castCaracter.setForegroundColor(parseColor(self.castCaracterColor))
-                        logout(data="-------------------- csx: {}, charctersize: {}".format(self.csx, self.charactersize))
-                        self.castCaracter.resize(eSize(self.csx, self.charactersize))
-                        logout(data="------------------------- charter position Y: {}".format(self.chacterpos))
-                        # # Position unter dem Bild: Höhe: self.csy // 2 (hälfte der Bildschirmhöhe) + platz + schrifthoehe.
-                        self.castCaracter.move(ePoint(0, self.chacterpos))
+                        self.castCaracter.resize(eSize(self.csx, self.csy // 2))
 
+                        self.castCaracter.move(ePoint(0, (self.csy // 2) + 10 + int(self.castNamefontSize)))
+                        logout(data="csy2")
+                        logout(data=str(self.castCaracter.move))
 
                         self.castCaracter.setFont(gFont(self.castCaracterfontType, int(self.castCaracterfontSize)))
                         self.castCaracter.setHAlign(eLabel.alignLeft)
                         self.castCaracter.setTransparent(1)
                         self.castCaracter.setZPosition(99)
                         self.castCaracter.show()
-
                     else:
                         logout(data="file nicht vorhanden 1")
                         self.castName.hide()
                         self.castNamePic.hide()
                         self.castCaracter.hide()
                 else:
-                    logout(data="folder nicht vorhanden 2")
+                    logout(data="file nicht vorhanden 2")
                     self.castName.hide()
                     self.castNamePic.hide()
                     self.castCaracter.hide()
 
             except Exception as err:
-                logout(data="exeption error ")
-
+                logout(data="file error ")
+                #from Tools.xtraTool import errorlog
+                #errorlog(err, __file__)
         else:
             logout(data="file nicht vorhanden 3")
             self.castName.hide()
@@ -352,13 +241,10 @@ class xtraCast(Renderer):
             return
 
     def GUIcreate(self, parent):
-        logout(data="------------------------------------------------------------------------------- GUIcreate 1")
+        logout(data="GUIcreate")
         self.instance = eWidget(parent)
-        logout(data="------------------------------------------------------------------------------- GUIcreate 2")
         self.castName = eLabel(self.instance)
-        logout(data="------------------------------------------------------------------------------- GUIcreate 3")
         self.castCaracter = eLabel(self.instance)
-        logout(data="------------------------------------------------------------------------------- GUIcreate 4")
         self.castNamePic = ePixmap(self.instance)
 
     def GUIdelete(self):
