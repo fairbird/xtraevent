@@ -660,6 +660,7 @@ class downloads(Screen):
             nl = len(refs)
 
             def extract_year_from_text(text):
+                logout(data="extract year from text")
                 """Extrahiert das Jahr aus dem Text (z. B. Beschreibung)."""
                 # Regulärer Ausdruck zum Finden eines Jahres im Format 4 Ziffern (z.B. 2020)
                 year_match = re.search(r'\b(\d{4})\b', text)
@@ -673,20 +674,25 @@ class downloads(Screen):
                 ref = refs[i]
                 try:
                     events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
+                    logout(data="676 ----------- events")
+                    #logout(data=str(events))
                     n = config.plugins.xtraEvent.searchNUMBER.value
+                    logout(data="679 ----------- n anzahl")
+                    logout(data=str(n))
                     for i in range(int(n)):
                         title = events[i][4]
-                        logout(data="----------- Title")
+                        logout(data="679 ----------- Title")
                         logout(data=str(title))
                         #description = events[i][5]  # Beschreibung der Sendung (Short/Extended Description)
                         description = events[i][6]  # Erweiterte Beschreibung der Sendung
-                        logout(data="----------- Info")
+                        logout(data="682 ----------- Epg Info description ")
                         #logout(data=str(description))
-                        logout(data="----------------")
+                        logout(data="----------------  description ende -----------------------------------")
                         fd = description
                         fd = fd.replace(',', '').replace('(', '').replace(')', '')
                         fdl = ['\d{4} [A-Z]+', '[A-Z]+ \d{4}', '[A-Z][a-z]+\s\d{4}', '\+\d+\s\d{4}']
                         logout(data=str(fd))
+
                         for i in fdl:
                             logout(data="Year 685 ")
                             year = re.findall(i, fd)
@@ -2443,7 +2449,7 @@ class downloads(Screen):
 
                     if modified_date < zwei_tage_ago:
                         shutil.rmtree(dirpath)  # Verzeichnis und Inhalt löschen
-                        logout(data=f"Deleted old directory: {dirpath}")
+                        logout(data="Deleted old directory: {}".format(dirpath))
 
         else:
             logout(data="delete old directories off")
