@@ -210,7 +210,7 @@ config.plugins.xtraEvent.skinSelectColor = ConfigSelection(default = "#3478c1", 
     ("#2E8B57","SeaGreen"),
     ])
 config.plugins.xtraEvent.loc = ConfigDirectory(default='/tmp/')
-config.plugins.xtraEvent.searchMOD = ConfigSelection(default = lng.get(lang, '13'), choices = [(lng.get(lang, '13')), (lng.get(lang, '14')), (lng.get(lang, '14a'))])
+config.plugins.xtraEvent.searchMOD = ConfigSelection(default = lng.get(lang, '14'), choices = [(lng.get(lang, '13')), (lng.get(lang, '14')), (lng.get(lang, '14a'))])
 config.plugins.xtraEvent.searchNUMBER = ConfigSelectionNumber(0, 999, 1, default=50)
 # ------------------------------------------------- hier 50 next events downloaden , ca fuer 1 Tag
 # config.plugins.xtraEvent.timerMod = ConfigYesNo(default = False)
