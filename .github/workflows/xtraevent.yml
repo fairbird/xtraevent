@@ -8,17 +8,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-    - name: install prerequisites
+    - name: Install prerequisites
       run: |
-        sudo apt-get -q update
-        sudo apt-get install automake
-        sudo apt-get install git
-        sudo apt-get install build-essential
-        sudo apt-get install gettext
-    - name: compile xtraevent python
+        sudo apt-get -qq update
+        sudo apt-get install -y automake git build-essential gettext
+    - name: Compile xtraevent Python and process .po files
       run: |
-        python -m compileall .
+        python3 -m compileall .
         find . -type f -name "*.po" -exec msgfmt {} -o {}.mo \;
-        echo done!
+        echo "Done!"
