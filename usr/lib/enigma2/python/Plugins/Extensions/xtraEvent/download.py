@@ -645,100 +645,117 @@ class downloads(Screen):
                     f.write("currentChEpgs, %s\n"%(err))
 
     def selBouquets(self):
+        import os
+        import re
+        import inspect
+        from threading import Thread
         logout(data="--------------------------------------------------- selBouquets ---------------------------------")
         caller_frame = inspect.currentframe().f_back
         caller_name = inspect.getframeinfo(caller_frame).function
-        #log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
-        log_message = "Die Funktion getText() wurde von %s aufgerufen." % caller_name
-        logout(data=str(log_message))
+        log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
+        logout(data=log_message)
 
-        if os.path.exists("{}bqts".format(pathLoc)):
-            logout(data="----------------------------------------------- 641 Bouquets file exits ---------------------")
-            with open("{}bqts".format(pathLoc), "r") as f:
-                logout(data="selBouquets open file")
-                refs = f.readlines()
-            nl = len(refs)
+        # Check if the bouquets file exists
+        bqts_path = f"{pathLoc}bqts"
+        if not os.path.exists(bqts_path):
+        	logout(data="----------------------------- 687 selBouquets file not exists --------------------------------")
+        	return
 
-            def extract_year_from_text(text):
-                logout(data="extract year from text")
-                """Extrahiert das Jahr aus dem Text (z. B. Beschreibung)."""
-                # Regulärer Ausdruck zum Finden eines Jahres im Format 4 Ziffern (z.B. 2020)
-                year_match = re.search(r'\b(\d{4})\b', text)
-                if year_match:
-                    return year_match.group(1)  # Gibt das gefundene Jahr zurück
-                return None  # Kein Jahr gefunden
+        logout(data="----------------------------------------------- 641 Bouquets file exists ---------------------")
+        with open(bqts_path, "r", encoding="utf-8") as f:
+        	logout(data="selBouquets open file")
+        	refs = f.readlines()
 
-            eventlist=[]
-            yearlist = []  # Neue Liste für Jahre
-            for i in range(nl):
-                ref = refs[i]
-                try:
-                    events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
-                    logout(data="676 ----------- events")
-                    #logout(data=str(events))
-                    n = config.plugins.xtraEvent.searchNUMBER.value
-                    logout(data="679 ----------- n anzahl")
-                    logout(data=str(n))
-                    for i in range(int(n)):
-                        title = events[i][4]
-                        logout(data="679 ----------- Title")
-                        logout(data=str(title))
-                        #description = events[i][5]  # Beschreibung der Sendung (Short/Extended Description)
-                        description = events[i][6]  # Erweiterte Beschreibung der Sendung
-                        logout(data="682 ----------- Epg Info description ")
-                        #logout(data=str(description))
-                        logout(data="----------------  description ende -----------------------------------")
-                        fd = description
-                        fd = fd.replace(',', '').replace('(', '').replace(')', '')
-                        fdl = ['\d{4} [A-Z]+', '[A-Z]+ \d{4}', '[A-Z][a-z]+\s\d{4}', '\+\d+\s\d{4}']
-                        logout(data=str(fd))
+        def extract_year_from_text(text):
+        	logout(data="extract year from text")
+        	"""Extracts the year from the text (e.g., description)."""
+        	if not isinstance(text, str) or not text:
+        		return None
+        	year_match = re.search(r'\b(\d{4})\b', text)
+        	return year_match.group(1) if year_match else None
 
-                        for i in fdl:
-                            logout(data="Year 685 ")
-                            year = re.findall(i, fd)
-                            logout(data=str(year))
-                            if year:
-                                logout(data="Year ok 689")
-                                year = re.sub(r'\(.*?\)|\.|\+\d+', ' ', year[0]).strip()
-                                logout(data=str(year))
-                                year_mit = year
-                                # Entferne alles außer der 4-stelligen Jahreszahl
-                                year = re.search(r'\b\d{4}\b', year_mit)
-                                year = year.group(0)  # Extrahiere die gefundene Jahreszahl
-                                logout(data=str(year))
-                                break
-                        # Jahr extrahieren, falls in der Beschreibung vorhanden
-                        #year = extract_year_from_text(description)
-                        if not year:  # Falls kein Jahr in der Beschreibung gefunden wird
-                            year = 0  # Falls kein Jahr gefunden wird, 0 setzen
+        eventlist = []
+        yearlist = []
+        for ref in refs:
+        	ref = ref.strip()
+        	if not ref:
+        		continue
+        	try:
+        		# Lookup events for the reference
+        		events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
+        		logout(data="676 ----------- events")
+        		n = int(config.plugins.xtraEvent.searchNUMBER.value)
+        		logout(data=f"679 ----------- n anzahl: {n}")
 
+        		for i in range(min(n, len(events))):  # Prevent index out of range
+        			title = events[i][4] or ""  # Title, default to empty string if None
+        			description = events[i][6] or ""  # Extended description, default to empty string
+        			logout(data=f"679 ----------- Title: {title}")
+        			logout(data="682 ----------- Epg Info description")
+        			logout(data="---------------- description ende -----------------------------------")
 
-                        # Titel bereinigen (z. B. "live" entfernen)
-                        name = title.replace('\xc2\x86', '').replace('\xc2\x87', '').replace("live: ", "").replace(
-                            "LIVE ", "")
-                        name = REGEX.sub('', name).strip()  # Bereinigung des Titels
+        			# Clean description for year extraction
+        			fd = description.replace(',', '').replace('(', '').replace(')', '').strip()
+        			logout(data=f"Cleaned description: {fd}")
 
-                        # Eventliste mit Titel und Jahr füllen
-                        eventlist.append(name)
-                        yearlist.append(year)
-                        logout(data="712 ende naechste sendung ")
-                except:
-                    pass
-            self.titles = list(dict.fromkeys(eventlist))
-            self.year = [yearlist[eventlist.index(title)] for title in self.titles]  # Jahre entsprechend den Titeln
-            logout(data="---------------------------- Title mit Year  ------------------------------")
-            logout(data=str(self.titles))
-            logout(data=str(self.year))
-            logout(data="---------------------------------------------------------------------------")
-            #----------------------------------------------- sollte ja thread sein -------------------------
-            logout(data="---------------------------- 680 selBouquets zu downloadEvents ------------------------------")
-            start_new_thread(self.downloadEvents, ())
-            #import _thread
-            #_thread.start_new_thread(self.downloadEvents, ())
-            logout(data="-----------------------------684  selBouquets von downloadEvents zurueck --------------------")
-            # ----------------------------------------------------------------------------------------------
-        else:
-            logout(data="----------------------------- 687 selBouquets file not exits --------------------------------")
+        			# Patterns to find year in description
+        			fdl = [r'\d{4}\s+[A-Z]+', r'[A-Z]+\s+\d{4}', r'[A-Z][a-z]+\s+\d{4}', r'\+\d+\s+\d{4}']
+        			year = None
+        			for pattern in fdl:
+        				matches = re.findall(pattern, fd)
+        				logout(data=f"Year pattern {pattern}: {matches}")
+        				if matches:
+        					logout(data="Year ok")
+        					# Extract the year, removing extra characters
+        					year_text = re.sub(r'\(.*?\)|\.|\+\d+', ' ', matches[0]).strip()
+        					year_match = re.search(r'\b\d{4}\b', year_text)
+        					if year_match:
+        						year = year_match.group(0)
+        						logout(data=f"Extracted year: {year}")
+        						break
+
+        			# Fallback to extract_year_from_text if no year found
+        			if not year:
+        				year = extract_year_from_text(description) or "0"
+        				logout(data=f"Fallback year: {year}")
+
+        			# Clean title
+        			name = title
+        			if isinstance(name, bytes):  # Handle potential byte strings
+        				name = name.decode('utf-8', errors='ignore')
+        			name = name.replace('\xc2\x86', '').replace('\xc2\x87', '').replace("live: ", "").replace("LIVE ", "")
+        			name = re.sub(r'[^\w\s]', '', name).strip()  # Safer regex cleanup
+        			logout(data=f"Cleaned title: {name}")
+
+        			# Add to lists
+        			eventlist.append(name)
+        			yearlist.append(year)
+        			logout(data="712 ende naechste sendung")
+        	except Exception as e:
+        		logout(data=f"Error processing ref {ref}: {str(e)}")
+        		continue
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_titles = []
+        unique_years = []
+        for title, year in zip(eventlist, yearlist):
+        	if title not in seen:
+        		seen.add(title)
+        		unique_titles.append(title)
+        		unique_years.append(year)
+
+        self.titles = unique_titles
+        self.year = unique_years
+        logout(data="---------------------------- Title mit Year ------------------------------")
+        logout(data=f"Titles: {self.titles}")
+        logout(data=f"Years: {self.year}")
+        logout(data="---------------------------------------------------------------------------")
+
+        # Start downloadEvents in a new thread
+        logout(data="---------------------------- 680 selBouquets zu downloadEvents ------------------------------")
+        Thread(target=self.downloadEvents).start()
+        logout(data="----------------------------- 684 selBouquets von downloadEvents zurueck --------------------")
 
 ########################################################################################################################
     def downloadEvents(self):
