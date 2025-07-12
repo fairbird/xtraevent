@@ -27,6 +27,7 @@ from . import xtra
 from datetime import datetime
 import time
 import threading
+from threading import Thread
 from Components.ProgressBar import ProgressBar
 import io
 from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
