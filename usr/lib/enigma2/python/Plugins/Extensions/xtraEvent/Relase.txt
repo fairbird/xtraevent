@@ -25,3 +25,64 @@ skin text Anzahl in Anzahl/Number und Arabisch geändert
 -------------------------------------------------------------------
 6.808
 log off in einigen datein gemacht
+------------------------------------------------------------------------------------------------------------
+6.87 31.07.2025
+im tmp logfiles in xtraevent ordner
+
+converter xtrainfo verbessert download json nur einmal und json öffnen
+
+download auch omdb json download wie im info 
+
+info löst beim umschalten die spinner aus , sollte jetzt schnell gehen , download sollte die datein schon geladen haben
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
+6.88
+in xtrastar noch vote aus infos dazu gebaut
+-------------------------------------------------------------------------------------------------------
+6.89
+download.py
+1. Aktueller Kanal – Limit von 15 Events aufgehoben
+Problem:
+
+Bei der „aktueller Kanal“-Suche (currentChEpgs) hat Enigma2 standardmäßig nur 15 EPG-Events zurückgegeben, egal was im Plugin-Menü (searchNUMBER) eingestellt war.
+
+Lösung:
+
+Die lookupEvent-Abfrage wurde angepasst:
+
+Code
+events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 0, -1, n)])
+n = Anzahl der Events aus den Plugin-Einstellungen
+
+0 = Startzeit = aktuelle Zeit
+
+-1 = kein Endlimit
+
+Damit berücksichtigt die Suche jetzt die in den Einstellungen gesetzte Zahl (z. B. 70) statt fix 15.
+
+2. Year-Fix – Jahresliste ergänzt
+Problem:
+
+In der Funktion currentChEpgs() wurde zwar self.titles gefüllt, aber self.year war leer.
+
+Später in downloadEvents() wurde aber mit self.year[i] gearbeitet → Absturz.
+
+Lösung:
+
+Beim Einsammeln der Events wird jetzt parallel self.year gefüllt:
+
+Wenn der Titel eine Jahreszahl in Klammern enthält (z. B. „Avatar (2009)“) → year = 2009.
+
+Die Jahreszahl wird aus dem Titel entfernt.
+
+Wenn keine Jahreszahl vorhanden ist → year = "".
+
+Damit sind self.titles und self.year synchron und vollständig.
+---------------------------------------------------------------------------------------------------------
+6.90
+download.py übernimmen
+--------------------------------------------------------------------------------------------------------
+6.891
+emc movielist war 0
+xtra 465 pathe
+---------------------------------------------------------------------------------------------------------

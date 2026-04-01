@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # by digiteng...08.2020 - 11.2021
-# <widget source="session.Event_Now" render="xtraPoster" position="0,0" size="185,278" zPosition="1" />
+# <widget source="session.Event_Now" render="xtraLogo" position="59,148" size="278,185" zPosition="1" />
 from __future__ import absolute_import
 from Components.Renderer.Renderer import Renderer
 from enigma import ePixmap, eEPGCache, loadJPG, loadPNG
@@ -18,24 +18,30 @@ from shutil import copyfile
 from os import remove
 from os.path import isfile
 
-
-
+import inspect
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
+from Plugins.Extensions.xtraEvent.xtraTitleHelper import *
 ########################### log file loeschen ##################################
+dir_path = "/tmp/xtraevent"
 
-myfile="/tmp/xtraLogo.log"
+try:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print("Directory has been created:", dir_path)
+    else:
+        print("Directory already exists:", dir_path)
+except Exception as e:
+    print("Error creating directory:", e)
 
+
+
+
+myfile=dir_path + "/logo.log"
 ## If file exists, delete it ##
 if isfile(myfile):
     remove(myfile)
-############################## File copieren ############################################
-# fuer py2 die int und str anweisung raus genommen und das Grad zeichen
 
-###########################  log file anlegen ##################################
-# kitte888 logfile anlegen die eingabe in logstatus
-
-from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
-
-logstatus = "off"
+logstatus = "on"
 if config.plugins.xtraEvent.logFiles.value == True:
     logstatus = "on"
 else:
@@ -65,6 +71,10 @@ def logout(data):
 
 # ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
 logout(data="start 6.76")
+logout(data=str(config.plugins.xtraEvent.logFiles.value))
+logout(data=str(logstatus))
+
+
 if config.plugins.xtraEvent.tmdbAPI.value != "":
     tmdb_api = config.plugins.xtraEvent.tmdbAPI.value
 else:
@@ -127,109 +137,153 @@ try:
 except:
     pathLoc = ""
 
-REGEX = re.compile(
-        r'([\(\[]).*?([\)\]])|'
-        r'(: odc.\d+)|'
-        r'(\d+: odc.\d+)|'
-        r'(\d+ odc.\d+)|(:)|'
-        
-        r'!|'
-        r'/.*|'
-        r'\|\s[0-9]+\+|'
-        r'[0-9]+\+|'
-        r'\s\d{4}\Z|'
-        r'([\(\[\|].*?[\)\]\|])|'
-        r'(\"|\"\.|\"\,|\.)\s.+|'
-        r'\"|:|'
-        r'\*|'
-        r'Премьера\.\s|'
-        r'(х|Х|м|М|т|Т|д|Д)/ф\s|'
-        r'(х|Х|м|М|т|Т|д|Д)/с\s|'
-        r'\s(с|С)(езон|ерия|-н|-я)\s.+|'
-        r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-        r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-        r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-        r'\d{1,3}(-я|-й|\sс-н).+|'
-        r'\sح\s*\d+|'                # Entfernt Episodennummern in arabischen Serien
-        r'\sج\s*\d+|'                # Entfernt Staffelangaben in arabischen Serien
-        r'\sم\s*\d+|'                # Entfernt weitere Staffelangaben in arabischen Serien
-        r'\d+$'                     # Entfernt Zahlen am Ende
-        , re.DOTALL)
-
 class xtraLogo(Renderer):
+    GUI_WIDGET = ePixmap
 
     def __init__(self):
         Renderer.__init__(self)
+        self.download_starts = {}
 
-    GUI_WIDGET = ePixmap
+    def can_start_download(self, key):
+        try:
+            now = time.time()
+            last_time = self.download_starts.get(key, 0)
+            if now - last_time < 20:
+                logout(data="skip duplicate logo download for key={}".format(key))
+                return False
+            self.download_starts[key] = now
+            return True
+        except Exception as e:
+            logout(data="can_start_download error: {}".format(str(e)))
+            return True
+
+    def download_logo_now(self, evntNm):
+        try:
+            if not config.plugins.xtraEvent.logoFiles.value:
+                logout(data="logoFiles is OFF")
+                return
+
+            from requests.utils import quote
+
+            srch = config.plugins.xtraEvent.searchType.value
+            if not srch:
+                srch = "multi"
+
+            url_tmdb = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(
+                srch, tmdb_api, quote(evntNm)
+            )
+            logout(data="xtraLogo search url={}".format(url_tmdb))
+            data = requests.get(url_tmdb).json()
+            results = data.get("results", [])
+            if not results:
+                logout(data="xtraLogo no TMDB search results")
+                return
+
+            item = results[0]
+            tmdb_id = item.get("id")
+            media_type = item.get("media_type", srch)
+
+            if srch in ("movie", "tv"):
+                media_type = srch
+            elif media_type not in ("movie", "tv"):
+                if item.get("title", "") or item.get("release_date", ""):
+                    media_type = "movie"
+                else:
+                    media_type = "tv"
+
+            if not tmdb_id:
+                logout(data="xtraLogo no tmdb id")
+                return
+
+            url_images = "https://api.themoviedb.org/3/{}/{}/images?api_key={}".format(
+                media_type, tmdb_id, tmdb_api
+            )
+            logout(data="xtraLogo images url={}".format(url_images))
+            img_json = requests.get(url_images).json()
+            logos = img_json.get("logos", [])
+            if not logos:
+                logout(data="xtraLogo no logos found")
+                return
+
+            # Prefer current GUI language, then English, then first available
+            selected_logo = None
+            for item in logos:
+                if item.get("iso_639_1") == lang:
+                    selected_logo = item
+                    break
+            if selected_logo is None:
+                for item in logos:
+                    if item.get("iso_639_1") == "en":
+                        selected_logo = item
+                        break
+            if selected_logo is None:
+                selected_logo = logos[0]
+
+            file_path = selected_logo.get("file_path")
+            if not file_path:
+                logout(data="xtraLogo selected logo missing file_path")
+                return
+
+            logo_size = "w300"
+            try:
+                logo_size = config.plugins.xtraEvent.TMDBlogosize.value
+            except:
+                pass
+
+            url_logo = "https://image.tmdb.org/t/p/{}{}".format(logo_size, file_path)
+            dwn_logo = "{}xtraEvent/logo/{}.png".format(pathLoc, evntNm)
+            logout(data="xtraLogo save path={}".format(dwn_logo))
+
+            open(dwn_logo, 'wb').write(requests.get(url_logo, stream=True, allow_redirects=True).content)
+
+        except Exception as e:
+            logout(data="xtraLogo download error={}".format(str(e)))
+
     def changed(self, what):
-        logout(data="changed")
+        logout(data="xtraLogo changed")
         if not self.instance:
             return
-        else:
-            logout(data="changed ist png vorhanden")
 
-            
-            if what[0] != self.CHANGED_CLEAR:
-                evnt = ''
-                pstrNm = ''
-                evntNm = ''
-                try:
-                    event = self.source.event
-                    logout(data=str(event))
-                    if event:
-                        logout(data="if event")
-                        evnt = event.getEventName()
-                        logout(data=str(evnt))
+        if what[0] == self.CHANGED_CLEAR:
+            self.instance.hide()
+            return
 
-                        # hier live: entfernen
-                        Name = evnt.replace('\xc2\x86', '').replace('\xc2\x87', '').replace("live: ", "").replace("LIVE ", "")
-                        evnt = Name.replace("live: ", "").replace("LIVE ", "").replace("LIVE: ", "").replace("live ",
-                                                                                                             "")
-                        logout(data="name live rausnehmen")
-                        logout(data=evnt)
-
-                        # hier versuch name nur vor dem :
-                        #name1 = evnt.split(": ", 1)
-                        #Name = name1[0]
-                        #logout(data="name   : abtrennen ")
-                        #logout(data=Name)
-
-                        evnt = Name
-                        # -------------------------------
-
-
-                        evntNm = REGEX.sub('', evnt).strip()
-                        logout(data=str(evntNm))
-                        pstrNm = "{}xtraEvent/logo/{}.png".format(pathLoc, evntNm)
-                        logout(data=str(pstrNm))
-                        if os.path.exists(pstrNm):
-                            logout(data="png vorhanden")
-                            self.instance.setPixmap(loadPNG(pstrNm))
-                            self.instance.setScale(1)
-                            self.instance.show()
-                            logout(data="changed ende png vorhanden ")
-                        else:
-                            logout(data="png nicht vorhanden")
-                            pstrNmno = "{}xtraEvent/poster/dummy/{}.png".format(pathLoc, evntNm)
-                            if os.path.exists(pstrNmno):
-                                logout(data="png dummy vorhanden")
-                                self.instance.setPixmap(loadJPG(pstrNmno))
-                                self.instance.setScale(1)
-                                self.instance.show()
-                                logout(data="changed ende png dummy vorhanden ")
-
-                            else:
-                                self.instance.hide()
-                    else:
-                        logout(data="no event")
-                        self.instance.hide()
-                    return
-                except:
-                    logout(data="no ")
-                    self.instance.hide()
-                    return
-            else:
-                logout(data="nichts changed")
+        try:
+            event = self.source.event
+            if not event:
                 self.instance.hide()
                 return
+
+            evnt = event.getEventName()
+            logout(data="xtraLogo raw event={}".format(str(evnt)))
+
+            evntNm = clean_search_title(evnt)
+            logout(data="xtraLogo clean event={}".format(str(evntNm)))
+
+            if not evntNm:
+                self.instance.hide()
+                return
+
+            pstrNm = "{}xtraEvent/logo/{}.png".format(pathLoc, evntNm)
+            logout(data="xtraLogo expected path={}".format(pstrNm))
+
+            if os.path.exists(pstrNm):
+                self.instance.setPixmap(loadPNG(pstrNm))
+                self.instance.setScale(1)
+                self.instance.show()
+                return
+
+            # Current event has priority
+            key = "logo::{}".format(evntNm)
+            if self.can_start_download(key):
+                try:
+                    from _thread import start_new_thread
+                except:
+                    from thread import start_new_thread
+                start_new_thread(self.download_logo_now, (evntNm,))
+
+            self.instance.hide()
+
+        except Exception as e:
+            logout(data="xtraLogo changed error={}".format(str(e)))
+            self.instance.hide()

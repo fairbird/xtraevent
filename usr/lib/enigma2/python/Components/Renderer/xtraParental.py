@@ -9,7 +9,8 @@ from Components.config import config
 import re
 import json
 import os
-
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
+from Plugins.Extensions.xtraEvent.xtraTitleHelper import *
 # --------------------------- Logfile -------------------------------
 
 from datetime import datetime
@@ -17,21 +18,26 @@ from shutil import copyfile
 from os import remove
 from os.path import isfile
 
-
-
 ########################### log file loeschen ##################################
+dir_path = "/tmp/xtraevent"
 
-myfile="/tmp/xtraParental.log"
+try:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print("Directory has been created:", dir_path)
+    else:
+        print("Directory already exists:", dir_path)
+except Exception as e:
+    print("Error creating directory:", e)
 
+
+
+
+myfile=dir_path + "/parental.log"
 ## If file exists, delete it ##
 if isfile(myfile):
     remove(myfile)
-############################## File copieren ############################################
-# fuer py2 die int und str anweisung raus genommen und das Grad zeichen
 
-###########################  log file anlegen ##################################
-# kitte888 logfile anlegen die eingabe in logstatus
-from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 
 logstatus = "off"
 if config.plugins.xtraEvent.logFiles.value == True:
@@ -62,7 +68,7 @@ def logout(data):
 
 
 # ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
-logout(data="start")
+logout(data="start xtraParental")
 
 
 try:
@@ -81,35 +87,181 @@ except:
     pathLoc = ""
 
 REGEX = re.compile(
-        r'([\(\[]).*?([\)\]])|'
-        r'(: odc.\d+)|'
-        r'(\d+: odc.\d+)|'
-        r'(\d+ odc.\d+)|(:)|'
-        
-        r'!|'
-        r'/.*|'
-        r'\|\s[0-9]+\+|'
-        r'[0-9]+\+|'
-        r'\s\d{4}\Z|'
-        r'([\(\[\|].*?[\)\]\|])|'
-        r'(\"|\"\.|\"\,|\.)\s.+|'
-        r'\"|:|'
-        r'\*|'
-        r'Премьера\.\s|'
-        r'(х|Х|м|М|т|Т|д|Д)/ф\s|'
-        r'(х|Х|м|М|т|Т|д|Д)/с\s|'
-        r'\s(с|С)(езон|ерия|-н|-я)\s.+|'
-        r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-        r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-        r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-        r'\d{1,3}(-я|-й|\sс-н).+|'
-        r'\sح\s*\d+|'                # Entfernt Episodennummern in arabischen Serien
-        r'\sج\s*\d+|'                # Entfernt Staffelangaben in arabischen Serien
-        r'\sم\s*\d+|'                # Entfernt weitere Staffelangaben in arabischen Serien
-        r'\d+$'                     # Entfernt Zahlen am Ende
-        , re.DOTALL)
+    r'([\(\[]).*?([\)\]])|'
+    r'(: odc\.\d+)|'
+    r'(\d+: odc\.\d+)|'
+    r'(\d+ odc\.\d+)|'
+    r'!|'
+    r'/.*|'
+    r'\|\s[0-9]+\+|'
+    r'[0-9]+\+|'
+    r'([\(\[\|].*?[\)\]\|])|'
+    r'(\"|\"\.|\"\,|\.)\s.+|'
+    r'\"|'
+    r'\*|'
+    r'Премьера\.\s|'
+    r'(х|Х|м|М|т|Т|д|Д)/ф\s|'
+    r'(х|Х|м|М|т|Т|д|Д)/с\s',
+    re.DOTALL
+)
 
-# im TVDB gibt es keine INFO dazu nur TMDB json
+
+def safe_str(value):
+    try:
+        if value is None:
+            return ""
+        return str(value).strip()
+    except:
+        return ""
+
+
+def smart_capitalize_title(title):
+    """
+    Normalize title case without destroying sequel numbers or dotted decimals.
+    Examples:
+        THE MATRIX -> The Matrix
+        the matrix -> The Matrix
+        M3GAN 2.0 -> M3GAN 2.0
+        F1 THE MOVIE -> F1 The Movie
+    """
+    try:
+        title = safe_str(title)
+        if not title:
+            return ""
+
+        small_words = {
+            "a", "an", "and", "as", "at", "but", "by", "for", "from",
+            "in", "into", "nor", "of", "on", "or", "over", "the", "to", "with"
+        }
+
+        words = title.split()
+        result = []
+
+        for i, word in enumerate(words):
+            original = word
+
+            # Keep pure numbers as they are
+            if re.match(r'^\d+([.,]\d+)?$', original):
+                result.append(original)
+                continue
+
+            # Keep words with digits inside as uppercase-ish originals
+            # Examples: M3GAN, F1
+            if re.search(r'\d', original):
+                result.append(original.upper() if original.isupper() else original)
+                continue
+
+            lower_word = original.lower()
+
+            if i > 0 and lower_word in small_words:
+                result.append(lower_word)
+            else:
+                result.append(lower_word[:1].upper() + lower_word[1:])
+
+        return " ".join(result)
+
+    except Exception:
+        return safe_str(title)
+
+
+def clean_search_title(title):
+    """
+    Shared title cleaner for xtraInfo / xtraParental / xtraStar / xtraLogo.
+
+    Goals:
+    - remove EPG junk
+    - remove explicit episode/season suffixes
+    - normalize separators
+    - remove ':' so saved filenames stay consistent
+    - normalize title case so duplicates do not happen because of letter case
+    """
+    try:
+        if not title:
+            return ""
+
+        original_title = safe_str(title)
+        title = original_title
+
+        # Remove service control chars
+        title = title.replace('\xc2\x86', '').replace('\xc2\x87', '')
+
+        # Normalize common live prefixes
+        title = re.sub(r'^(live:\s*|LIVE:\s*|LIVE\s+|live\s+)', '', title).strip()
+
+        # First run generic cleanup regex
+        title = REGEX.sub('', title).strip()
+
+        # Normalize separators early
+        title = title.replace(":", " ")
+        title = re.sub(r'[_]+', ' _ ', title)
+        title = re.sub(r'[-]+', ' - ', title)
+        title = re.sub(r'\s{2,}', ' ', title).strip()
+
+        # Arabic season / episode patterns
+        arabic_patterns = [
+            r'\s*[_\-]+\s*ج\s*\d+\s*[_\-]+\s*ح\s*\d+.*$',
+            r'\s*[_\-]+\s*ح\s*\d+\s*[_\-]+\s*ج\s*\d+.*$',
+
+            r'\s*[_\-]+\s*جزء\s*\d+\s*[_\-]+\s*حلقة\s*\d+.*$',
+            r'\s*[_\-]+\s*حلقة\s*\d+\s*[_\-]+\s*جزء\s*\d+.*$',
+            r'\s*[_\-]+\s*الموسم\s*\d+\s*[_\-]+\s*الحلقة\s*\d+.*$',
+            r'\s*[_\-]+\s*الحلقة\s*\d+\s*[_\-]+\s*الموسم\s*\d+.*$',
+
+            r'\s+ج\s*\d+\s+ح\s*\d+.*$',
+            r'\s+ح\s*\d+\s+ج\s*\d+.*$',
+            r'\s+جزء\s*\d+\s+حلقة\s*\d+.*$',
+            r'\s+حلقة\s*\d+\s+جزء\s*\d+.*$',
+            r'\s+الموسم\s*\d+\s+الحلقة\s*\d+.*$',
+            r'\s+الحلقة\s*\d+\s+الموسم\s*\d+.*$',
+
+            r'\s*[_\-]+\s*ج\s*\d+.*$',
+            r'\s*[_\-]+\s*ح\s*\d+.*$',
+            r'\s*[_\-]+\s*جزء\s*\d+.*$',
+            r'\s*[_\-]+\s*حلقة\s*\d+.*$',
+            r'\s*[_\-]+\s*الموسم\s*\d+.*$',
+            r'\s*[_\-]+\s*الحلقة\s*\d+.*$',
+
+            r'\s+ج\s*\d+.*$',
+            r'\s+ح\s*\d+.*$',
+            r'\s+جزء\s*\d+.*$',
+            r'\s+حلقة\s*\d+.*$',
+            r'\s+الموسم\s*\d+.*$',
+            r'\s+الحلقة\s*\d+.*$',
+        ]
+
+        for pattern in arabic_patterns:
+            title = re.sub(pattern, '', title, flags=re.IGNORECASE).strip()
+
+        # English TV episode patterns
+        english_patterns = [
+            r'\s*[_\-]+\s*S\d+\s*E\d+.*$',
+            r'\s+S\d+\s*E\d+.*$',
+            r'\s*[_\-]+\s*Season\s*\d+\s*Episode\s*\d+.*$',
+            r'\s+Season\s*\d+\s*Episode\s*\d+.*$',
+            r'\s*[_\-]+\s*Episode\s*\d+.*$',
+            r'\s+Episode\s*\d+.*$',
+            r'\s*[_\-]+\s*Ep\.?\s*\d+.*$',
+            r'\s+Ep\.?\s*\d+.*$',
+        ]
+
+        for pattern in english_patterns:
+            title = re.sub(pattern, '', title, flags=re.IGNORECASE).strip()
+
+        # Final normalization
+        title = re.sub(r'\s*[_\-:|]+\s*$', '', title).strip()
+        title = re.sub(r'\s{2,}', ' ', title).strip()
+
+        # Normalize case so same title from different channels becomes one filename
+        title = smart_capitalize_title(title)
+
+        logout(data="clean_search_title original={}".format(original_title))
+        logout(data="clean_search_title result={}".format(title))
+
+        return title
+
+    except Exception as e:
+        logout(data="clean_search_title error: {}".format(str(e)))
+        return smart_capitalize_title(safe_str(title))
 
 class xtraParental(Renderer):
 
@@ -133,7 +285,8 @@ class xtraParental(Renderer):
             if event:
                 logout(data="event")
                 fd = "{}{}{}".format(event.getEventName(), event.getShortDescription(), event.getExtendedDescription())
-                ppr = ["[aA]b ((\d+))", "[+]((\d+))", "Od lat: ((\d+))"]
+                ppr = [r"[aA]b ((\d+))", r"[+]((\d+))", r"Od lat: ((\d+))"]
+                #ppr = ["[aA]b ((\d+))", "[+]((\d+))", "Od lat: ((\d+))"]
                 for i in ppr:
                     logout(data="for i")
                     prr = re.search(i, fd)
@@ -153,42 +306,125 @@ class xtraParental(Renderer):
                     evnt = event.getEventName()
                     logout(data="event")
                     logout(data=str(evnt))
-                    evntNm = REGEX.sub('', evnt).strip()
+                    evntNm = clean_search_title(evnt)
                     logout(data="evntNm")
                     logout(data=str(evntNm))
-                    rating_json = "{}xtraEvent/infosomdb/{}.json".format(pathLoc, evntNm)
-                    logout(data="rating json")
-                    logout(data=str(rating_json))
-                    if os.path.exists(rating_json):
-                        logout(data="json path check")
-                        try:
-                            logout(data="json vorhanden")
-                            with open(rating_json) as f:
-                                prate = json.load(f)['Rated']
-                        except:
-                            pass
+                    def map_rating_to_fsk(value):
+                        value = str(value or "").strip().upper()
+                        if not value:
+                            return ""
+
+                        rating_map = {
+                            "TV-Y7": "6",
+                            "TV-Y": "6",
+                            "TV-14": "12",
+                            "TV-PG": "16",
+                            "TV-G": "0",
+                            "TV-MA": "18",
+                            "PG-13": "16",
+                            "PG": "12",
+                            "R": "18",
+                            "NC-17": "18",
+                            "G": "0",
+                            "0": "0",
+                            "6": "6",
+                            "7": "6",
+                            "9": "6",
+                            "10": "12",
+                            "11": "12",
+                            "12": "12",
+                            "13": "12",
+                            "14": "16",
+                            "15": "16",
+                            "16": "16",
+                            "17": "18",
+                            "18": "18",
+                        }
+
+                        if value in rating_map:
+                            return rating_map[value]
+
+                        match = re.search(r"(\d{1,2})", value)
+                        if match:
+                            num = int(match.group(1))
+                            if num <= 6:
+                                return "6" if num else "0"
+                            elif num <= 13:
+                                return "12"
+                            elif num <= 16:
+                                return "16"
+                            else:
+                                return "18"
+                        return ""
+
+                    def get_tmdb_rating(data):
+                        # TV result: {"results": [{"iso_3166_1": "DE", "rating": "16"}, ...]}
+                        if isinstance(data, dict) and isinstance(data.get("results"), list):
+                            preferred_countries = ["DE", "US", "GB"]
+                            results = data.get("results", [])
+                            for country in preferred_countries:
+                                for item in results:
+                                    if item.get("iso_3166_1") == country and item.get("rating"):
+                                        return item.get("rating")
+                            for item in results:
+                                if item.get("rating"):
+                                    return item.get("rating")
+
+                        # Movie result: {"results": [{"iso_3166_1": "DE", "release_dates": [{"certification": "16"}, ...]}]}
+                        if isinstance(data, dict) and isinstance(data.get("results"), list):
+                            preferred_countries = ["DE", "US", "GB"]
+                            results = data.get("results", [])
+                            for country in preferred_countries:
+                                for item in results:
+                                    if item.get("iso_3166_1") == country:
+                                        for rel in item.get("release_dates", []):
+                                            cert = rel.get("certification")
+                                            if cert:
+                                                return cert
+                            for item in results:
+                                for rel in item.get("release_dates", []):
+                                    cert = rel.get("certification")
+                                    if cert:
+                                        return cert
+
+                        return ""
+
+                    try:
+                        prefer_tmdb = bool(config.plugins.xtraEvent.tmdb.value)
+                    except:
+                        prefer_tmdb = True
+
+                    rating_files = get_rated_json_candidates(pathLoc, evntNm, prefer_tmdb=prefer_tmdb)
+
+                    for rating_json in rating_files:
+                        logout(data="rating json")
+                        logout(data=str(rating_json))
+                        if os.path.exists(rating_json):
+                            logout(data="json path check")
+                            try:
+                                with open(rating_json) as f:
+                                    data = json.load(f)
+
+                                # New TMDB dedicated parental json
+                                if isinstance(data, dict) and data.get("parental"):
+                                    prate = data.get("parental")
+
+                                # OMDB rated json or OMDB info json
+                                elif isinstance(data, dict) and data.get("Rated"):
+                                    prate = data.get("Rated")
+
+                                else:
+                                    prate = ""
+
+                                if prate:
+                                    break
+
+                            except Exception as e:
+                                logout(data="rating read error: {}".format(str(e)))
+
                     logout(data="prate")
                     logout(data=str(prate))
-                    if prate == "TV-Y7":
-                        rate = "6"
-                    elif prate == "TV-Y":
-                        rate = "6"
-                    elif prate == "TV-14":
-                        rate = "12"
-                    elif prate == "TV-PG":
-                        rate = "16"
-                    elif prate == "TV-G":
-                        rate = "0"
-                    elif prate == "TV-MA":
-                        rate = "18"
-                    elif prate == "PG-13":
-                        rate = "16"
-                    elif prate == "R":
-                        rate = "18"
-                    elif prate == "G":
-                        rate = "0"
-                    else:
-                        pass
+                    rate = map_rating_to_fsk(prate)
                     if rate:
                         logout(data="rate leer schreibe parentName")
                         parentName = str(rate)

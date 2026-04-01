@@ -16,7 +16,7 @@ from Components.config import config, configfile, ConfigYesNo, ConfigSubsection,
 getConfigListEntry, ConfigSelection, ConfigText, ConfigInteger, ConfigSelectionNumber, \
 ConfigDirectory, ConfigClock, NoSave
 from Components.ConfigList import ConfigListScreen
-from enigma import eTimer, eLabel, ePixmap, eSize, ePoint, loadJPG, eEPGCache, \
+from enigma import eTimer, eLabel, ePixmap, eSize, ePoint, loadJPG, loadPNG, eEPGCache, \
 getDesktop, addFont, eServiceReference, eServiceCenter
 from Components.Sources.StaticText import StaticText
 from Screens.VirtualKeyBoard import VirtualKeyBoard
@@ -24,6 +24,7 @@ from PIL import Image
 from Screens.LocationBox import LocationBox
 import socket
 import requests
+import json
 
 from Components.ProgressBar import ProgressBar
 from Screens.ChoiceBox import ChoiceBox
@@ -33,6 +34,7 @@ from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 from threading import Timer
 from datetime import datetime
 import time
+from Components.config import config
 # --------------------------- Logfile -------------------------------
 
 from datetime import datetime, timedelta
@@ -40,12 +42,19 @@ from shutil import copyfile
 from os import remove
 from os.path import isfile
 
-
-
 ########################### log file loeschen ##################################
+dir_path = "/tmp/xtraevent"
 
-myfile="/tmp/xtraevent-Xtra.log"
+try:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print("Directory has been created:", dir_path)
+    else:
+        print("Directory already exists:", dir_path)
+except Exception as e:
+    print("Error creating directory:", e)
 
+myfile=dir_path + "/xtra.log"
 ## If file exists, delete it ##
 if isfile(myfile):
     remove(myfile)
@@ -54,10 +63,8 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
-
 logstatus = "on"
-# auf on lassen das er dann aber nur die parameter logt und dann da ausschaltet das loggin zeile 327
-
+# kann man erst nach den config values abschalten 328
 # ________________________________________________________________________________
 
 def write_log(msg):
@@ -77,14 +84,16 @@ def logout(data):
         write_log(data)
         return
     return
-
 # =================================================================================================================
-version = "v6.820"
+version = "v7.0"
+UPDATE_VERSION_URL = "https://github.com/popking159/xtraeventplugin/raw/refs/heads/main/version.txt"
+UPDATE_IPK_URL_TEMPLATE = "https://github.com/popking159/xtraeventplugin/raw/refs/heads/main/enigma2-plugin-extensions-xtraevent_{version}_all.ipk"
+API_BACKUP_DIR = "/etc/enigma2/xtraevent"
+API_BACKUP_FILE = os.path.join(API_BACKUP_DIR, "api.json")
 # ==================================================================================================================
-# ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
-#logout(data="start 6.77")
+# ----------------------------- This is what the command must look like to write to the file.  ------------------------------
+
 logout(data=str(version))
-#logout(data=str(config.plugins.xtraEvent.logFiles.value))
 
 REGEX = re.compile(
     r'([\(\[]).*?([\)\]])|'
@@ -117,7 +126,93 @@ REGEX = re.compile(
 
     #  r'[\u0600-\u06FF]+'  # Arabische Schrift
 
+def safe_str(value):
+    try:
+        if value is None:
+            return ""
+        return str(value).strip()
+    except:
+        return ""
 
+
+def clean_movie_filename(name):
+    """
+    Clean movie filename and keep only the real movie title + optional year.
+    Examples:
+        Eden.2024.720p.WEBRip.x264.AAC-[YTS.MX].mp4 -> Eden 2024
+        The Accountant 2 (2025).mp4 -> The Accountant 2 2025
+        M3GAN.2.0.2025.720p...mkv -> M3GAN 2.0 2025
+        F1.The.Movie.2025...mp4 -> F1 The Movie 2025
+    """
+    try:
+        name = safe_str(name)
+
+        # Keep only standalone movie containers
+        if not re.search(r'\.(mp4|mkv|avi)$', name, flags=re.IGNORECASE):
+            return ""
+
+        # Remove extension
+        name = re.sub(r'\.(mp4|mkv|avi)$', '', name, flags=re.IGNORECASE)
+
+        # Skip episodic content
+        if re.search(r'\bS\d{1,2}E\d{1,3}\b', name, flags=re.IGNORECASE):
+            return ""
+
+        # Normalize separators
+        name = name.replace('_', ' ')
+        name = name.replace('.', ' ')
+        name = re.sub(r'\s{2,}', ' ', name).strip()
+
+        # Remove bracket groups that are mostly release tags
+        name = re.sub(r'\[[^\]]+\]', ' ', name)
+        name = re.sub(r'\{[^\}]+\}', ' ', name)
+
+        # Remove common release / source / codec / audio tags
+        garbage_patterns = [
+            r'\b(480p|576p|720p|1080p|2160p)\b',
+            r'\b(WEBRip|WEB\-DL|WEB|BluRay|BRRip|BDRip|DVDRip|HDRip|HDTV)\b',
+            r'\b(x264|x265|h264|h265|HEVC|AVC|10bit|8bit|HDR)\b',
+            r'\b(AAC|AC3|DD5\.1|DDP5\.1|DDP|DTS|Atmos|2CH|6CH|Dual Audio)\b',
+            r'\b(REPACK|PROPER|INTERNAL|EXTENDED|UNRATED|REMUX)\b',
+            r'\b(YTS|YTS MX|PSA|Rapta|GalaxyRG|NeoNoir|RARBG)\b',
+            r'\b(mp4|mkv|avi)\b',
+        ]
+
+        for p in garbage_patterns:
+            name = re.sub(p, ' ', name, flags=re.IGNORECASE)
+
+        # Remove leftover release-group style tail pieces
+        name = re.sub(r'\b\w+-\w+\b$', ' ', name)
+        name = re.sub(r'\b[A-Za-z0-9]+\.MX\b', ' ', name, flags=re.IGNORECASE)
+
+        # Preserve decimal titles like 2.0 by joining isolated number groups
+        name = re.sub(r'\b(\d+)\s+(\d+)\b', lambda m: "{}.{}".format(m.group(1), m.group(2)) if len(m.group(2)) == 1 else m.group(0), name)
+
+        # Normalize year formatting
+        name = name.replace('(', ' ').replace(')', ' ')
+        name = re.sub(r'\s{2,}', ' ', name).strip()
+
+        # Keep one year if present
+        years = re.findall(r'\b(19\d{2}|20\d{2})\b', name)
+        keep_year = years[0] if years else ""
+
+        # Remove duplicate year occurrences from body, then append once
+        if keep_year:
+            body = re.sub(r'\b(19\d{2}|20\d{2})\b', ' ', name)
+            body = re.sub(r'\s{2,}', ' ', body).strip()
+            name = "{} {}".format(body, keep_year).strip()
+        else:
+            name = re.sub(r'\s{2,}', ' ', name).strip()
+
+        # Final cleanup
+        name = re.sub(r'\s*-\s*$', '', name).strip()
+        name = re.sub(r'\s{2,}', ' ', name).strip()
+
+        return name
+
+    except Exception as err:
+        logout(data="clean_movie_filename error={}".format(str(err)))
+        return ""
 
 try:
     logout(data="xtra 2")
@@ -210,7 +305,7 @@ config.plugins.xtraEvent.skinSelectColor = ConfigSelection(default = "#3478c1", 
     ("#2E8B57","SeaGreen"),
     ])
 config.plugins.xtraEvent.loc = ConfigDirectory(default='/tmp/')
-config.plugins.xtraEvent.searchMOD = ConfigSelection(default = lng.get(lang, '14'), choices = [(lng.get(lang, '13')), (lng.get(lang, '14')), (lng.get(lang, '14a'))])
+config.plugins.xtraEvent.searchMOD = ConfigSelection(default = lng.get(lang, '13'), choices = [(lng.get(lang, '13')), (lng.get(lang, '14')), (lng.get(lang, '14a'))])
 config.plugins.xtraEvent.searchNUMBER = ConfigSelectionNumber(0, 999, 1, default=50)
 # ------------------------------------------------- hier 50 next events downloaden , ca fuer 1 Tag
 # config.plugins.xtraEvent.timerMod = ConfigYesNo(default = False)
@@ -242,6 +337,20 @@ config.plugins.xtraEvent.searchMANUEL = ConfigText(default="event name", visible
 # config.plugins.xtraEvent.searchLang = ConfigText(default="", visible_width=100, fixed_size=False)
 
 config.plugins.xtraEvent.searchLang = ConfigYesNo(default = True)
+config.plugins.xtraEvent.translatePlot = ConfigYesNo(default = False)
+config.plugins.xtraEvent.translatePlotLang = ConfigSelection(
+    default="ar",
+    choices=[
+        ("ar", "Arabic"),
+        ("en", "English"),
+        ("de", "German"),
+        ("fr", "French"),
+        ("es", "Spanish"),
+        ("it", "Italian"),
+        ("tr", "Turkish"),
+        ("ru", "Russian")
+    ]
+)
 config.plugins.xtraEvent.tmdb = ConfigYesNo(default = True)
 config.plugins.xtraEvent.tmdb_backdrop = ConfigYesNo(default = True)
 config.plugins.xtraEvent.tvdb = ConfigYesNo(default = False)
@@ -260,8 +369,13 @@ config.plugins.xtraEvent.banner = ConfigYesNo(default = False)
 config.plugins.xtraEvent.backdrop = ConfigYesNo(default = True)
 config.plugins.xtraEvent.logo = ConfigYesNo(default = False)
 config.plugins.xtraEvent.info = ConfigYesNo(default = True)
-config.plugins.xtraEvent.infoOmdb = ConfigYesNo(default = False)
-config.plugins.xtraEvent.infoImdb = ConfigYesNo(default = False)
+config.plugins.xtraEvent.infoProvider = ConfigSelection(
+    default="omdb",
+    choices=[
+        ("omdb", "OMDB"),
+        ("tmdb", "TMDB")
+    ]
+)
 config.plugins.xtraEvent.opt_Images = ConfigYesNo(default = False)
 config.plugins.xtraEvent.cnfg = ConfigYesNo(default = True)
 config.plugins.xtraEvent.cnfgSel = ConfigSelection(default = "poster", choices = [("poster"), ("banner"), ("backdrop"), ("EMC")])
@@ -281,6 +395,13 @@ config.plugins.xtraEvent.TMDBbackdropsize = ConfigSelection(default="w300", choi
     ("w780", "780x440"),
     ("w1280", "1280x720"),
     ("original", "ORIGINAL")])
+config.plugins.xtraEvent.TMDBlogosize = ConfigSelection(default="w300", choices = [
+    ("w92", "92px"),
+    ("w154", "154px"),
+    ("w185", "185px"),
+    ("w300", "300px"),
+    ("w500", "500px"),
+    ("original", "ORIGINAL")])
 config.plugins.xtraEvent.TVDBbackdropsize = ConfigSelection(default="thumbnail", choices = [
     ("thumbnail", "640x360"),
     ("fileName", "original(1920x1080)")])
@@ -299,7 +420,8 @@ config.plugins.xtraEvent.imdb_Poster_size = ConfigSelection(default="185", choic
     ("500", "500x750")])
 config.plugins.xtraEvent.PB = ConfigSelection(default="posters", choices = [
     ("posters", "Poster"),
-    ("backdrops", "Backdrop")])
+    ("backdrops", "Backdrop"),
+    ("logos", "Logo")])
 config.plugins.xtraEvent.srcs = ConfigSelection(default="TMDB", choices = [
     ('TMDB', 'TMDB'),
     ('TVDB', 'TVDB'),
@@ -324,14 +446,20 @@ config.plugins.xtraEvent.FANART_Banner_Size = ConfigSelection(default="1", choic
     ("4", "250x46"),
     ("8", "125x23")
     ])
-logout(data="xtra configs ende und logfile aus oder an , false off , true on")
+logout(data="xtra configs end and logfile off or on, false off, true on")
 logout(data=str(config.plugins.xtraEvent.logFiles.value))
 if config.plugins.xtraEvent.logFiles.value == True:
     logstatus = "on"
 else:
     logstatus = "off"
 
+pathMovie = config.plugins.xtraEvent.EMCloc.value
+pathXtra = os.path.join(config.plugins.xtraEvent.loc.value, "xtraEvent")
+listdir_path = os.listdir(pathMovie)
+movielist_path = os.path.join(pathMovie, "movielist.txt")
 # --------------------------------------------- check direktories -----------------------------------------------------
+
+logout("First, check all the paths.")
 pathLoc = ""
 logout(data="location")
 logout(data=str(config.plugins.xtraEvent.loc.value))
@@ -339,10 +467,16 @@ pathLoc = "{}xtraEvent/".format(config.plugins.xtraEvent.loc.value)
 logout(data="path location")
 logout(data=str(pathLoc))
 
+if not os.path.exists(pathLoc):
+	logout(data="-----  The path location is no longer available; it will be set to TMP.")
+	config.plugins.xtraEvent.loc.value = "/tmp/"
+	logout(data=str(config.plugins.xtraEvent.loc.value))
+	pathLoc = "{}fallbackxtraEvent/".format(config.plugins.xtraEvent.loc.value)
+	logout(data="path location")
+	logout(data=str(pathLoc))
 
 
-
-
+logout("Check all paths and create a directory.")
 if not os.path.exists("{}poster".format(pathLoc)):
     os.makedirs("{}poster".format(pathLoc))
 
@@ -385,6 +519,21 @@ if not os.path.exists("{}infosomdbrated".format(pathLoc)):
 if not os.path.exists("{}infossterne".format(pathLoc)):
     os.makedirs("{}infossterne".format(pathLoc))
 
+if not os.path.exists("{}infostmdbstar".format(pathLoc)):
+    os.makedirs("{}infostmdbstar".format(pathLoc))
+
+if not os.path.exists("{}infostmdbrated".format(pathLoc)):
+    os.makedirs("{}infostmdbrated".format(pathLoc))
+
+if not os.path.exists("{}infoselcinema".format(pathLoc)):
+    os.makedirs("{}infoselcinema".format(pathLoc))
+
+if not os.path.exists("{}infoselcinemastars".format(pathLoc)):
+    os.makedirs("{}infoselcinemastars".format(pathLoc))
+
+if not os.path.exists("{}infoselcinemarated".format(pathLoc)):
+    os.makedirs("{}infoselcinemarated".format(pathLoc))
+
 if not os.path.exists("{}noinfos".format(pathLoc)):
     os.makedirs("{}noinfos".format(pathLoc))
 
@@ -394,128 +543,66 @@ if not os.path.exists("{}mSearch".format(pathLoc)):
 if not os.path.exists("{}EMC".format(pathLoc)):
     os.makedirs("{}EMC".format(pathLoc))
 
-# ------------------------------- check angelegt vorhanden -----------------------------------------------------------
+# ------------------------------- check created available -----------------------------------------------------------
 
 if os.path.exists("{}poster".format(pathLoc)):
-    logout(data="poster vorhanden")
+    logout(data="poster available")
 
 if os.path.exists("{}poster/dummy".format(pathLoc)):
-    logout(data="poster/dummy vorhanden")
+    logout(data="poster/dummy available")
 
 if os.path.exists("{}backdrop".format(pathLoc)):
-    logout(data="backdrop vorhanden")
+    logout(data="backdrop available")
 
 if os.path.exists("{}backdrop/dummy".format(pathLoc)):
-    logout(data="backdrop/dummy vorhanden")
+    logout(data="backdrop/dummy available")
 
 if os.path.exists("{}logo".format(pathLoc)):
-    logout(data="logo vorhanden")
+    logout(data="logo available")
 
 if os.path.exists("{}casts".format(pathLoc)):
-    logout(data="casts vorhanden")
+    logout(data="casts available")
 
 if os.path.exists("{}logo/dummy".format(pathLoc)):
-    logout(data="logo/dummy vorhanden")
+    logout(data="logo/dummy available")
 
 if os.path.exists("{}banner".format(pathLoc)):
-    logout(data="banner vorhanden")
+    logout(data="banner available")
 
 if os.path.exists("{}banner/dummy".format(pathLoc)):
-    logout(data="banner/dummy vorhanden")
+    logout(data="banner/dummy available")
 
 if os.path.exists("{}infos".format(pathLoc)):
-    logout(data="infos vorhanden")
+    logout(data="infos available")
 
 if os.path.exists("{}infosomdb".format(pathLoc)):
-    logout(data="infosomdb vorhanden")
+    logout(data="infosomdb available")
 
 if os.path.exists("{}infosomdbsterne".format(pathLoc)):
-    logout(data="infosomdbsterne vorhanden")
+    logout(data="infosomdbsterne available")
 
 if os.path.exists("{}infosomdbrated".format(pathLoc)):
-    logout(data="infosomdbrated vorhanden")
+    logout(data="infosomdbrated available")
 
 if os.path.exists("{}infossterne".format(pathLoc)):
-    logout(data="infossterne vorhanden")
+    logout(data="infossterne available")
+
+if os.path.exists("{}infostmdbrated".format(pathLoc)):
+    logout(data="infostmdbrated available")
+
+if os.path.exists("{}infostmdbstar".format(pathLoc)):
+    logout(data="infostmdbstar available")
 
 if os.path.exists("{}noinfos".format(pathLoc)):
-    logout(data="noinfos vorhanden")
+    logout(data="noinfos available")
 
 if os.path.exists("{}mSearch".format(pathLoc)):
-    logout(data="mSearch vorhanden")
+    logout(data="mSearch available")
 
 if os.path.exists("{}EMC".format(pathLoc)):
-    logout(data="EMC vorhanden")
+    logout(data="EMC available")
 
-
-
-# ---------------------------------------------------------------------------------------------------------------------
-logout(data="------------------ def check_movieList")
-pathMovie = config.plugins.xtraEvent.EMCloc.value
-pathXtra = os.path.join(config.plugins.xtraEvent.loc.value, "xtraEvent")
-try:
-    mlst = os.listdir(pathMovie)
-    logout(data=str(mlst))
-    if mlst:
-        logout(data="movielist mlst")
-        movieList = [x for x in mlst if x.endswith(".mvi") or x.endswith(".ts") or x.endswith(".mp4") or x.endswith(
-                ".avi") or x.endswith(".mkv") or x.endswith(".divx")]
-        logout(data=str(movieList))
-        # name bearbeiten und als file rausschreiben
-        file_path = os.path.join(pathMovie, "movielist.txt")
-        if isfile(file_path):
-            remove(file_path)
-        with open(file_path, 'a') as file:
-            for movie in movieList:
-                # movie_name = movie.split('-')[-1].strip().rstrip('.ts')
-                movie_name = movie.split('-')[-1].strip()
-                #movie_name = re.search(r'\d{8} \d{4} - [^-]* - (.*?)(?:\.ts)?$', movie).group(1).strip()
-                logout(data=str(movie_name))
-                #movie_name = REGEX.sub('', movie_name).strip()
-                movie_name = REGEX.sub('', movie_name).strip().rsplit(".", 1)[0].strip()
-                logout(data=str(movie_name))
-
-                #poster_path = os.path.join(pathXtra, "EMC", f"{movie_name}-poster.jpg")
-                #backdrop_path = os.path.join(pathXtra, "EMC", f"{movie_name}-backdrop.jpg")
-                #info_path = os.path.join(pathXtra, "EMC", f"{movie_name}-info.json")
-
-                poster_path = os.path.join(pathXtra, "EMC", movie_name, "-poster.jpg")
-                backdrop_path = os.path.join(pathXtra, "EMC", movie_name, "-backdrop.jpg")
-                info_path = os.path.join(pathXtra, "EMC", movie_name, "-info.json")
-                logout(data=str(poster_path))
-                poster_filename = movie_name, ".jpg"
-                info_filename = movie_name, ".json"
-                casts_filename = movie_name, ".json"
-                logout(data=str(poster_filename))
-                poster_src_path = os.path.join(pathXtra, "poster", poster_filename)
-                logout(data=str(poster_src_path))
-                backdrop_src_path = os.path.join(pathXtra, "backdrop", poster_filename)
-                logout(data=str(backdrop_src_path))
-                info_src_path = os.path.join(pathXtra, "infos", info_filename)
-                logout(data=str(info_src_path))
-                casts_src_path = os.path.join(pathXtra, "casts", casts_filename)
-                logout(data=str(casts_src_path))
-                EMCposter_dest_path = poster_path
-                EMCbackdrop_dest_path = backdrop_path
-                EMCinfo_dest_path = info_path
-                logout(data=str(EMCposter_dest_path))
-                logout(data="movie check in EMC")
-                if not os.path.exists(poster_path):
-                    logout(data="movie nicht in EMC vorhanden check in poster")
-                    if os.path.exists(poster_src_path):
-                        logout(data="movie in poster vorhanden copiert")
-                        shutil.copy(poster_src_path, EMCposter_dest_path)
-                        shutil.copy(backdrop_src_path, EMCbackdrop_dest_path)
-                        shutil.copy(info_src_path, EMCinfo_dest_path)
-                    else:
-                        logout(data="movie nicht vorhanden schreibe in file")
-                        file.write(movie_name + '\n')
-
-except:
-    pass
-
-
-
+    # ---------------------------------------------------------------------------------------------------------------------
 
 
 class xtra(Screen, ConfigListScreen):
@@ -539,9 +626,9 @@ class xtra(Screen, ConfigListScreen):
         list = []
         ConfigListScreen.__init__(self, list, session=session)
 
-        self['key_red'] = Label(_('Close'))
+        self['key_red'] = Label(_('exit'))
         self['key_green'] = Label(_(lng.get(lang, '40')))
-        #self['key_yellow'] = Label(_(lng.get(lang, '75')))
+        self['key_yellow'] = Label(_('Backup/Restore'))
         self['key_blue'] = Label(_(lng.get(lang, '18')))
         self["actions"] = ActionMap(["xtraEventAction"],
         {
@@ -551,7 +638,7 @@ class xtra(Screen, ConfigListScreen):
             "right": self.keyRight,
             "red": self.exit,
             "green": self.search,
-            #"yellow": self.update,
+            "yellow": self.apiBackupRestoreMenu,
             "blue": self.ms,
             "cancel": self.exit,
             "ok": self.keyOK,
@@ -561,18 +648,77 @@ class xtra(Screen, ConfigListScreen):
 
         self.setTitle(_("xtraEvent {}".format(version)))
         self['status'] = Label()
-        self['info'] = Label()
+        #self['info'] = Label()
         self['int_statu'] = Label()
         self['help'] = StaticText()
 
         self.timer = eTimer()
         self.timer.callback.append(self.xtraList)
+        self.startupUpdateTimer = eTimer()
+        self.startupUpdateTimer.callback.append(self.checkForUpdateOnOpen)
         self.onLayoutFinish.append(self.xtraList)
+        self.onLayoutFinish.append(self.startupUpdateCheck)
         self.intCheck()
 
+    def startupUpdateCheck(self):
+        logout(data="startupUpdateCheck")
+        try:
+            self.startupUpdateTimer.start(800, True)
+        except Exception as err:
+            logout(data="startupUpdateCheck error={}".format(str(err)))
 
+    def versionTuple(self, value):
+        try:
+            cleaned = str(value or '').strip().lower().replace('version', '').replace('=', '').replace('"', '').replace("'", '')
+            cleaned = cleaned.replace('v', '')
+            return tuple(int(x) for x in cleaned.split('.') if x.strip().isdigit())
+        except Exception:
+            return (0,)
 
+    def fetchUpdateInfo(self):
+        logout(data="fetchUpdateInfo")
+        response = requests.get(UPDATE_VERSION_URL, timeout=10)
+        response.raise_for_status()
+        content = response.text
+        version_match = re.search(r"version\s*=\s*['\"]([^'\"]+)['\"]", content)
+        desc_match = re.search(r"description\s*=\s*['\"]([\s\S]*?)['\"]", content)
+        if not version_match:
+            raise ValueError('version.txt does not contain a valid version entry')
+        new_version = version_match.group(1).strip()
+        description = ''
+        if desc_match:
+            description = desc_match.group(1).replace('\n', '\n').strip()
+        update_url = UPDATE_IPK_URL_TEMPLATE.format(version=new_version)
+        return {
+            'version': new_version,
+            'description': description,
+            'url': update_url
+        }
 
+    def checkForUpdateOnOpen(self):
+        logout(data="checkForUpdateOnOpen")
+        if not self.intCheck():
+            return
+        try:
+            info = self.fetchUpdateInfo()
+            if self.versionTuple(info['version']) > self.versionTuple(version):
+                msg = "Current version: {}\nNew version: {}\n\n{}\n\nUpdate will start automatically in 10 seconds. Press No to cancel.".format(
+                    version,
+                    info['version'],
+                    info['description'] or 'Update available.'
+                )
+                self.session.openWithCallback(
+                    lambda answer, data=info: self.instalUpdate(answer, data),
+                    MessageBox,
+                    _(msg),
+                    MessageBox.TYPE_YESNO,
+                    timeout=10,
+                    default=True
+                )
+            else:
+                logout(data="No update available")
+        except Exception as err:
+            logout(data="checkForUpdateOnOpen error={}".format(str(err)))
 
     def intCheck(self):
         try:
@@ -585,40 +731,40 @@ class xtra(Screen, ConfigListScreen):
             self['status'].setText(lng.get(lang, '68'))
             return False
 
+    def getFolderSizeMB(self, folder_path):
+        try:
+            total_size = 0
+            if os.path.isdir(folder_path):
+                for current_path, folders, files in os.walk(folder_path):
+                    for fname in files:
+                        file_path = os.path.join(current_path, fname)
+                        try:
+                            total_size += os.path.getsize(file_path)
+                        except Exception:
+                            pass
+            return "{:.1f}".format(total_size / (1024.0 * 1024.0))
+        except Exception:
+            return "0.0"
+
     def strg(self):
         if config.plugins.xtraEvent.onoff.value:
             try:
-                path_poster = "{}poster/".format(pathLoc)
-                path_banner = "{}banner/".format(pathLoc)
-                path_backdrop = "{}backdrop/".format(pathLoc)
-                path_casts = "{}infos/".format(pathLoc)
-                path_info = "{}infos/".format(pathLoc)
-                folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_poster, fname)), files)) for path_poster, folders, files in os.walk(path_poster)])
-                posters_sz = "%0.1f" % (folder_size//(1024*1024.0))
-                poster_nmbr = len(os.listdir(path_poster))
-                folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_banner, fname)), files)) for path_banner, folders, files in os.walk(path_banner)])
-                banners_sz = "%0.1f" % (folder_size//(1024*1024.0))
-                banner_nmbr = len(os.listdir(path_banner))
-                folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_backdrop, fname)), files)) for path_backdrop, folders, files in os.walk(path_backdrop)])
-                backdrops_sz = "%0.1f" % (folder_size//(1024*1024.0))
-                backdrop_nmbr = len(os.listdir(path_backdrop))
-                folder_size=sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_info, fname)), files)) for path_info, folders, files in os.walk(path_info)])
-                infos_sz = "%0.1f" % (folder_size//(1024*1024.0))
-                info_nmbr = len(os.listdir(path_info))
-                folder_size = sum([sum(map(lambda fname: os.path.getsize(os.path.join(path_casts, fname)), files)) for path_casts, folders, files in os.walk(path_casts)])
-                castss_sz = "%0.1f" % (folder_size // (1024 * 1024.0))
-                casts_nmbr = len(os.listdir(path_casts))
+                base_path = pathLoc.rstrip('/')
+                folders = [
+                    'EMC', 'infos', 'infostmdbrated', 'poster',
+                    'backdrop', 'infosomdb', 'infostmdbstar', 
+                    'banner', 'infosomdbrated', 'logo', 
+                    'casts', 'infosomdbsterne', 'mSearch', 'noinfos'
+                ]
+                lines = []
+                for folder_name in folders:
+                    folder_path = os.path.join(base_path, folder_name)
+                    lines.append('{:<16} {} MB'.format(folder_name + ':', self.getFolderSizeMB(folder_path)))
                 self['status'].setText(_(lng.get(lang, '48')))
-                pstr = "Poster : {} poster {} MB".format(poster_nmbr, posters_sz)
-                bnnr = "Banner : {} banner {} MB".format(banner_nmbr, banners_sz)
-                bckdrp = "Backdrop : {} backdrop {} MB".format(backdrop_nmbr, backdrops_sz)
-                inf = "Info : {} info {} MB".format(info_nmbr, infos_sz)
-                cast = "Info : {} info {} MB".format(casts_nmbr, castss_sz)
-                pbbi = "\n".join([pstr, bnnr, bckdrp, inf, cast])
-                self['info'].setText(str(pbbi))
+                self.session.open(MessageBox, '\n'.join(lines), MessageBox.TYPE_INFO, timeout=0)
             except Exception as err:
-                with open("/tmp/xtraEvent.log", "a+") as f:
-                    f.write("xtra-info-strg, %s\n"%(err))
+                with open('/tmp/xtraEvent.log', 'a+') as f:
+                    f.write('xtra-info-strg, %s\n' % (err))
         else:
             self.exit()
 
@@ -641,7 +787,7 @@ class xtra(Screen, ConfigListScreen):
             logout(data="path selected pathLoc ")
             logout(data=str(pathLoc))
             if not os.path.exists(pathLoc):
-                logout(data="directory anlegen")
+                logout(data="create directory")
                 os.makedirs(pathLoc)
             if not os.path.isdir(pathLoc):
                 pathLoc = "/tmp/"
@@ -668,7 +814,7 @@ class xtra(Screen, ConfigListScreen):
 
             self.updateFinish()
         logout(data="path selected nichts gemacht")
-    # ------------------------------------------------ neue ordner checken ------------------------
+    # ------------------------------------------------ check new folders ---------------------------
     def pathCheck(self):
 
         if not os.path.isdir(pathLoc):
@@ -695,7 +841,7 @@ class xtra(Screen, ConfigListScreen):
 
             logout(data="check neue ordner neu angelegt 536")
         else:
-            logout(data="check neue ordner vorhanden 538")
+            logout(data="check neue ordner available 538")
 
 
     def delay(self):
@@ -710,7 +856,7 @@ class xtra(Screen, ConfigListScreen):
         on_color = "\\c0000??00"
         off_color = "\\c00??0000"
         list = []
-# CONFIG_________________________________________________________________________________________________________________
+# CONFIGURATION____________________________________________________________________________________________________________
 
         if config.plugins.xtraEvent.onoff.value:
             list.append(getConfigListEntry("{}◙ \\c00?????? {}".format(on_color, lng.get(lang, '0')), config.plugins.xtraEvent.onoff, _(lng.get(lang, '0'))))
@@ -755,62 +901,63 @@ class xtra(Screen, ConfigListScreen):
     # poster__________________________________________________________________________________________________________________
             list.append(getConfigListEntry("POSTER", config.plugins.xtraEvent.poster, _("...")))
             if config.plugins.xtraEvent.poster.value == True:
-
-                # logo und casts gehen nur mit TVDB
-                list.append(getConfigListEntry("\tTMDB", config.plugins.xtraEvent.tmdb, _(" "),))
-                if config.plugins.xtraEvent.tmdb.value :
-                    list.append(getConfigListEntry("\t	Tmdb Poster {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TMDBpostersize, _(" ")))
-                    list.append(getConfigListEntry("\t	  {}".format(lng.get(lang, '63')), config.plugins.xtraEvent.searchType, _(" ")))
-                    list.append(getConfigListEntry("Download Logo", config.plugins.xtraEvent.logoFiles, _(lng.get(lang, '4'))))
-                    list.append(getConfigListEntry("Download Casts", config.plugins.xtraEvent.castsFiles, _(lng.get(lang, '4'))))
-
-                list.append(getConfigListEntry("\tTVDB", config.plugins.xtraEvent.tvdb, _(lng.get(lang, '29'))))
-                if config.plugins.xtraEvent.tvdb.value :
-                    list.append(getConfigListEntry("\t	Tvdb Poster {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TVDBpostersize, _(" ")))
-
-
-                list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart, _(lng.get(lang, '29'))))
+                list.append(getConfigListEntry("	TMDB", config.plugins.xtraEvent.tmdb, _(" ")))
+                if config.plugins.xtraEvent.tmdb.value:
+                    list.append(getConfigListEntry("		Tmdb Poster {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TMDBpostersize, _(" ")))
+                    list.append(getConfigListEntry("		{}".format(lng.get(lang, '63')), config.plugins.xtraEvent.searchType, _(" ")))
+                list.append(getConfigListEntry("	TVDB", config.plugins.xtraEvent.tvdb, _(lng.get(lang, '29'))))
+                if config.plugins.xtraEvent.tvdb.value:
+                    list.append(getConfigListEntry("		Tvdb Poster {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TVDBpostersize, _(" ")))
+                list.append(getConfigListEntry("	FANART", config.plugins.xtraEvent.fanart, _(lng.get(lang, '29'))))
                 if config.plugins.xtraEvent.fanart.value:
-                    list.append(getConfigListEntry("\t	Fanart Poster {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.FANART_Poster_Resize, _(" ")))
+                    list.append(getConfigListEntry("		Fanart Poster {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.FANART_Poster_Resize, _(" ")))
+                list.append(getConfigListEntry("	MAZE(TV SHOWS)", config.plugins.xtraEvent.maze, _(" ")))
+                list.append(getConfigListEntry("_" * 100))
 
-                list.append(getConfigListEntry("\tMAZE(TV SHOWS)", config.plugins.xtraEvent.maze, _(" ")))
-
-                list.append(getConfigListEntry("_"*100))
-
-
-    # backdrop_______________________________________________________________________________________________________________
             list.append(getConfigListEntry("BACKDROP", config.plugins.xtraEvent.backdrop, _(" ")))
             if config.plugins.xtraEvent.backdrop.value == True:
-                list.append(getConfigListEntry("\tTMDB", config.plugins.xtraEvent.tmdb_backdrop, _(" ")))
-                if config.plugins.xtraEvent.tmdb_backdrop.value :
-                    list.append(getConfigListEntry("\t	Tmdb Backdrop {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TMDBbackdropsize, _(" ")))
-                    list.append(getConfigListEntry("\t	  {}".format(lng.get(lang, '63')), config.plugins.xtraEvent.searchType, _(" ")))
-                list.append(getConfigListEntry("\tTVDB", config.plugins.xtraEvent.tvdb_backdrop, _(" ")))
-                if config.plugins.xtraEvent.tvdb_backdrop.value :
-                    list.append(getConfigListEntry("\t	Tvdb Backdrop {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TVDBbackdropsize, _(" ")))
-                list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart_backdrop, _(" ")))
+                list.append(getConfigListEntry("	TMDB", config.plugins.xtraEvent.tmdb_backdrop, _(" ")))
+                if config.plugins.xtraEvent.tmdb_backdrop.value:
+                    list.append(getConfigListEntry("		Tmdb Backdrop {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TMDBbackdropsize, _(" ")))
+                    list.append(getConfigListEntry("		{}".format(lng.get(lang, '63')), config.plugins.xtraEvent.searchType, _(" ")))
+                list.append(getConfigListEntry("	TVDB", config.plugins.xtraEvent.tvdb_backdrop, _(" ")))
+                if config.plugins.xtraEvent.tvdb_backdrop.value:
+                    list.append(getConfigListEntry("		Tvdb Backdrop {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TVDBbackdropsize, _(" ")))
+                list.append(getConfigListEntry("	FANART", config.plugins.xtraEvent.fanart_backdrop, _(" ")))
                 if config.plugins.xtraEvent.fanart_backdrop.value:
-                    list.append(getConfigListEntry("\t	Fanart Backdrop {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.FANART_Backdrop_Resize, _(" ")))
-                list.append(getConfigListEntry("\tEXTRA", config.plugins.xtraEvent.extra, _(lng.get(lang, '30'))))
-                list.append(getConfigListEntry("\tEXTRA-2", config.plugins.xtraEvent.extra2, _(lng.get(lang, '31'))))
-                list.append(getConfigListEntry("_"*100))
+                    list.append(getConfigListEntry("		Fanart Backdrop {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.FANART_Backdrop_Resize, _(" ")))
+                list.append(getConfigListEntry("	EXTRA (tvmovie.de)", config.plugins.xtraEvent.extra, _(lng.get(lang, '30'))))
+                list.append(getConfigListEntry("	EXTRA-2 (Bing/Google)", config.plugins.xtraEvent.extra2, _(lng.get(lang, '31'))))
+                list.append(getConfigListEntry("_" * 100))
 
-    # banner__________________________________________________________________________________________________________________
+            list.append(getConfigListEntry("LOGO", config.plugins.xtraEvent.logoFiles, _(" ")))
+            if config.plugins.xtraEvent.logoFiles.value:
+                list.append(getConfigListEntry("		Tmdb Logo {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TMDBlogosize, _(" ")))
+                list.append(getConfigListEntry("		{}".format(lng.get(lang, '63')), config.plugins.xtraEvent.searchType, _(" ")))
+                list.append(getConfigListEntry("_" * 100))
+
             list.append(getConfigListEntry("BANNER", config.plugins.xtraEvent.banner, _(" ")))
             if config.plugins.xtraEvent.banner.value == True:
-                list.append(getConfigListEntry("\tTVDB", config.plugins.xtraEvent.tvdb_banner, _(" ")))
+                list.append(getConfigListEntry("	TVDB", config.plugins.xtraEvent.tvdb_banner, _(" ")))
                 if config.plugins.xtraEvent.tvdb_banner.value:
-                    list.append(getConfigListEntry("\t	Tvdb Banner {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TVDB_Banner_Size, _(" ")))
-                list.append(getConfigListEntry("\tFANART", config.plugins.xtraEvent.fanart_banner, _(" ")))
+                    list.append(getConfigListEntry("		Tvdb Banner {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.TVDB_Banner_Size, _(" ")))
+                list.append(getConfigListEntry("	FANART", config.plugins.xtraEvent.fanart_banner, _(" ")))
                 if config.plugins.xtraEvent.fanart_banner.value:
-                    list.append(getConfigListEntry("\t	Fanart Banner {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.FANART_Banner_Size, _(" ")))
+                    list.append(getConfigListEntry("		Fanart Banner {}".format(lng.get(lang, '49')), config.plugins.xtraEvent.FANART_Banner_Size, _(" ")))
                 list.append(getConfigListEntry("_" * 100))
-    # info___________________________________________________________________________________________________________________
+
+            list.append(getConfigListEntry("CASTS", config.plugins.xtraEvent.castsFiles, _(" ")))
+            if config.plugins.xtraEvent.castsFiles.value:
+                list.append(getConfigListEntry("_" * 100))
+
             list.append(getConfigListEntry("INFO", config.plugins.xtraEvent.info, _(lng.get(lang, '32'))))
-            # if config.plugins.xtraEvent.info.value == True:
-                # list.append(getConfigListEntry("\tOMDB", config.plugins.xtraEvent.infoOmdb, _(" ")))
-                # list.append(getConfigListEntry("\tIMDB", config.plugins.xtraEvent.infoImdb, _(" ")))
-            list.append(getConfigListEntry("EXTRA-3", config.plugins.xtraEvent.extra3, _(lng.get(lang, '64'))))
+            if config.plugins.xtraEvent.info.value:
+                list.append(getConfigListEntry("	Provider", config.plugins.xtraEvent.infoProvider, _("Select the metadata source for xtraInfo")))
+                list.append(getConfigListEntry("	Translate Plot", config.plugins.xtraEvent.translatePlot, _("Translate OMDB plot before saving/showing")))
+                if config.plugins.xtraEvent.translatePlot.value:
+                    list.append(getConfigListEntry("		Plot Language", config.plugins.xtraEvent.translatePlotLang, _("Target language for translated plot")))
+    # elcinema_____________________________________________________________________________________________________________
+            list.append(getConfigListEntry("EXTRA-3 (elcinema.com)", config.plugins.xtraEvent.extra3, _(lng.get(lang, '64'))))
             list.append(getConfigListEntry("_"*100))
         else:
             list.append(getConfigListEntry("{}◙ \\c00?????? {}".format(off_color, lng.get(lang, '0')), config.plugins.xtraEvent.onoff, _(lng.get(lang, '0'))))
@@ -863,46 +1010,70 @@ class xtra(Screen, ConfigListScreen):
     def update(self):
         logout(data="------------------ def update")
         try:
-            url = requests.get("https://api.github.com/repos/digiteng/xtra/releases/latest")
-            new_version = url.json()["name"]
-            if version != new_version:
-                msg = url.json()["body"]
-                up_msg = "Current version : {}\n\\c00bb?fbbNew version : {} \n\n\\c00bb?fee{}\n\n\\c00??????Do you want UPDATE PLUGIN ?..".format(version, new_version, msg)
-                self.session.openWithCallback(self.instalUpdate, MessageBox, _(up_msg), MessageBox.TYPE_YESNO)
+            info = self.fetchUpdateInfo()
+            if self.versionTuple(info['version']) > self.versionTuple(version):
+                msg = "Current version: {}\nNew version: {}\n\n{}\n\nDo you want to update now?".format(
+                    version,
+                    info['version'],
+                    info['description'] or 'Update available.'
+                )
+                self.session.openWithCallback(
+                    lambda answer, data=info: self.instalUpdate(answer, data),
+                    MessageBox,
+                    _(msg),
+                    MessageBox.TYPE_YESNO
+                )
             else:
-                self['info'].setText(lng.get(lang, '71'))
+                self.session.open(MessageBox, _('You already have the latest version: {}').format(version), MessageBox.TYPE_INFO, timeout=5)
         except Exception as err:
             self['info'].setText(str(err))
-            with open("/tmp/xtraEvent.log", "a+") as f:
-                f.write("update %s\n\n"%err)
+            with open('/tmp/xtraEvent.log', 'a+') as f:
+                f.write('update %s\n\n' % err)
 
-    def instalUpdate(self, answer):
+    def instalUpdate(self, answer, update_info=None):
         logout(data="------------------ def installUpdate")
         try:
-            if answer is True:
-                url = requests.get("https://api.github.com/repos/digiteng/xtra/releases/latest")
-                update_url = url.json()["assets"][1]["browser_download_url"]
-                up_name	 = url.json()["assets"][1]["name"]
-                up_tmp = "/tmp/{}".format(up_name)
-                if not os.path.exists(up_tmp):
-                    open(up_tmp, 'wb').write(requests.get(update_url, stream=True, allow_redirects=True).content)
-                if os.path.exists(up_tmp):
-                    from enigma import eConsoleAppContainer
-                    cmd = ("rm -rf /usr/lib/enigma2/python/Components/Converter/xtra* \
-                    | rm -rf /usr/lib/enigma2/python/Components/Renderer/xtra* \
-                    | rm -rf /usr/lib/enigma2/python/Plugins/Extensions/xtraEvent \
-                    | rm -rf /usr/share/enigma2/xtra \
-                    ")
-                    os.system(cmd)
-                    container = eConsoleAppContainer()
-                    container.execute("tar xf /tmp/xtraEvent.tar.gz -C /")
-                    self.updateFinish()
+            if answer is not True:
+                return
+
+            info = update_info or self.fetchUpdateInfo()
+            update_url = info['url']
+            up_name = os.path.basename(update_url)
+            up_tmp = '/tmp/{}'.format(up_name)
+
+            response = requests.get(update_url, stream=True, allow_redirects=True, timeout=60)
+            response.raise_for_status()
+            with open(up_tmp, 'wb') as handle:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        handle.write(chunk)
+
+            if os.path.exists(up_tmp) and os.path.getsize(up_tmp) > 0:
+                rc = os.system('opkg install "{}"'.format(up_tmp))
+                os.system('sync')
+                try:
+                    os.remove(up_tmp)
+                except Exception:
+                    pass
+                if rc == 0:
+                    self.updateInstalledNotice(info['version'])
+                else:
+                    raise Exception('opkg install failed with code {}'.format(rc))
             else:
-                self.close()
+                raise Exception('Downloaded update package is missing or empty')
         except Exception as err:
+            self.session.open(MessageBox, _('Update failed: {}').format(str(err)), MessageBox.TYPE_ERROR, timeout=10)
             self['info'].setText(str(err))
-            with open("/tmp/xtraEvent.log", "a+") as f:
-                f.write("instalUpdate %s\n\n"%err)
+            with open('/tmp/xtraEvent.log', 'a+') as f:
+                f.write('instalUpdate %s\n\n' % err)
+
+    def updateInstalledNotice(self, installed_version=None):
+        logout(data="------------------ def updateInstalledNotice")
+        note = _('Update installed successfully.')
+        if installed_version:
+            note = _('xtraEvent {} installed successfully.').format(installed_version)
+        note += '\n' + _('GUI restart is required.')
+        self.session.openWithCallback(self.restarte2, MessageBox, note, MessageBox.TYPE_INFO, timeout=10)
 
     def updateFinish(self):
         logout(data="------------------ def updateFinish")
@@ -912,12 +1083,107 @@ class xtra(Screen, ConfigListScreen):
         logout(data="------------------ def updateFinish configfile save")
         configfile.save()
         logout(data="------------------ def updateFinish configfile save ende")
-        self.session.openWithCallback(self.restarte2, MessageBox, _(lng.get(lang, '70')), MessageBox.TYPE_YESNO)
+        self.session.openWithCallback(self.restarte2Confirm, MessageBox, _(lng.get(lang, '70')), MessageBox.TYPE_YESNO)
 
-    def restarte2(self, answer):
-        logout(data="------------------ def restart2")
+    def restarte2Confirm(self, answer):
+        logout(data="------------------ def restart2Confirm")
         if answer:
             self.session.open(TryQuitMainloop, 3)
+
+    def restarte2(self, answer=None):
+        logout(data="------------------ def restart2")
+        self.exit()
+
+    def apiBackupRestoreMenu(self):
+        logout(data='apiBackupRestoreMenu')
+        choices = [
+            (_('Backup API keys'), 'backup'),
+            (_('Restore API keys'), 'restore')
+        ]
+        self.session.openWithCallback(self.apiBackupRestoreMenuCallback, ChoiceBox, title=_('API Backup / Restore'), list=choices)
+
+    def apiBackupRestoreMenuCallback(self, choice=None):
+        logout(data='apiBackupRestoreMenuCallback')
+        if not choice:
+            return
+        action = choice[1]
+        if action == 'backup':
+            self.backupApiKeys()
+        elif action == 'restore':
+            self.restoreApiKeys()
+
+    def backupApiKeys(self):
+        logout(data='backupApiKeys')
+        try:
+            if not os.path.exists(API_BACKUP_DIR):
+                os.makedirs(API_BACKUP_DIR)
+
+            data = {}
+            key_map = {
+                'tmdb': config.plugins.xtraEvent.tmdbAPI.value,
+                'tvdb': config.plugins.xtraEvent.tvdbAPI.value,
+                'omdb': config.plugins.xtraEvent.omdbAPI.value,
+                'fanart': config.plugins.xtraEvent.fanartAPI.value
+            }
+            for name, value in key_map.items():
+                value = (value or '').strip()
+                if value:
+                    data[name] = value
+
+            with open(API_BACKUP_FILE, 'w') as handle:
+                json.dump(data, handle, indent=2, sort_keys=True)
+
+            if data:
+                msg = _('Saved API keys: {}\nFile: {}').format(', '.join(sorted(data.keys())).upper(), API_BACKUP_FILE)
+            else:
+                msg = _('No API keys were set. Empty backup created at {}').format(API_BACKUP_FILE)
+            self.session.open(MessageBox, msg, MessageBox.TYPE_INFO, timeout=8)
+        except Exception as err:
+            self.session.open(MessageBox, _('Backup failed: {}').format(str(err)), MessageBox.TYPE_ERROR, timeout=10)
+
+    def restoreApiKeys(self):
+        logout(data='restoreApiKeys')
+        try:
+            if not os.path.exists(API_BACKUP_FILE):
+                self.session.open(MessageBox, _('No saved APIs are present.'), MessageBox.TYPE_INFO, timeout=8)
+                return
+
+            with open(API_BACKUP_FILE, 'r') as handle:
+                raw = handle.read().strip()
+
+            if not raw:
+                self.session.open(MessageBox, _('No saved APIs are present.'), MessageBox.TYPE_INFO, timeout=8)
+                return
+
+            data = json.loads(raw)
+            if not isinstance(data, dict) or not data:
+                self.session.open(MessageBox, _('No saved APIs are present.'), MessageBox.TYPE_INFO, timeout=8)
+                return
+
+            restored = []
+            mapping = {
+                'tmdb': config.plugins.xtraEvent.tmdbAPI,
+                'tvdb': config.plugins.xtraEvent.tvdbAPI,
+                'omdb': config.plugins.xtraEvent.omdbAPI,
+                'fanart': config.plugins.xtraEvent.fanartAPI
+            }
+            for name, cfg in mapping.items():
+                value = data.get(name, '')
+                if value:
+                    cfg.value = value
+                    cfg.save()
+                    restored.append(name.upper())
+
+            configfile.save()
+            self.xtraList()
+
+            if restored:
+                msg = _('Restored API keys: {}').format(', '.join(restored))
+            else:
+                msg = _('No saved APIs are present.')
+            self.session.open(MessageBox, msg, MessageBox.TYPE_INFO, timeout=8)
+        except Exception as err:
+            self.session.open(MessageBox, _('Restore failed: {}').format(str(err)), MessageBox.TYPE_ERROR, timeout=10)
 
     def removeImagesAll(self):
         logout(data="------------------ def removeImagesAll")
@@ -941,6 +1207,8 @@ class xtra(Screen, ConfigListScreen):
                 os.makedirs("{}infosomdb".format(pathLoc))
                 os.makedirs("{}infosomdbsterne".format(pathLoc))
                 os.makedirs("{}infosomdbrated".format(pathLoc))
+                os.makedirs("{}infostmdbrated".format(pathLoc))
+                os.makedirs("{}infostmdbstar".format(pathLoc))
                 os.makedirs("{}mSearch".format(pathLoc))
                 os.makedirs("{}EMC".format(pathLoc))
                 os.makedirs("{}logo".format(pathLoc))
@@ -1107,7 +1375,7 @@ class manuelSearch(Screen, ConfigListScreen):
         ConfigListScreen.__init__(self, list, session=session)
         self.setTitle(_(lng.get(lang, '18')))
 
-        self["key_red"] = StaticText(_(lng.get(lang, '35')))
+        self["key_red"] = StaticText(_("Create Movielist"))
         self["key_green"] = StaticText(_(lng.get(lang, '40')))
         self["key_yellow"] = StaticText(_(lng.get(lang, '65')))
         self["key_blue"] = StaticText(_("Keyboard"))
@@ -1116,7 +1384,7 @@ class manuelSearch(Screen, ConfigListScreen):
                 "left": self.keyLeft,
                 "right": self.keyRight,
                 "cancel": self.stop,
-                "red": self.stop,
+                "red": self.check_movielist,
                 "ok": self.keyOK,
                 "green": self.mnlSrch,
                 "yellow": self.append,
@@ -1142,8 +1410,68 @@ class manuelSearch(Screen, ConfigListScreen):
         self.onLayoutFinish.append(self.msList)
         self.onLayoutFinish.append(self.intCheck)
 
+        self.check_movielist()
 
+    def check_movielist(self):
+        logout(data="------------------ def check_movieList")
+        try:
+            mlst = listdir_path
+            logout(data="existing movie folder files")
+            logout(data=str(mlst))
 
+            if not mlst:
+                return
+
+            movieList = [
+                x for x in mlst
+                if x.lower().endswith(".mp4") or x.lower().endswith(".mkv") or x.lower().endswith(".avi")
+            ]
+            logout(data="filtered movie containers")
+            logout(data=str(movieList))
+
+            file_path = movielist_path
+            if isfile(file_path):
+                remove(file_path)
+
+            seen_titles = set()
+
+            with open(file_path, 'a') as file:
+                for movie in movieList:
+                    movie_name = clean_movie_filename(movie)
+                    logout(data="raw movie filename={}".format(movie))
+                    logout(data="cleaned movie title={}".format(movie_name))
+
+                    if not movie_name:
+                        continue
+
+                    if movie_name.lower() == "instant record":
+                        continue
+
+                    if movie_name in seen_titles:
+                        continue
+                    seen_titles.add(movie_name)
+
+                    poster_path = os.path.join(pathXtra, "EMC", "{}-poster.jpg".format(movie_name))
+                    backdrop_path = os.path.join(pathXtra, "EMC", "{}-backdrop.jpg".format(movie_name))
+                    info_path = os.path.join(pathXtra, "EMC", "{}-info.json".format(movie_name))
+
+                    poster_src_path = os.path.join(pathXtra, "poster", "{}.jpg".format(movie_name))
+                    backdrop_src_path = os.path.join(pathXtra, "backdrop", "{}.jpg".format(movie_name))
+                    info_src_path = os.path.join(pathXtra, "infos", "{}.json".format(movie_name))
+
+                    if not os.path.exists(poster_path):
+                        if os.path.exists(poster_src_path):
+                            shutil.copy(poster_src_path, poster_path)
+                            if os.path.exists(backdrop_src_path):
+                                shutil.copy(backdrop_src_path, backdrop_path)
+                            if os.path.exists(info_src_path):
+                                shutil.copy(info_src_path, info_path)
+                        else:
+                            file.write(movie_name + '\n')
+
+        except Exception as err:
+            logout(data="check_movielist error={}".format(str(err)))
+            pass
 
     def stop(self):
         logout(data="------------------ def stop")
@@ -1202,8 +1530,10 @@ class manuelSearch(Screen, ConfigListScreen):
             list.append(getConfigListEntry(_(lng.get(lang, '63')), config.plugins.xtraEvent.searchType))
             if config.plugins.xtraEvent.PB.value == "posters":
                 list.append(getConfigListEntry(_("\t{}".format(lng.get(lang, '49'))), config.plugins.xtraEvent.TMDBpostersize))
-            else:
+            elif config.plugins.xtraEvent.PB.value == "backdrops":
                 list.append(getConfigListEntry(_("\t{}".format(lng.get(lang, '49'))), config.plugins.xtraEvent.TMDBbackdropsize))
+            elif config.plugins.xtraEvent.PB.value == "logos":
+                list.append(getConfigListEntry(_("\t{}".format(lng.get(lang, '49'))), config.plugins.xtraEvent.TMDBlogosize))
         if config.plugins.xtraEvent.srcs.value == "TVDB":
             if config.plugins.xtraEvent.PB.value == "posters":
                 list.append(getConfigListEntry(_("\t{}".format(lng.get(lang, '49'))), config.plugins.xtraEvent.TVDBpostersize))
@@ -1274,22 +1604,33 @@ class manuelSearch(Screen, ConfigListScreen):
         logout(data="------------------ def movieList")
         pathLoc = config.plugins.xtraEvent.EMCloc.value
 
-
         try:
             mlst = os.listdir(pathLoc)
             logout(data=str(mlst))
             if mlst:
-                logout(data="movielist mlst")
-                movieList = [x for x in mlst if x.endswith(".mvi") or x.endswith(".ts") or x.endswith(".mp4") or x.endswith(".avi") or x.endswith(".mkv") or x.endswith(".divx")]
-                logout(data=str(movieList))
+                movieList = [
+                    x for x in mlst
+                    if x.lower().endswith(".mp4") or x.lower().endswith(".mkv") or x.lower().endswith(".avi")
+                ]
 
-                if movieList:
-                    logout(data="movielist if")
+                cleaned_movies = []
+                seen_titles = set()
+
+                for x in movieList:
+                    cleaned = clean_movie_filename(x)
+                    if cleaned and cleaned not in seen_titles:
+                        cleaned_movies.append(cleaned)
+                        seen_titles.add(cleaned)
+
+                logout(data="cleaned movielist")
+                logout(data=str(cleaned_movies))
+
+                if cleaned_movies:
                     n = config.plugins.xtraEvent.searchMANUELnmbr.value
-                    self.evnt = movieList[int(n)]
-
+                    self.evnt = cleaned_movies[int(n)]
                     self.vkEdit("")
-        except:
+        except Exception as err:
+            logout(data="movieList2 error={}".format(str(err)))
             pass
 
     def vk(self):
@@ -1329,6 +1670,7 @@ class manuelSearch(Screen, ConfigListScreen):
         except:
             logout(data="def mnlSrch return")
             return
+
         if config.plugins.xtraEvent.PB.value == "posters":
             logout(data="def mnlSrch poster")
             if config.plugins.xtraEvent.srcs.value == "TMDB":
@@ -1343,7 +1685,9 @@ class manuelSearch(Screen, ConfigListScreen):
                 start_new_thread(self.bing, ())
             if config.plugins.xtraEvent.srcs.value == "Google":
                 start_new_thread(self.google, ())
-        if config.plugins.xtraEvent.PB.value == "backdrops":
+
+        elif config.plugins.xtraEvent.PB.value == "backdrops":
+            logout(data="def mnlSrch backdrop")
             if config.plugins.xtraEvent.srcs.value == "TMDB":
                 start_new_thread(self.tmdb, ())
             if config.plugins.xtraEvent.srcs.value == "TVDB":
@@ -1355,39 +1699,135 @@ class manuelSearch(Screen, ConfigListScreen):
             if config.plugins.xtraEvent.srcs.value == "Google":
                 start_new_thread(self.google, ())
 
+        elif config.plugins.xtraEvent.PB.value == "logos":
+            logout(data="def mnlSrch logo")
+            if config.plugins.xtraEvent.srcs.value == "TMDB":
+                start_new_thread(self.tmdb_logo, ())
+            else:
+                self['status'].setText(_("Logo manual search supported only with TMDB"))
+
+    def tmdb_logo(self):
+        logout(data="------------------ def tmdb_logo")
+        self['status'].setText("Download Start")
+        self['progress'].setValue(0)
+
+        try:
+            self.srch = config.plugins.xtraEvent.searchType.value
+            self.year = config.plugins.xtraEvent.searchMANUELyear.value
+
+            from requests.utils import quote
+            url = "https://api.themoviedb.org/3/search/{}?api_key={}&query={}".format(self.srch, tmdb_api, quote(self.title))
+            logout(data="------------------ def tmdb_logo search url")
+            logout(data=str(url))
+
+            if self.year != "0":
+                if config.plugins.xtraEvent.searchType.value == "tv":
+                    url += "&first_air_date_year={}".format(self.year)
+                elif config.plugins.xtraEvent.searchType.value == "movie":
+                    url += "&year={}".format(self.year)
+                logout(data="------------------ def tmdb_logo search url year")
+                logout(data=str(url))
+
+            js = requests.get(url).json()
+            results = js.get('results', [])
+            if not results:
+                self['status'].setText("Download Ende : no files found")
+                return
+
+            item = results[0]
+            tmdb_id = item.get('id')
+            media_type = item.get('media_type', self.srch)
+
+            if self.srch in ("movie", "tv"):
+                media_type = self.srch
+            elif media_type not in ("movie", "tv"):
+                if item.get("title", "") or item.get("release_date", ""):
+                    media_type = "movie"
+                else:
+                    media_type = "tv"
+
+            if not tmdb_id:
+                self['status'].setText("Download Ende : no files found")
+                return
+
+            url = "https://api.themoviedb.org/3/{}/{}?api_key={}&append_to_response=images".format(media_type, int(tmdb_id), tmdb_api)
+            logout(data="------------------ def tmdb_logo details url")
+            logout(data=str(url))
+
+            if config.plugins.xtraEvent.searchLang.value:
+                url += "&language={}".format(lang)
+
+            p1 = requests.get(url).json()
+            logos = p1.get('images', {}).get('logos', [])
+            n = len(logos)
+
+            if n > 0:
+                downloaded = 0
+                sz = config.plugins.xtraEvent.TMDBlogosize.value
+
+                for i in range(int(n)):
+                    logo = logos[i].get('file_path')
+                    if logo:
+                        url_logo = "https://image.tmdb.org/t/p/{}{}".format(sz, logo)
+                        dwnldFile = "{}mSearch/{}-logos-{}.png".format(pathLoc, self.title, i + 1)
+                        open(dwnldFile, 'wb').write(requests.get(url_logo, stream=True, allow_redirects=True).content)
+                        downloaded += 1
+                        self.prgrs(downloaded, n)
+            else:
+                self['status'].setText(_("Download : Logo not found - Language off ?"))
+
+            config.plugins.xtraEvent.imgNmbr.value = 0
+
+        except Exception as err:
+            logout(data="------------------ def tmdb_logo except")
+            self['status'].setText("Download Ende : no files found")
+            with open("/tmp/xtraEvent.log", "a+") as f:
+                f.write("Manuel Search tmdb_logo, %s, %s\n" % (self.title, err))
+
     def picShow(self):
-        logout(data="------------------ def pecShow")
+        logout(data="------------------ def picShow")
         self["Picture2"].hide()
         try:
             self.iNmbr = config.plugins.xtraEvent.imgNmbr.value
 
-            self.path = "{}mSearch/{}-{}-{}.jpg".format(pathLoc, self.title, config.plugins.xtraEvent.PB.value, self.iNmbr)
-            if config.plugins.xtraEvent.srcs.value == "IMDB(poster)":
-                self.path = "{}mSearch/{}-poster-1.jpg".format(pathLoc, self.title)
-            self["Picture"].instance.setPixmap(loadJPG(self.path))
+            if config.plugins.xtraEvent.PB.value == "logos":
+                self.path = "{}mSearch/{}-logos-{}.png".format(pathLoc, self.title, self.iNmbr)
+                self["Picture"].instance.setPixmap(loadPNG(self.path))
+            else:
+                self.path = "{}mSearch/{}-{}-{}.jpg".format(pathLoc, self.title, config.plugins.xtraEvent.PB.value, self.iNmbr)
+                if config.plugins.xtraEvent.srcs.value == "IMDB(poster)":
+                    self.path = "{}mSearch/{}-poster-1.jpg".format(pathLoc, self.title)
+                self["Picture"].instance.setPixmap(loadJPG(self.path))
+
             self["Picture"].instance.setScale(1)
             self["Picture"].show()
+
             if desktop_size <= 1280:
                 if config.plugins.xtraEvent.PB.value == "posters":
-                    self["Picture"].instance.setScale(1)
-                    self["Picture"].instance.resize(eSize(185,278))
-                    self["Picture"].instance.move(ePoint(930,325))
-                else:
-                    self["Picture"].instance.setScale(1)
-                    self["Picture"].instance.resize(eSize(300,170))
-                    self["Picture"].instance.move(ePoint(890,375))
+                    self["Picture"].instance.resize(eSize(185, 278))
+                    self["Picture"].instance.move(ePoint(930, 325))
+                elif config.plugins.xtraEvent.PB.value == "backdrops":
+                    self["Picture"].instance.resize(eSize(300, 170))
+                    self["Picture"].instance.move(ePoint(890, 375))
+                else:  # logos
+                    self["Picture"].instance.resize(eSize(300, 170))
+                    self["Picture"].instance.move(ePoint(890, 375))
             else:
                 if config.plugins.xtraEvent.PB.value == "posters":
-                    self["Picture"].instance.setScale(1)
-                    self["Picture"].instance.resize(eSize(185,278))
-                    self["Picture"].instance.move(ePoint(1450,550))
-                else:
-                    self["Picture"].instance.setScale(1)
-                    self["Picture"].instance.resize(eSize(300,170))
-                    self["Picture"].instance.move(ePoint(1400,600))
+                    self["Picture"].instance.resize(eSize(185, 278))
+                    self["Picture"].instance.move(ePoint(1450, 550))
+                elif config.plugins.xtraEvent.PB.value == "backdrops":
+                    self["Picture"].instance.resize(eSize(300, 170))
+                    self["Picture"].instance.move(ePoint(1400, 600))
+                else:  # logos
+                    self["Picture"].instance.resize(eSize(300, 170))
+                    self["Picture"].instance.move(ePoint(1400, 600))
+
             self['Picture'].show()
             self.inf()
-        except:
+
+        except Exception as err:
+            logout(data="picShow error={}".format(str(err)))
             pass
 
     def inf(self):
@@ -1399,20 +1839,28 @@ class manuelSearch(Screen, ConfigListScreen):
         try:
             msLoc = "{}mSearch/".format(pathLoc)
             n = 0
-            for file in os.listdir(msLoc):
-                if file.startswith("{}-{}".format(self.title, config.plugins.xtraEvent.PB.value)) == True:
-                    e = os.path.join(msLoc, file)
-                    n += 1
+
+            if config.plugins.xtraEvent.PB.value == "logos":
+                for file in os.listdir(msLoc):
+                    if file.startswith("{}-logos".format(self.title)):
+                        n += 1
+                pb_path = "{}mSearch/{}-logos-{}.png".format(pathLoc, self.title, self.iNmbr)
+            else:
+                for file in os.listdir(msLoc):
+                    if file.startswith("{}-{}".format(self.title, config.plugins.xtraEvent.PB.value)):
+                        n += 1
+                pb_path = "{}mSearch/{}-{}-{}.jpg".format(pathLoc, self.title, config.plugins.xtraEvent.PB.value, self.iNmbr)
+
             tot = n
             cur = config.plugins.xtraEvent.imgNmbr.value
-            pb_path = "{}mSearch/{}-{}-{}.jpg".format(pathLoc , self.title, config.plugins.xtraEvent.PB.value, self.iNmbr)
-            pb_sz = "{} KB".format(os.path.getsize(pb_path)//1024)
+            pb_sz = "{} KB".format(os.path.getsize(pb_path) // 1024)
             im = Image.open(pb_path)
             pb_res = im.size
             self['info'].setText(_("{}/{} - {} - {}".format(cur, tot, pb_sz, pb_res)))
-        except:
+        except Exception as err:
+            logout(data="inf error={}".format(str(err)))
             pass
-# ----------------------------- hinzufuegen vom poster backdrop in emc ---------------------------------------------------
+# ----------------------------- Adding a poster backdrop in EMC ---------------------------------------------------
     def append(self):
         logout(data="------------------ def append")
         try:
@@ -1424,61 +1872,69 @@ class manuelSearch(Screen, ConfigListScreen):
             logout(data=str(self.title))
 
             if config.plugins.xtraEvent.PB.value == "posters":
-                logout(data="------------------ def append 2")
-                if config.plugins.xtraEvent.srcs.value == "bing":
-                    logout(data="------------------ def append 3")
-                    target = "{}poster/{}.jpg".format(pathLoc, self.title)
+                logout(data="------------------ def append poster")
                 if config.plugins.xtraEvent.searchModManuel.value == lng.get(lang, '16'):
-                    logout(data="------------------ def append 4")
                     target = "{}poster/{}.jpg".format(pathLoc, self.title)
-
                 else:
-                    logout(data="------------------ def append 5")
                     target = "{}EMC/{}-poster.jpg".format(pathLoc, self.title)
-            else:
-                logout(data="------------------ def append 6")
+
+            elif config.plugins.xtraEvent.PB.value == "backdrops":
+                logout(data="------------------ def append backdrop")
                 if config.plugins.xtraEvent.searchModManuel.value == lng.get(lang, '16'):
-                    logout(data="------------------ def append 7")
                     target = "{}backdrop/{}.jpg".format(pathLoc, self.title)
                     if config.plugins.xtraEvent.srcs.value == "bing":
-                        logout(data="------------------ def append 8")
-                        evntNm = re.sub("([\(\[]).*?([\)\]])|(: odc.\d+)|(\d+: odc.\d+)|(\d+ odc.\d+)|(:)|( -(.*?).*)|(,)|!|\*", "", self.title).rstrip()
+                        evntNm = re.sub(r"([\(\[]).*?([\)\]])|(: odc\.\d+)|(\d+: odc\.\d+)|(\d+ odc\.\d+)|(:)|( -(.*?))|(,)|!|\*", "", self.title).rstrip()
                         target = "{}backdrop/{}.jpg".format(pathLoc, evntNm)
                 else:
-                    logout(data="------------------ def append 9")
                     target = "{}EMC/{}-backdrop.jpg".format(pathLoc, self.title)
+
+            elif config.plugins.xtraEvent.PB.value == "logos":
+                logout(data="------------------ def append logo")
+                target = "{}logo/{}.png".format(pathLoc, self.title)
+
+            else:
+                return
+
             import shutil
             logout(data="------------------ def append 10")
+
             if os.path.exists(self.path):
                 logout(data="------------------ def append 11")
                 shutil.copyfile(self.path, target)
                 logout(data=str(self.path))
                 logout(data=str(target))
+
                 if os.path.exists(target):
                     logout(data="------------------ def append 12")
-                    if config.plugins.xtraEvent.PB.value == "backdrops":
-                        logout(data="------------------ def append 13")
-                        if not config.plugins.xtraEvent.searchModManuel.value == lng.get(lang, '16'):
-                            logout(data="------------------ def append 14 bild auf 1280x720")
-                            im1 = Image.open(target)
-                            #im1 = im1.resize((1280,720))
-                            im1 = im1.resize((640, 360))
-                            im1 = im1.save(target)
-                            #im1.save("/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/im1.jpg")
-                            if os.path.exists(target):
-                                logout(data="------------------ def append 15 bild wird dunkler")
-                                im1 = Image.open(target)
-                                im2 = Image.open("/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/emc_background.jpg")
-                                mask = Image.new("L", im1.size, 80)
-                                im = Image.composite(im1, im2, mask)
-                                #im.save(target)
-                    logout(data="------------------ def append 16")
-                    im1 = Image.open(target)
-                    # im1 = im1.resize((1280,720))
-                    im1 = im1.resize((185, 272))
-                    im1 = im1.save(target)
 
-        except:
+                    if config.plugins.xtraEvent.PB.value == "backdrops":
+                        if not config.plugins.xtraEvent.searchModManuel.value == lng.get(lang, '16'):
+                            logout(data="------------------ def append 14 resize EMC backdrop")
+                            im1 = Image.open(target)
+                            im1 = im1.resize((640, 360))
+                            im1.save(target)
+
+                        try:
+                            im1 = Image.open(target)
+                            im2 = Image.open("/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/pic/emc_background.jpg")
+                            mask = Image.new("L", im1.size, 80)
+                            im = Image.composite(im1, im2, mask)
+                        except:
+                            pass
+
+                    elif config.plugins.xtraEvent.PB.value == "posters":
+                        logout(data="------------------ def append 16 resize poster")
+                        im1 = Image.open(target)
+                        im1 = im1.resize((185, 272))
+                        im1.save(target)
+
+                    elif config.plugins.xtraEvent.PB.value == "logos":
+                        logout(data="------------------ def append logo saved")
+                        # keep original png size
+                        pass
+
+        except Exception as err:
+            logout(data="append error={}".format(str(err)))
             return
 # --------------------------------------- hier downloads -------------------------------------------------------
     def tmdb(self):
@@ -1514,7 +1970,7 @@ class manuelSearch(Screen, ConfigListScreen):
                     logout(data="------------------ def tmdb 2a")
                     url += "&year={}".format(self.year)
                     logout(data=str(url))
-            id = requests.get(url).json()['results'][0]['id']      # check daten vorhanden
+            id = requests.get(url).json()['results'][0]['id']      # check daten available
             logout(data="------------------ def tmdb url 2")
 
             #self.srch = "tv"  # in den anderen findet er nichts
@@ -1778,7 +2234,8 @@ class manuelSearch(Screen, ConfigListScreen):
             headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
             try:
                 ff = requests.get(url, stream=True, headers=headers).text
-                p = re.findall('ihk=\"\/th\?id=(.*?)&', ff)
+                #p = re.findall('ihk=\"\/th\?id=(.*?)&', ff)
+                p = re.findall(r'ihk="/th\?id=(.*?)&', ff)
             except:
                 pass
             n = 9
@@ -1817,7 +2274,8 @@ class manuelSearch(Screen, ConfigListScreen):
             headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
             try:
                 ff = requests.get(url, stream=True, headers=headers).text
-                p = re.findall('\],\["https://(.*?)",\d+,\d+]', ff)
+                #p = re.findall('\],\["https://(.*?)",\d+,\d+]', ff)
+                p = re.findall(r'\],\["https://(.*?)",\d+,\d+]', ff)
             except:
                 pass
             n = 9
@@ -2122,3 +2580,4 @@ class selBouquets(Screen):
     def cancel(self):
         logout(data="cancel")
         self.close(self.session, False)
+

@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 # ------------------- von Python ------------------------------------
 import json
 import re

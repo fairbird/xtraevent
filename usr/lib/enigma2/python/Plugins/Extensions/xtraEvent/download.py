@@ -34,6 +34,15 @@ from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 from .xtra import version
 import shutil
 import inspect
+try:
+    from html import unescape
+except Exception:
+    try:
+        from HTMLParser import HTMLParser
+        unescape = HTMLParser().unescape
+    except Exception:
+        def unescape(value):
+            return value
 # --------------------------- Logfile -------------------------------
 
 
@@ -44,9 +53,23 @@ from os.path import isfile
 
 downloadrunning = 0
 
+import os
 ########################### log file loeschen ##################################
+dir_path = "/tmp/xtraevent"
 
-myfile="/tmp/xtraevent-Download.log"
+try:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print("Directory has been created:", dir_path)
+    else:
+        print("Directory already exists:", dir_path)
+except Exception as e:
+    print("Error creating directory:", e)
+
+
+
+
+myfile=dir_path + "/download.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -84,7 +107,6 @@ def logout(data):
 
 logout(data=str(config.plugins.xtraEvent.logFiles.value))
 # ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
-#logout(data="start 6.77")
 logout(data=str(version))
 
 #                                    bei 1570 google abfrage einbauen
@@ -615,36 +637,55 @@ class downloads(Screen):
 
     def currentChEpgs(self):
         logout(data="currentChEpgs")
-        caller_frame = inspect.currentframe().f_back
-        caller_name = inspect.getframeinfo(caller_frame).function
-        #log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
-        log_message = "Die Funktion getText() wurde von %s aufgerufen." % caller_name
-        logout(data=str(log_message))
+        try:
+            import NavigationInstance
+            ref = NavigationInstance.instance.getCurrentlyPlayingServiceReference().toString()
+            n = int(config.plugins.xtraEvent.searchNUMBER.value)
+            events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
+            if not events:
+                return
 
-        events = None
-        import NavigationInstance
-        ref = NavigationInstance.instance.getCurrentlyPlayingServiceReference().toString()
-        events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
-        if events:
-            try:
-                n = config.plugins.xtraEvent.searchNUMBER.value
-                titles = []
-                for i in range(int(n)):
-                    try:
-                        title = events[i][4]
-                        title = REGEX.sub('', title).strip()
-                        titles.append(title)
-                    except:
-                        continue
-                    if i == n:
-                        break
-                self.titles = list(dict.fromkeys(titles))
-                start_new_thread(self.downloadEvents, ())
-            except Exception as err:
-                with open("/tmp/xtraEvent.log", "a+") as f:
-                    f.write("currentChEpgs, %s\n"%(err))
+            titles = []
+            years = []
+            for i in range(min(n, len(events))):
+                try:
+                    raw_title = events[i][4] or ""
+                    title = REGEX.sub('', raw_title).strip()
 
+                    # Year extrahieren, falls vorhanden
+                    year_match = re.search(r'\((\d{4})\)', raw_title)
+                    if year_match:
+                        year = year_match.group(1)
+                        title = re.sub(r'\(\d{4}\)', '', title).strip()
+                    else:
+                        year = ""
+
+                    titles.append(title)
+                    years.append(year)
+                except Exception as e:
+                    logout(data="Error parsing event: %s" % e)
+                    continue
+
+            # Doppelte Titel vermeiden
+            seen = set()
+            unique_titles, unique_years = [], []
+            for t, y in zip(titles, years):
+                if t not in seen:
+                    seen.add(t)
+                    unique_titles.append(t)
+                    unique_years.append(y)
+
+            self.titles = unique_titles
+            self.year = unique_years
+
+            start_new_thread(self.downloadEvents, ())
+
+        except Exception as err:
+            with open("/tmp/xtraEvent.log", "a+") as f:
+                f.write("currentChEpgs, %s\n" % (err))
     def selBouquets(self):
+
+        from threading import Thread
         logout(data="--------------------------------------------------- selBouquets ---------------------------------")
         caller_frame = inspect.currentframe().f_back
         caller_name = inspect.getframeinfo(caller_frame).function
@@ -652,95 +693,115 @@ class downloads(Screen):
         log_message = "Die Funktion getText() wurde von %s aufgerufen." % caller_name
         logout(data=str(log_message))
 
-        if os.path.exists("{}bqts".format(pathLoc)):
-            logout(data="----------------------------------------------- 641 Bouquets file exits ---------------------")
-            with open("{}bqts".format(pathLoc), "r") as f:
-                logout(data="selBouquets open file")
-                refs = f.readlines()
-            nl = len(refs)
+#############################################################################  neue python ###########################################################
+        # Check if the bouquets file exists
+        #bqts_path = f"{pathLoc}bqts"
 
-            def extract_year_from_text(text):
-                logout(data="extract year from text")
-                """Extrahiert das Jahr aus dem Text (z. B. Beschreibung)."""
-                # Regulärer Ausdruck zum Finden eines Jahres im Format 4 Ziffern (z.B. 2020)
-                year_match = re.search(r'\b(\d{4})\b', text)
-                if year_match:
-                    return year_match.group(1)  # Gibt das gefundene Jahr zurück
-                return None  # Kein Jahr gefunden
 
-            eventlist=[]
-            yearlist = []  # Neue Liste für Jahre
-            for i in range(nl):
-                ref = refs[i]
-                try:
-                    events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
-                    logout(data="676 ----------- events")
-                    #logout(data=str(events))
-                    n = config.plugins.xtraEvent.searchNUMBER.value
-                    logout(data="679 ----------- n anzahl")
-                    logout(data=str(n))
-                    for i in range(int(n)):
-                        title = events[i][4]
-                        logout(data="679 ----------- Title")
-                        logout(data=str(title))
-                        #description = events[i][5]  # Beschreibung der Sendung (Short/Extended Description)
-                        description = events[i][6]  # Erweiterte Beschreibung der Sendung
-                        logout(data="682 ----------- Epg Info description ")
-                        #logout(data=str(description))
-                        logout(data="----------------  description ende -----------------------------------")
-                        fd = description
-                        fd = fd.replace(',', '').replace('(', '').replace(')', '')
-                        fdl = ['\d{4} [A-Z]+', '[A-Z]+ \d{4}', '[A-Z][a-z]+\s\d{4}', '\+\d+\s\d{4}']
-                        logout(data=str(fd))
+        bqts_path = "{}bqts".format(pathLoc)  # Ergebnis: "/example/path/bqts"
 
-                        for i in fdl:
-                            logout(data="Year 685 ")
-                            year = re.findall(i, fd)
-                            logout(data=str(year))
-                            if year:
-                                logout(data="Year ok 689")
-                                year = re.sub(r'\(.*?\)|\.|\+\d+', ' ', year[0]).strip()
-                                logout(data=str(year))
-                                year_mit = year
-                                # Entferne alles außer der 4-stelligen Jahreszahl
-                                year = re.search(r'\b\d{4}\b', year_mit)
-                                year = year.group(0)  # Extrahiere die gefundene Jahreszahl
-                                logout(data=str(year))
+        if not os.path.exists(bqts_path):
+            logout(data="----------------------------- 687 selBouquets file not exists --------------------------------")
+            return
+
+        logout(data="----------------------------------------------- 641 Bouquets file exists ---------------------")
+        with open(bqts_path, "r", encoding="utf-8") as f:
+            logout(data="selBouquets open file")
+            refs = f.readlines()
+
+        def extract_year_from_text(text):
+            logout(data="extract year from text")
+            """Extracts the year from the text (e.g., description)."""
+            if not isinstance(text, str) or not text:
+                return None
+            year_match = re.search(r'\b(\d{4})\b', text)
+            return year_match.group(1) if year_match else None
+
+        eventlist = []
+        yearlist = []
+        for ref in refs:
+            ref = ref.strip()
+            if not ref:
+                continue
+            try:
+                # Lookup events for the reference
+                events = epgcache.lookupEvent(['IBDCTSERNX', (ref, 1, -1, -1)])
+                logout(data="676 ----------- events")
+                n = int(config.plugins.xtraEvent.searchNUMBER.value)
+                logout(data="679 ----------- n anzahl: {}".format(n))
+
+                for i in range(min(n, len(events))):  # Prevent index out of range
+                    title = events[i][4] or ""  # Title, default to empty string if None
+                    description = events[i][6] or ""  # Extended description, default to empty string
+                    logout(data="679 ----------- Title: {}".format(title))
+                    logout(data="682 ----------- Epg Info description")
+                    logout(data="---------------- description ende -----------------------------------")
+
+                    # Clean description for year extraction
+                    fd = description.replace(',', '').replace('(', '').replace(')', '').strip()
+                    logout(data="Cleaned description: {}".format(fd))
+
+                    # Patterns to find year in description
+                    fdl = [r'\d{4}\s+[A-Z]+', r'[A-Z]+\s+\d{4}', r'[A-Z][a-z]+\s+\d{4}', r'\+\d+\s+\d{4}']
+                    year = None
+                    for pattern in fdl:
+                        matches = re.findall(pattern, fd)
+                        logout(data="Year pattern {}: {}".format(pattern, matches))
+                        if matches:
+                            logout(data="Year ok")
+                            # Extract the year, removing extra characters
+                            year_text = re.sub(r'\(.*?\)|\.|\+\d+', ' ', matches[0]).strip()
+                            year_match = re.search(r'\b\d{4}\b', year_text)
+                            if year_match:
+                                year = year_match.group(0)
+                                logout(data="Extracted year: {}".format(year))
                                 break
-                        # Jahr extrahieren, falls in der Beschreibung vorhanden
-                        #year = extract_year_from_text(description)
-                        if not year:  # Falls kein Jahr in der Beschreibung gefunden wird
-                            year = 0  # Falls kein Jahr gefunden wird, 0 setzen
 
+                    # Fallback to extract_year_from_text if no year found
+                    if not year:
+                        year = extract_year_from_text(description) or "0"
+                        logout(data="Fallback year: {}".format(year))
 
-                        # Titel bereinigen (z. B. "live" entfernen)
-                        name = title.replace('\xc2\x86', '').replace('\xc2\x87', '').replace("live: ", "").replace(
-                            "LIVE ", "")
-                        name = REGEX.sub('', name).strip()  # Bereinigung des Titels
+                    # Clean title
+                    name = title
+                    if isinstance(name, bytes):  # Handle potential byte strings
+                        name = name.decode('utf-8', errors='ignore')
+                    name = name.replace('\xc2\x86', '').replace('\xc2\x87', '').replace("live: ", "").replace("LIVE ", "")
+                    #name = re.sub(r'[^\w\s]', '', name).strip()  # Safer regex cleanup
+                    name = REGEX.sub('', name).strip()  # Bereinigung des Titels
+                    logout(data="Cleaned title: {}".format(name))
 
-                        # Eventliste mit Titel und Jahr füllen
-                        eventlist.append(name)
-                        yearlist.append(year)
-                        logout(data="712 ende naechste sendung ")
-                except:
-                    pass
-            self.titles = list(dict.fromkeys(eventlist))
-            self.year = [yearlist[eventlist.index(title)] for title in self.titles]  # Jahre entsprechend den Titeln
-            logout(data="---------------------------- Title mit Year  ------------------------------")
-            logout(data=str(self.titles))
-            logout(data=str(self.year))
-            logout(data="---------------------------------------------------------------------------")
-            #----------------------------------------------- sollte ja thread sein -------------------------
-            logout(data="---------------------------- 680 selBouquets zu downloadEvents ------------------------------")
-            start_new_thread(self.downloadEvents, ())
-            #import _thread
-            #_thread.start_new_thread(self.downloadEvents, ())
-            logout(data="-----------------------------684  selBouquets von downloadEvents zurueck --------------------")
-            # ----------------------------------------------------------------------------------------------
-        else:
-            logout(data="----------------------------- 687 selBouquets file not exits --------------------------------")
+                    # Add to lists
+                    eventlist.append(name)
+                    yearlist.append(year)
+                    logout(data="712 ende naechste sendung")
+            except Exception as e:
+                logout(data="Error processing ref {}: {}".format(ref, str(e)))
+                continue
 
-########################################################################################################################
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_titles = []
+        unique_years = []
+        for title, year in zip(eventlist, yearlist):
+            if title not in seen:
+                seen.add(title)
+                unique_titles.append(title)
+                unique_years.append(year)
+
+        self.titles = unique_titles
+        self.year = unique_years
+        logout(data="---------------------------- Title mit Year ------------------------------")
+        logout(data="Titles: {}".format(self.titles))
+        logout(data="Years: {}".format(self.year))
+        logout(data="---------------------------------------------------------------------------")
+
+        # Start downloadEvents in a new thread
+        logout(data="---------------------------- 680 selBouquets zu downloadEvents ------------------------------")
+        Thread(target=self.downloadEvents).start()
+        logout(data="----------------------------- 684 selBouquets von downloadEvents zurueck --------------------")
+
+    ########################################################################################################################
     def downloadEvents(self):
         logout(data="")
         logout(data="------------------------------------------------------------------------------ downloadEvents 691")
@@ -802,211 +863,59 @@ class downloads(Screen):
             logout(data="747 abfrage ist xtraEvent3 download JA/NEIN ")
             if config.plugins.xtraEvent.extra3.value == True:
                 logout(data="Extra 3 Download ist JA ")
-                # elcinema(en) #################################################################
-
-                Type = ""
-                Genre = ""
-                Language = ""
-                Country = ""
-                imdbRating = ""
-                Rated = ""
-                Duration = ""
-                Year = ""
-                Director = ""
-                Writer = ""
-                Actors = ""
-                Plot = ""
-                setime = ""
                 try:
-                    logout(data="extra3 true1")
-                    if not os.path.exists("/tmp/urlo.html"):
-                        logout(data="extra3 true1a")
-                        url = "https://elcinema.com/en/tvguide/"
-                        logout(data="extra3 true1a URL")
-                        logout(data=str(url))
-                        urlo = requests.get(url)
-                        urlo = urlo.text.replace('&#39;', "'").replace('&quot;', '"').replace('&amp;', 'and').replace('(', '').replace(')', '')
-                        #logout(data=str(urlo))             # info jede menge
-                        with io.open("/tmp/urlo.html", "w", encoding="utf-8") as f:
-                            f.write(urlo)
-                            logout(data="extra3 true1a URL fertig")
-                    if os.path.exists("/tmp/urlo.html"):
-                        logout(data="extra3 true 1b")
-                        with io.open("/tmp/urlo.html", "r", encoding="utf-8") as f:
-                            urlor = f.read()
-                            logout(data="extra3 urlor")
-                            #logout(data=str(urlor))
-                        titles = re.findall('<li><a title="(.*?)" href="/en/work', urlor)
-                        #logout(data="extra3 true 1c")
-                        logout(data="extra3 true 1c, Anzahl der Titel: " + str(len(titles)))
+                    titles = self.titles or []
                     n = len(titles)
-                except Exception as err:
-                    logout(data="extra3 true 2")
-                    with open("/tmp/xtraEvent.log", "a+") as f:
-                        f.write("elcinema urlo, %s, %s\n"%(title, err))
-                for title in titles:
+                    logout(data="elcinema download title count={}".format(n))
+                    for raw_title in titles:
+                        try:
+                            title = self.cleanElcinemaTitle(raw_title)
+                            if not title:
+                                logout(data="elcinema skipped empty cleaned title from={}".format(raw_title))
+                                continue
+                            if not contains_arabic_text(title):
+                                logout(data="elcinema skip non arabic title={}".format(title))
+                                continue
 
-                    try:
-                        logout(data="download try")
-                        title = REGEX.sub('', title).strip()
-                        logout(data="download try title ")
-                        logout(data=str(title))
-                        dwnldFile = "{}poster/{}.jpg".format(pathLoc, title)
-                        logout(data="download try dwnldFile save poster jpg")
-                        logout(data=str(dwnldFile))
-                        info_files = "{}infos/{}.json".format(pathLoc, title)
-                        logout(data="download try info files save json ")
-                        logout(data=str(info_files))
-                        tid = re.findall('title="%s" href="/en/work/(.*?)/"'%title, urlor)[0]
-                        logout(data="download try tid ist wohl die id aber nur fuers poster kein logo")
-                        logout(data=str(tid))
-                        self.setTitle(_("{}".format(title)))
+                            self.setTitle(_("{}".format(title)))
+                            exists, json_file = self.hasElcinemaInfoJson(title)
+                            html_file = ""
+                            work_id = ""
 
-                        if not os.path.exists(dwnldFile):
-                            logout(data="download poster 370")
-                            turl =	"https://elcinema.com/en/work/{}/".format(tid)
-                            logout(data=str(turl))
-                            jurlo = requests.get(turl.strip(), stream=True, allow_redirects=True, headers=headers)
-                            jurlo = jurlo.text.replace('&#39;', "'").replace('&quot;', '"').replace('&amp;', 'and').replace('(', '').replace(')', '')
-                            # poster elcinema
-                            img = re.findall('<img src="(.*?).jpg" alt=""', jurlo)[0]
-                            open(dwnldFile, "wb").write(requests.get("{}.jpg".format(img), stream=True, allow_redirects=True).content)
-                            self['info'].setText("► {}, EXTRA3, POSTER".format(title.upper()))
-                            self.extra3_poster_downloaded += 1
-                            downloaded = self.extra3_poster_downloaded
-                            self.prgrs(downloaded, n)
-                            self.showPoster(dwnldFile)
-                    except Exception as err:
-                        with open("/tmp/xtraEvent.log", "a+") as f:
-                            f.write("elcinema poster, %s, %s\n"%(title, err))
-                    #info elcinema,
-                    if not os.path.exists(info_files):
-                        logout(data="download json 388")
-                        turl =	"https://elcinema.com/en/work/{}/".format(tid)
-                        logout(data=str(turl))
-                        jurlo = requests.get(turl.strip(), stream=True, allow_redirects=True, headers=headers)
-                        jurlo = jurlo.text.replace('&#39;', "'").replace('&quot;', '"').replace('&amp;', 'and').replace('(', '').replace(')', '')
-                        try:
-                            setime = urlor.partition('title="%s"'%title)[2].partition('</ul>')[0].strip()
-                            setime = re.findall("(\d\d\:\d\d) (.*?) - (\d\d\:\d\d) (.*?)</li>", setime)
-                            setime = setime[0][0]+setime[0][1]+" - "+setime[0][2]+setime[0][3]
-                        except:
-                            pass
-                        try:
-                            Category = jurlo.partition('<li>Category:</li>')[2].partition('</ul>')[0].strip()
-                            Category = Category.partition('<li>')[2].partition('</li>')[0].strip()
-                        except:
-                            pass
-                        try:
-                            glist=[]
-                            Genre = (jurlo.partition('<li>Genre:</li>')[2].partition('</ul>')[0]).strip().split("</a> </li>")
-                            for i in range(len(Genre)-1):
-                                Genre = (jurlo.partition('<li>Genre:</li>')[2].partition('</ul>')[0]).strip().split("</a> </li>")[i]
-                                Genre = Genre.partition('">')[2].strip()
-                                glist.append(Genre)
-                        except:
-                            pass
-                        try:
-                            llist=[]
-                            Language = (jurlo.partition('<li>Language:</li>')[2].partition('</ul>')[0]).strip().split("</a> </li>")
-                            for i in range(len(Language)-1):
-                                Language = (jurlo.partition('<li>Language:</li>')[2].partition('</ul>')[0]).strip().split("</a> </li>")[i]
-                                Language = Language.partition('">')[2].strip()
-                                llist.append(Language)
-                        except:
-                            pass
-                        try:
-                            clist=[]
-                            Country = (jurlo.partition('<li>Country:</li>')[2].partition('</ul>')[0]).strip().split("</a> </li>")
-                            for i in range(len(Country)-1):
-                                Country = (jurlo.partition('<li>Country:</li>')[2].partition('</ul>')[0]).strip().split("</a> </li>")[i]
-                                Country = Country.partition('">')[2].strip()
-                                clist.append(Country)
-                        except:
-                            pass
-                        try:
-                            Rating = re.findall("class='fa fa-star'></i> (.*?) </span><div", jurlo)[0]
-                            Rated = jurlo.partition('<li>MPAA</li><li>')[2].partition('</li></ul></li>')[0].strip()
-                            if Rated =="":
-                                Rated = jurlo.partition('class="censorship purple" title="Censorship:')[2].partition('"><li>')[0].strip()
-                        except:
-                            pass
-                        try:
-                            Year = jurlo.partition('href="/en/index/work/release_year/')[2].partition('/"')[0].strip()
-                        except:
-                            pass
-                        try:
-                            Duration = re.findall("<li>(.*?) minutes</li>", jurlo)[0]
-                        except:
-                            pass
-                        try:
-                            dlist=[]
-                            Director = (jurlo.partition('<li>Director:</li>')[2].partition('</ul>')[0]).strip().split('</a>')
-                            for i in range(len(Director)-1):
-                                Director = (jurlo.partition('<li>Director:</li>')[2].partition('</ul>')[0]).strip().split('</a>')[i]
-                                Director = Director.partition('/">')[2].strip()
-                                dlist.append(Director)
-                        except:
-                            pass
-                        try:
-                            wlist=[]
-                            Writer = (jurlo.partition('<li>Writer:</li>')[2].partition('</ul>')[0]).strip().split('</a>')
-                            for i in range(len(Writer)-1):
-                                Writer = (jurlo.partition('<li>Writer:</li>')[2].partition('</ul>')[0]).strip().split('</a>')[i]
-                                Writer = Writer.partition('/">')[2].strip()
-                                wlist.append(Writer)
-                        except:
-                            pass
-                        try:
-                            calist=[]
-                            Cast = (jurlo.partition('<li>Cast:</li>')[2].partition('</ul>')[0]).strip().split("</a> </li>")
-                            for i in range(len(Cast)-1):
-                                Cast = (jurlo.partition('<li>Cast:</li>')[2].partition('</ul>')[0]).strip().split("</a> </li>")[i]
-                                Cast = Cast.partition('">')[2].strip()
-                                calist.append(Cast)
-                        except:
-                            pass
-                        try:
-                            Description1 = re.findall("<p>(.*?)<a href='#' id='read-more'>...Read more</a><span class='hide'>", jurlo)[0]
-                            Description2 = re.findall("<a href='#' id='read-more'>...Read more</a><span class='hide'>(.*?)\.", jurlo)[0]
-                            Description = "{}{}".format(Description1, Description2)
-                        except:
-                            try:
-                                Description = re.findall("<p>(.*?)</p>", jurlo)[0]
-                            except:
-                                pass
-                        try:
-                            ej = {
-                            "Title": "%s"%title,
-                            "Start-End Time": "%s"%setime,
-                            "Type": "%s"%Category,
-                            "Year": "%s"%Year,
-                            "imdbRating": "%s"%Rating,
-                            "Rated": "%s"%Rated,
-                            "Genre": "%s"%(', '.join(glist)),
-                            "Duration": "%s min."%Duration,
-                            "Language": "%s"%(', '.join(llist)),
-                            "Country": "%s"%(', '.join(clist)),
-                            "Director": "%s"%(', '.join(dlist)),
-                            "Writer": "%s"%(', '.join(wlist)),
-                            "Actors": "%s"%(', '.join(calist)),
-                            "Plot": "%s"%Description,
-                            }
-                            open(info_files, "w").write(json.dumps(ej))
+                            if exists:
+                                logout(data="elcinema json cache hit title={} path={}".format(title, json_file))
+                            else:
+                                html_file = self.findExistingElcinemaHtml(title)
+                                if html_file:
+                                    logout(data="elcinema html cache hit title={} path={}".format(title, html_file))
+                                else:
+                                    work_id = self.elcinemaSearchBestWorkId(title)
+                                    html_file = self.saveElcinemaWorkHtml(title, work_id)
+                                json_file = save_elcinema_info_from_html(html_file, pathLoc, title_override=title)
+                                logout(data="elcinema json created title={} path={}".format(title, json_file))
 
-                            if os.path.exists(info_files):
-                                self.extra3_info_downloaded += 1
-                                downloaded = self.extra3_info_downloaded
+                            self.extra3_info_downloaded += 1
+                            downloaded = self.extra3_info_downloaded
+                            if n > 0:
                                 self.prgrs(downloaded, n)
-                                self['info'].setText("► {}, EXTRA3, INFO".format(title.upper()))
-                            if os.path.exists(dwnldFile):
-                                self.showPoster(dwnldFile)
+                            self['info'].setText("► {}, EXTRA3, INFO".format(title.upper()))
+                            if html_file:
+                                logout(data="elcinema html file={}".format(html_file))
+                            if work_id:
+                                logout(data="elcinema work id={}".format(work_id))
+                            logout(data="elcinema json file={}".format(json_file))
 
+                            poster_file = "{}poster/{}.jpg".format(pathLoc, title)
+                            if not os.path.exists(poster_file):
+                                self.tryArabicElcinemaPoster(title, poster_file)
+
+                            time.sleep(1)
                         except Exception as err:
                             with open("/tmp/xtraEvent.log", "a+") as f:
-                                f.write("elcinema ej, %s, %s\n"%(title, err))
-                    logout(data=" hier timeout von 1 sec ")
-                    time.sleep(1)  # war 5 sec mal neuer versuch
+                                f.write("elcinema html, %s, %s\n" % (raw_title, err))
+                except Exception as err:
+                    with open("/tmp/xtraEvent.log", "a+") as f:
+                        f.write("elcinema init, %s\n" % (err))
             else:
                 logout(data="956 xtraEvent3 download ist NEIN ")
 
@@ -1705,7 +1614,7 @@ class downloads(Screen):
                                     logout(data="url 1022")
                                     ff = requests.get(url, stream=True, headers=headers).text
                                     logout(data="url 1024")
-                                    p = re.findall('\],\["https://(.*?)",\d+,\d+]', ff)[0]
+                                    p = re.findall(r'\],\["https://(.*?)",\d+,\d+]', ff)[0]
                                     logout(data="url 1026")
                                     url = "https://{}".format(p)
                                     logout(data="url 1028")
@@ -1939,7 +1848,7 @@ class downloads(Screen):
                         logout(data=str(omdb_apis))
                     else:
                         logout(data="omdb_apis default")
-                        omdb_apis = ["a8834925", "550a7c40", "8ec53e6b"]                 # kann schnell sein das limit erreicht zum download weil alle nutzen
+                        omdb_apis = ["69000e83"]                 # kann schnell sein das limit erreicht zum download weil alle nutzen
 
                     if not os.path.exists(info_files):
                         logout(data=" -----------------  info no json 1184 -----------------------------------")
@@ -1954,47 +1863,70 @@ class downloads(Screen):
                                 title = requests.get(url_tmdb).json()['results'][0]['original_title']   # ?????? warum
                             except:
                                 pass
-                            for omdb_api in omdb_apis:                                              # kann schnell sein das limit erreicht zum download weil alle nutzen
+                            for omdb_api in omdb_apis:  # kann schnell sein das limit erreicht zum download weil alle nutzen
                                 try:
-                                    logout(data="urlstartomdb")
+                                    logout(data="1995 urlstartomdb")
                                     logout(data=str(omdb_apis))
                                     logout(data=str(omdb_api))
-                                    url = "http://www.omdbapi.com/?apikey={}&t={}".format(omdb_api, title)
-                                    logout(data="url ombd ")
-                                    logout(data=str(url))
-                                    info_omdb = requests.get(url, timeout=5)
-                                    if info_omdb.status_code == 200:
+
+                                    # Titelvarianten vorbereiten
+                                    title_variants = [title.strip()]
+                                    if "-" in title:
+                                        parts = title.split("-")
+                                        title_variants += [p.strip() for p in parts]
+                                    elif ":" in title:
+                                        parts = title.split(":")
+                                        title_variants += [p.strip() for p in parts]
+
+                                    # Doppelte entfernen
+                                    title_variants = list(dict.fromkeys(title_variants))
+
+                                    info_omdb = None
+
+                                    for variant in title_variants:
+                                        url = "http://www.omdbapi.com/?apikey={}&t={}".format(omdb_api, variant)
+                                        logout(data="Versuche Titel: {}".format(variant))
+                                        logout(data="url omdb: {}".format(url))
+
+                                        try:
+                                            response = requests.get(url, timeout=5)
+                                            if response.status_code == 200:
+                                                read_json = response.json()
+                                                if read_json.get("Response") == "True":
+                                                    info_omdb = read_json
+                                                    break
+                                        except Exception as e:
+                                            logout(data="Fehler bei Anfrage mit '{}': {}".format(variant, str(e)))
+
+                                    if info_omdb:
                                         logout(data=" -----------------  omdb json gefunden --------------------------")
-                                        Title = info_omdb.json()["Title"]
-                                        Year = info_omdb.json()["Year"]
-                                        Rated = info_omdb.json()["Rated"]
-                                        Duration = info_omdb.json()["Runtime"]
-                                        Released = info_omdb.json()["Released"]
+                                        Title = info_omdb.get("Title", "")
+                                        Year = info_omdb.get("Year", "")
+                                        Rated = info_omdb.get("Rated", "")
+                                        Duration = info_omdb.get("Runtime", "")
+                                        Released = info_omdb.get("Released", "")
                                         logout(data="url variablen ")
-                                        Genre = info_omdb.json()["Genre"]
-                                        Director = info_omdb.json()["Director"]
-                                        Writer = info_omdb.json()["Writer"]
-                                        Actors = info_omdb.json()["Actors"]
+                                        Genre = info_omdb.get("Genre", "")
+                                        Director = info_omdb.get("Director", "")
+                                        Writer = info_omdb.get("Writer", "")
+                                        Actors = info_omdb.get("Actors", "")
+
                                         if not config.plugins.xtraEvent.searchLang.value:
-                                            Plot = info_omdb.json()["Plot"]
+                                            Plot = info_omdb.get("Plot", "")
                                         logout(data="url variablen 2")
-                                        Country = info_omdb.json()["Country"]
-                                        Awards = info_omdb.json()["Awards"]
-                                        imdbRating = info_omdb.json()["imdbRating"]
-                                        imdbID = info_omdb.json()["imdbID"]
-                                        Type = info_omdb.json()["Type"]
+                                        Country = info_omdb.get("Country", "")
+                                        Awards = info_omdb.get("Awards", "")
+                                        imdbRating = info_omdb.get("imdbRating", "0.0")
+                                        imdbID = info_omdb.get("imdbID", "")
+                                        Type = info_omdb.get("Type", "")
                                         logout(data="url variablen 3")
-                                        #                                                      save json datei in infosomdb
 
                                         # Speichere die JSON-Datei in infosomdb
                                         info_files = "{}infosomdb/{}.json".format(pathLoc, title)
                                         logout(data=str(info_files))
-                                        # Stelle sicher, dass der Zielordner existiert
                                         os.makedirs(os.path.dirname(info_files), exist_ok=True)
-
-                                        # Schreibe die Daten in die Ausgabedatei
                                         with open(info_files, "w") as f:
-                                            json.dump(info_omdb.json(), f, indent=4)
+                                            json.dump(info_omdb, f, indent=4)
                                             logout(data="url ombd json schreiben")
 
                                         if Rated != "N/A":
@@ -2006,17 +1938,21 @@ class downloads(Screen):
                                             with open(rated_files, "w") as f:
                                                 json.dump(rated_data, f, indent=4)
 
-                                        if float(imdbRating) > 1.0:
-                                            sterne_files = "{}infosomdbsterne/{}.json".format(pathLoc, title)
-                                            sterne_data = {
-                                                "vote_average": imdbRating
-                                            }
-                                            os.makedirs(os.path.dirname(sterne_files), exist_ok=True)
-                                            with open(sterne_files, "w") as f:
-                                                json.dump(sterne_data, f, indent=4)
+                                        try:
+                                            if float(imdbRating) > 1.0:
+                                                sterne_files = "{}infosomdbsterne/{}.json".format(pathLoc, title)
+                                                sterne_data = {
+                                                    "vote_average": imdbRating
+                                                }
+                                                os.makedirs(os.path.dirname(sterne_files), exist_ok=True)
+                                                with open(sterne_files, "w") as f:
+                                                    json.dump(sterne_data, f, indent=4)
+                                        except:
+                                            pass
 
-                                except:
-                                    pass
+                                except Exception as e:
+                                    logout(data="Fehler im gesamten omdb-Block: {}".format(str(e)))
+
                             logout(data="--------------------------------------------------------------- url imbd 1937")
                             url_find = 'https://m.imdb.com/find?q={}'.format(title)
                             logout(data=str(url_find))
@@ -2051,11 +1987,11 @@ class downloads(Screen):
                                 pass
                             try:
                                 if Duration == None:
-                                    Duration = re.findall('\d+h \d+min', ff)[0]
+                                    Duration = re.findall(r'\d+h \d+min', ff)[0]
                             except:
                                 try:
                                     if Duration == None:
-                                        Duration = re.findall('\d+min', ff)[0]
+                                        Duration = re.findall(r'\d+min', ff)[0]
                                 except:
                                     pass
                             try:
@@ -4282,7 +4218,7 @@ class downloads(Screen):
     def eventname(self, Name):
         logout(data="")
         logout(
-            data=">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>     name aus der json in eventname start umwandelen")
+            data=">>>>>>>>>>>>Convert name from JSON to event name start")
         caller_frame = inspect.currentframe().f_back
         caller_name = inspect.getframeinfo(caller_frame).function
         #log_message = f"Die Funktion getText() wurde von {caller_name} aufgerufen."
@@ -4315,6 +4251,237 @@ class downloads(Screen):
         Name = Name.lower()
         logout(data=Name)
         logout(
-            data=">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>    name aus der json in eventname ende umgewandelt")
+            data=">>>>>>>>Name converted from JSON to event name")
         logout(data="")
-        return Name  # liefert dem aufruf das zurueck
+        return Name  # liefert dem aufruf das zuruec    def cleanElcinemaTitle(self, title):
+        try:
+            cleaned = clean_search_title(title)
+            logout(data="elcinema cleaned title={}".format(cleaned))
+            return cleaned
+        except Exception as err:
+            logout(data="elcinema clean title error={}".format(err))
+            return REGEX.sub('', title or '').strip()
+
+    def getElcinemaDir(self):
+        folder = os.path.join(dir_path, "elcinema")
+        try:
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+                logout(data="elcinema dir created={}".format(folder))
+        except Exception as err:
+            logout(data="elcinema mkdir error={}".format(err))
+        return folder
+
+    def safeElcinemaFilename(self, value):
+        try:
+            return safe_filename(value)
+        except Exception:
+            pass
+        safe_value = re.sub(r'[^\w\-\.\u0600-\u06FF]+', '_', value or "", flags=re.UNICODE)
+        safe_value = re.sub(r'_+', '_', safe_value).strip('._')
+        return safe_value or "title"
+
+    def normalizeElcinemaCompareTitle(self, title):
+        try:
+            value = self.cleanElcinemaTitle(title)
+            value = safe_str(value).lower()
+            value = value.replace("_", " ").replace("-", " ")
+            value = re.sub(r'\s+', ' ', value).strip()
+            return value
+        except Exception:
+            return safe_str(title).lower().strip()
+
+    def elcinemaTitleDistance(self, wanted_title, candidate_title):
+        try:
+            wanted = self.normalizeElcinemaCompareTitle(wanted_title)
+            candidate = self.normalizeElcinemaCompareTitle(candidate_title)
+            if not wanted and not candidate:
+                return 0
+            if wanted == candidate:
+                return 0
+            if wanted in candidate or candidate in wanted:
+                return abs(len(wanted) - len(candidate))
+
+            wanted_words = set([x for x in wanted.split(" ") if x])
+            candidate_words = set([x for x in candidate.split(" ") if x])
+            common = len(wanted_words & candidate_words)
+            total = len(wanted_words | candidate_words) or 1
+            similarity_score = int((float(common) / float(total)) * 100.0)
+            length_penalty = abs(len(wanted) - len(candidate))
+            return 100 - similarity_score + length_penalty
+        except Exception as err:
+            logout(data="elcinemaTitleDistance error={}".format(err))
+            return 999999
+
+    def elcinemaParseSearchResults(self, response_text):
+        results = []
+        patterns = [
+            r'data-url\\?"\\?=\\?"/work/(\d+)".*?data-text\\?"\\?=\\?"([^"]+)"',
+            r'data-url="/work/(\d+)".*?data-text="([^"]+)"',
+        ]
+        try:
+            for pattern in patterns:
+                matches = re.findall(pattern, response_text, re.S)
+                if matches:
+                    for work_id, data_text in matches:
+                        title_text = safe_str(unescape(data_text))
+                        results.append({"id": safe_str(work_id), "title": title_text})
+                    break
+            logout(data="elcinema parsed search results count={}".format(len(results)))
+            for item in results[:10]:
+                logout(data="elcinema candidate id={} title={}".format(item.get("id", ""), item.get("title", "")))
+        except Exception as err:
+            logout(data="elcinema parse search results error={}".format(err))
+        return results
+
+    def elcinemaSearchBestWorkId(self, title):
+        logout(data="elcinemaSearchBestWorkId")
+        search_url = "https://elcinema.com/ajaxable/search_simple?q={}".format(quote(title))
+        logout(data="elcinema search url")
+        logout(data=str(search_url))
+        try:
+            response = requests.get(search_url, headers=headers, timeout=20, verify=False)
+            logout(data="elcinema search status={}".format(getattr(response, "status_code", "unknown")))
+            response.raise_for_status()
+            response_text = response.text or ""
+        except Exception as err:
+            logout(data="elcinema search request error={}".format(err))
+            raise
+
+        try:
+            sample = response_text[:400].replace("\n", " ").replace("\r", " ")
+            logout(data="elcinema search sample={}".format(sample))
+        except Exception as err:
+            logout(data="elcinema search sample error={}".format(err))
+
+        results = self.elcinemaParseSearchResults(response_text)
+        if not results:
+            logout(data="No elcinema work id found for {}".format(title))
+            raise ValueError("No elcinema work id found for {}".format(title))
+
+        best_item = None
+        best_score = 999999
+        wanted = self.normalizeElcinemaCompareTitle(title)
+        for item in results:
+            candidate_title = item.get("title", "")
+            score = self.elcinemaTitleDistance(wanted, candidate_title)
+            logout(data="elcinema compare wanted={} candidate={} id={} score={}".format(
+                wanted, candidate_title, item.get("id", ""), score
+            ))
+            if score < best_score:
+                best_score = score
+                best_item = item
+
+        if not best_item:
+            logout(data="No best elcinema work id found for {}".format(title))
+            raise ValueError("No best elcinema work id found for {}".format(title))
+
+        work_id = safe_str(best_item.get("id", ""))
+        logout(data="elcinema selected id={} title={} score={}".format(
+            work_id, best_item.get("title", ""), best_score
+        ))
+        return work_id
+
+    def getElcinemaInfoJsonPath(self, title):
+        clean_title = self.cleanElcinemaTitle(title)
+        json_path = get_provider_target_json_path(config.plugins.xtraEvent.loc.value, clean_title, "elcinema", "info")
+        logout(data="elcinema info json path title={} path={}".format(title, json_path))
+        return json_path
+
+    def hasElcinemaInfoJson(self, title):
+        try:
+            json_path = self.getElcinemaInfoJsonPath(title)
+            exists = bool(json_path and os.path.exists(json_path))
+            logout(data="elcinema info json exists title={} path={} exists={}".format(title, json_path, exists))
+            return exists, json_path
+        except Exception as err:
+            logout(data="elcinema info json exists error title={} err={}".format(title, err))
+            return False, ""
+
+    def findExistingElcinemaHtml(self, title):
+        try:
+            html_dir = self.getElcinemaDir()
+            safe_title = self.safeElcinemaFilename(self.cleanElcinemaTitle(title))
+            for name in os.listdir(html_dir):
+                if not name.lower().endswith(".html"):
+                    continue
+                if safe_title in name:
+                    path = os.path.join(html_dir, name)
+                    logout(data="elcinema html cache hit title={} path={}".format(title, path))
+                    return path
+        except Exception as err:
+            logout(data="elcinema html cache error title={} err={}".format(title, err))
+        return ""
+
+    def saveElcinemaWorkHtml(self, title, work_id):
+        logout(data="saveElcinemaWorkHtml")
+        safe_title = self.safeElcinemaFilename(title)
+        work_url = "https://elcinema.com/work/{}".format(work_id)
+        logout(data="elcinema work url")
+        logout(data=str(work_url))
+        try:
+            response = requests.get(work_url, headers=headers, timeout=20, verify=False)
+            logout(data="elcinema work status={}".format(getattr(response, "status_code", "unknown")))
+            response.raise_for_status()
+            html_text = response.text or ""
+        except Exception as err:
+            logout(data="elcinema work request error={}".format(err))
+            raise
+
+        html_dir = self.getElcinemaDir()
+        html_file = os.path.join(html_dir, "elcinema_work_{}_{}.html".format(work_id, safe_title))
+        try:
+            with io.open(html_file, "w", encoding="utf-8") as handle:
+                handle.write(html_text)
+            logout(data="elcinema html saved={}".format(html_file))
+        except Exception as err:
+            logout(data="elcinema save error={}".format(err))
+            raise
+        return html_file
+
+    def saveElcinemaHtmlAndJson(self, raw_title):
+        title = self.cleanElcinemaTitle(raw_title)
+        if not title:
+            raise ValueError("Empty elcinema title")
+
+        exists, json_file = self.hasElcinemaInfoJson(title)
+        if exists:
+            logout(data="elcinema json cache hit title={} path={}".format(title, json_file))
+            return title, "", "", json_file
+
+        html_file = self.findExistingElcinemaHtml(title)
+        if not html_file:
+            work_id = self.elcinemaSearchBestWorkId(title)
+            html_file = self.saveElcinemaWorkHtml(title, work_id)
+        else:
+            work_id = ""
+
+        json_file = save_elcinema_info_from_html(html_file, pathLoc, title_override=title)
+        logout(data="elcinema info json saved={}".format(json_file))
+        return title, work_id, html_file, json_file
+
+    def tryArabicElcinemaPoster(self, clean_title, dest_file):
+        try:
+            if not contains_arabic_text(clean_title):
+                return False
+            json_path = get_provider_target_json_path(config.plugins.xtraEvent.loc.value, clean_title, "elcinema", "info")
+            candidates = [json_path]
+            logout(data="poster arabic info candidates={}".format(candidates))
+            for current_json in candidates:
+                if not current_json or not os.path.exists(current_json):
+                    continue
+                with open(current_json, "r") as handle:
+                    data = json.load(handle)
+                provider = safe_str(data.get("provider", "")).lower()
+                poster_url = safe_str(data.get("poster", "")) or safe_str(data.get("poster_path", ""))
+                logout(data="poster candidate json={} provider={} url={}".format(current_json, provider, poster_url))
+                if provider == "elcinema" and poster_url:
+                    response = requests.get(poster_url, stream=True, allow_redirects=True, timeout=15, headers=headers, verify=False)
+                    if response.status_code == 200:
+                        open(dest_file, "wb").write(response.content)
+                        logout(data="poster saved from elcinema={}".format(dest_file))
+                        return True
+            return False
+        except Exception as err:
+            logout(data="tryArabicElcinemaPoster error={}".format(err))
+            return False

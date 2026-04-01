@@ -12,20 +12,33 @@ from Components.config import config
 from Tools.xtraTool import REGEX, pathLoc
 import re
 import os
-# --------------------------- Logfile -------------------------------
 
-
-from datetime import datetime, timedelta
+from datetime import datetime
 from shutil import copyfile
 from os import remove
 from os.path import isfile
 
-
-
+import inspect
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraevent-cast-small.log"
+import os
+########################### log file loeschen ##################################
+dir_path = "/tmp/xtraevent"
 
+try:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print("Verzeichnis wurde erstellt:", dir_path)
+    else:
+        print("Verzeichnis existiert bereits:", dir_path)
+except Exception as e:
+    print("Fehler beim Erstellen des Verzeichnisses:", e)
+
+
+
+
+myfile=dir_path + "/castsmall.log"
 ## If file exists, delete it ##
 if isfile(myfile):
     remove(myfile)
@@ -36,8 +49,13 @@ if isfile(myfile):
 # kitte888 logfile anlegen die eingabe in logstatus
 
 
-#logstatus = "on"
-logstatus = "off"
+
+logstatus = "on"
+if config.plugins.xtraEvent.logFiles.value == True:
+    logstatus = "on"
+else:
+    logstatus = "off"
+
 
 # ________________________________________________________________________________
 
@@ -58,7 +76,6 @@ def logout(data):
         write_log(data)
         return
     return
-
 
 class xtraCastsmall(Renderer):
     def __init__(self):

@@ -9,25 +9,36 @@ from Components.Renderer.Renderer import Renderer
 from enigma import ePoint, eWidget, eSize, eLabel, gFont, ePixmap, eEPGCache, loadJPG
 from skin import parseColor
 from Components.config import config
-from Tools.xtraTool import REGEX, pathLoc
-from Plugins.Extensions.xtraEvent.download import REGEX, pathLoc
+from Tools.xtraTool import pathLoc
 
 import re
 import os
-# --------------------------- Logfile -------------------------------
 
-
-from datetime import datetime, timedelta
+from datetime import datetime
 from shutil import copyfile
 from os import remove
 from os.path import isfile
 
-
-
+import inspect
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
+from Plugins.Extensions.xtraEvent.xtraTitleHelper import *
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraCast.log"
 
+import os
+########################### log file loeschen ##################################
+dir_path = "/tmp/xtraevent"
+
+try:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print("Directory has been created:", dir_path)
+    else:
+        print("Directory already exists:", dir_path)
+except Exception as e:
+    print("Error creating directory:", e)
+
+myfile=dir_path + "/cast.log"
 ## If file exists, delete it ##
 if isfile(myfile):
     remove(myfile)
@@ -36,15 +47,14 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
-from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 
-logstatus = "off"
+
+
+logstatus = "on"
 if config.plugins.xtraEvent.logFiles.value == True:
     logstatus = "on"
 else:
     logstatus = "off"
-
-#logstatus = "on"
 
 
 # ________________________________________________________________________________
@@ -68,34 +78,8 @@ def logout(data):
     return
 
 
-REGEX = re.compile(
-    r'([\(\[]).*?([\)\]])|'
-    r'(: odc.\d+)|'
-    r'(\d+: odc.\d+)|'
-    r'(\d+ odc.\d+)|(:)|'
-
-    r'!|'
-    r'/.*|'
-    r'\|\s[0-9]+\+|'
-    r'[0-9]+\+|'
-    r'\s\d{4}\Z|'
-    r'([\(\[\|].*?[\)\]\|])|'
-    r'(\"|\"\.|\"\,|\.)\s.+|'
-    r'\"|:|'
-    r'\*|'
-    r'Премьера\.\s|'
-    r'(х|Х|м|М|т|Т|д|Д)/ф\s|'
-    r'(х|Х|м|М|т|Т|д|Д)/с\s|'
-    r'\s(с|С)(езон|ерия|-н|-я)\s.+|'
-    r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-    r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-    r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-    r'\d{1,3}(-я|-й|\sс-н).+|'
-    r'\sح\s*\d+|'                # Entfernt Episodennummern in arabischen Serien
-    r'\sج\s*\d+|'                # Entfernt Staffelangaben in arabischen Serien
-    r'\sم\s*\d+|'                # Entfernt weitere Staffelangaben in arabischen Serien
-    r'\d+$'                     # Entfernt Zahlen am Ende
-    , re.DOTALL)
+logout(data="class xtraCast")
+logout(data=str(config.plugins.xtraEvent.logFiles.value))
 
 class xtraCast(Renderer):
     def __init__(self):
@@ -202,16 +186,6 @@ class xtraCast(Renderer):
                 logout(data="Sendungs name")
                 evnt = event.getEventName()
                 logout(data=str(evnt))
-                # so vorher aber da passen die namen nicht zum download
-                #evntNm = REGEX.sub('', evnt).strip()
-                #logout(data="nach Regex Tools name")
-                #logout(data=str(evntNm))
-
-                #logout(data="nach Regex meiner name")
-                #title = REGEX.sub('', evnt).strip()
-                #logout(data=str(title))
-                #evntNm=title
-                #logout(data="#################### muss in evnNm stehen #########################")
 
                 # hier live: entfernen
                 Name = evnt.replace('\xc2\x86', '').replace('\xc2\x87', '').replace("live: ", "").replace("LIVE ", "")
@@ -219,16 +193,10 @@ class xtraCast(Renderer):
                 logout(data="name live rausnehmen")
                 logout(data=evnt)
 
-                # hier versuch name nur vor dem :
-                #name1 = evnt.split(": ", 1)
-                #Name = name1[0]
-                #logout(data="name   : abtrennen ")
-                #logout(data=Name)
-
                 evnt = Name
                 # -------------------------------
 
-                evntNm = REGEX.sub('', evnt).strip()
+                evntNm = clean_search_title(evnt)
                 logout(data=str(evntNm))
                 # ------------------------------ name setht in evntNm drin ---------------------------------------------
                 cf=""

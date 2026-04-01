@@ -7,7 +7,8 @@ from enigma import ePixmap, loadJPG, eServiceCenter
 from Components.config import config
 import re
 import os
-
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
+from Plugins.Extensions.xtraEvent.xtraTitleHelper import *
 # --------------------------- Logfile -------------------------------
 
 from datetime import datetime
@@ -19,8 +20,24 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraBackdrop.log"
 
+import os
+########################### log file loeschen ##################################
+dir_path = "/tmp/xtraevent"
+
+try:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print("Directory has been created:", dir_path)
+    else:
+        print("Directory already exists:", dir_path)
+except Exception as e:
+    print("Error creating directory:", e)
+
+
+
+
+myfile=dir_path + "/backdrop.log"
 ## If file exists, delete it ##
 if isfile(myfile):
     remove(myfile)
@@ -29,7 +46,7 @@ if isfile(myfile):
 
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
-from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
+
 
 logstatus = "off"
 if config.plugins.xtraEvent.logFiles.value == True:
@@ -84,36 +101,6 @@ try:
 except:
     pathLoc = ""
 
-
-REGEX = re.compile(
-        r'([\(\[]).*?([\)\]])|'
-        r'(: odc.\d+)|'
-        r'(\d+: odc.\d+)|'
-        r'(\d+ odc.\d+)|(:)|'
-        
-        r'!|'
-        r'/.*|'
-        r'\|\s[0-9]+\+|'
-        r'[0-9]+\+|'
-        r'\s\d{4}\Z|'
-        r'([\(\[\|].*?[\)\]\|])|'
-        r'(\"|\"\.|\"\,|\.)\s.+|'
-        r'\"|:|'
-        r'\*|'
-        r'Премьера\.\s|'
-        r'(х|Х|м|М|т|Т|д|Д)/ф\s|'
-        r'(х|Х|м|М|т|Т|д|Д)/с\s|'
-        r'\s(с|С)(езон|ерия|-н|-я)\s.+|'
-        r'\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-        r'\.\s\d{1,3}\s(ч|ч\.|с\.|с)\s.+|'
-        r'\s(ч|ч\.|с\.|с)\s\d{1,3}.+|'
-        r'\d{1,3}(-я|-й|\sс-н).+|'
-        r'\sح\s*\d+|'                # Entfernt Episodennummern in arabischen Serien
-        r'\sج\s*\d+|'                # Entfernt Staffelangaben in arabischen Serien
-        r'\sم\s*\d+|'                # Entfernt weitere Staffelangaben in arabischen Serien
-        r'\d+$'                     # Entfernt Zahlen am Ende
-        , re.DOTALL)
-
 class xtraBackdrop(Renderer):
     def __init__(self):
         Renderer.__init__(self)
@@ -144,17 +131,10 @@ class xtraBackdrop(Renderer):
                         logout(data="name live rausnehmen")
                         logout(data=evnt)
 
-                        # hier versuch name nur vor dem :
-                        #name1 = evnt.split(": ", 1)
-                        #Name = name1[0]
-                        #logout(data="name   : abtrennen ")
-                        #logout(data=Name)
-
                         evnt = Name
                         # -------------------------------
 
-
-                        evntNm = REGEX.sub('', evnt).strip()
+                        evntNm = clean_search_title(evnt)
                         logout(data=str(evntNm))
                         pstrNm = "{}xtraEvent/backdrop/{}.jpg".format(pathLoc, evntNm)
                         logout(data=str(pstrNm))

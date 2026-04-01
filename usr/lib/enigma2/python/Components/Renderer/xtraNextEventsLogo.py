@@ -13,7 +13,7 @@ from enigma import ePixmap, loadJPG, eTimer, eEPGCache, loadPNG
 from Components.config import config
 import os
 import re
-
+from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 # --------------------------- Logfile -------------------------------
 
 from datetime import datetime
@@ -25,8 +25,23 @@ from os.path import isfile
 
 ########################### log file loeschen ##################################
 
-myfile="/tmp/xtraNextEventsLogo.log"
+import os
+########################### log file loeschen ##################################
+dir_path = "/tmp/xtraevent"
 
+try:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print("Verzeichnis wurde erstellt:", dir_path)
+    else:
+        print("Verzeichnis existiert bereits:", dir_path)
+except Exception as e:
+    print("Fehler beim Erstellen des Verzeichnisses:", e)
+
+
+
+
+myfile=dir_path + "/NextEventsLogo.log"
 ## If file exists, delete it ##
 if isfile(myfile):
     remove(myfile)
@@ -36,7 +51,7 @@ if isfile(myfile):
 ###########################  log file anlegen ##################################
 # kitte888 logfile anlegen die eingabe in logstatus
 
-from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
+
 
 logstatus = "off"
 if config.plugins.xtraEvent.logFiles.value == True:

@@ -26,9 +26,23 @@ from Plugins.Extensions.xtraEvent.skins.xtraSkins import *
 
 from .xtra import version
 from .download import downloadrunning
+import os
 ########################### log file loeschen ##################################
+dir_path = "/tmp/xtraevent"
 
-myfile="/tmp/xtraevent-Plugin.log"
+try:
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print("Directory has been created:", dir_path)
+    else:
+        print("Directory already exists:", dir_path)
+except Exception as e:
+    print("Error creating directory:", e)
+
+
+
+
+myfile=dir_path + "/plugin.log"
 
 ## If file exists, delete it ##
 if isfile(myfile):
@@ -67,7 +81,7 @@ def logout(data):
 
 
 # ----------------------------- so muss das commando aussehen , um in den file zu schreiben  ------------------------------
-#logout(data="start 6.77")
+
 logout(data=str(version))
 addFont("/usr/lib/enigma2/python/Plugins/Extensions/xtraEvent/fonts/arial.ttf", "xtraRegular", 100, 1)
 
